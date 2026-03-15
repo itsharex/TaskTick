@@ -78,12 +78,6 @@ swift build -c release
 swift run
 ```
 
-## Tech Stack
-
-- **SwiftUI** — declarative UI framework
-- **SwiftData** — persistence (SQLite under the hood)
-- **Swift Package Manager** — build system & dependency management
-
 ## License
 
 GPL-3.0 © [lifedever](https://github.com/lifedever)

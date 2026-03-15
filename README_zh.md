@@ -78,12 +78,6 @@ swift build -c release
 swift run
 ```
 
-## 技术栈
-
-- **SwiftUI** — 声明式 UI 框架
-- **SwiftData** — 数据持久化（底层 SQLite）
-- **Swift Package Manager** — 构建系统与依赖管理
-
 ## 开源协议
 
 GPL-3.0 © [lifedever](https://github.com/lifedever)
