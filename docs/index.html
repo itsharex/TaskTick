@@ -11,13 +11,13 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#09090b;
-  --surface:rgba(255,255,255,.04);
-  --border:rgba(255,255,255,.08);
-  --text:#fafafa;
-  --text2:#a1a1aa;
-  --text3:#52525b;
-  --accent:#3b82f6;
+  --bg:#ffffff;
+  --surface:rgba(0,0,0,.02);
+  --border:rgba(0,0,0,.08);
+  --text:#09090b;
+  --text2:#71717a;
+  --text3:#a1a1aa;
+  --accent:#2563eb;
   --font:'Inter','Noto Sans SC',-apple-system,system-ui,sans-serif;
 }
 html{scroll-behavior:smooth;font-size:16px}
@@ -27,7 +27,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 .container{max-width:1080px;margin:0 auto;padding:0 24px}
 
 /* ── Nav ── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);background:rgba(9,9,11,.8);border-bottom:1px solid var(--border)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);background:rgba(255,255,255,.8);border-bottom:1px solid var(--border)}
 .nav-inner{max-width:1080px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px}
 .nav-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem;letter-spacing:-.02em;text-decoration:none;color:var(--text);cursor:pointer}
 .nav-brand img{width:26px;height:26px;border-radius:6px}
@@ -56,7 +56,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px) s
 
 /* ── Screenshot ── */
 .screenshot{padding:0 24px 100px;text-align:center}
-.screenshot img{width:100%;max-width:960px;border-radius:12px;border:1px solid var(--border);box-shadow:0 32px 80px rgba(0,0,0,.5)}
+.screenshot img{width:100%;max-width:960px;border-radius:12px;border:1px solid var(--border);box-shadow:0 32px 80px rgba(0,0,0,.1)}
 
 /* ── Features ── */
 .features{padding:100px 0;border-top:1px solid var(--border)}
@@ -124,20 +124,18 @@ footer .right a:hover{color:var(--text)}
   .btn{padding:11px 22px;font-size:.85rem}
 }
 
-/* ── Light mode ── */
-@media(prefers-color-scheme:light){
+/* ── Dark mode ── */
+@media(prefers-color-scheme:dark){
   :root{
-    --bg:#ffffff;--surface:rgba(0,0,0,.02);
-    --border:rgba(0,0,0,.08);
-    --text:#09090b;--text2:#71717a;--text3:#a1a1aa;
-    --accent:#2563eb;
+    --bg:#09090b;--surface:rgba(255,255,255,.04);
+    --border:rgba(255,255,255,.08);
+    --text:#fafafa;--text2:#a1a1aa;--text3:#52525b;
+    --accent:#3b82f6;
   }
-  nav{background:rgba(255,255,255,.8)}
-  .btn-primary{background:var(--text);color:#fff}
-  .screenshot img{box-shadow:0 32px 80px rgba(0,0,0,.1)}
-  .feature-card:hover{background:rgba(0,0,0,.01)}
-  .install-card{background:rgba(0,0,0,.02)}
-  .install-card code{color:#374151}
+  nav{background:rgba(9,9,11,.8)}
+  .screenshot img{box-shadow:0 32px 80px rgba(0,0,0,.5)}
+  .feature-card:hover{background:rgba(255,255,255,.02)}
+  .install-card{background:rgba(255,255,255,.04)}
 }
 
 /* ── i18n ── */
