@@ -48,9 +48,7 @@ Grab the latest `.dmg` from [Releases](https://github.com/lifedever/TaskTick/rel
 | `TaskTick-x.x.x-arm64.dmg` | Apple Silicon (M1/M2/M3/M4) |
 | `TaskTick-x.x.x-x86_64.dmg` | Intel Mac |
 
-> **Note:** The app is not notarized by Apple. On first launch:
->
-> **Right-click TaskTick.app → Open → Open**
+> On first launch: **Right-click TaskTick.app → Open → Open**
 >
 > Or run: `xattr -cr /Applications/TaskTick.app`
 
@@ -102,9 +100,7 @@ MIT © [lifedever](https://github.com/lifedever)
 | `TaskTick-x.x.x-arm64.dmg` | Apple Silicon (M1/M2/M3/M4) |
 | `TaskTick-x.x.x-x86_64.dmg` | Intel Mac |
 
-> **注意：** 本应用未经 Apple 公证。首次打开时：
->
-> **右键点击 TaskTick.app → 打开 → 打开**
+> 首次打开时：**右键点击 TaskTick.app → 打开 → 打开**
 >
 > 或在终端执行：`xattr -cr /Applications/TaskTick.app`
 
