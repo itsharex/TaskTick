@@ -2,10 +2,10 @@
 "app.name" = "TaskTick";
 
 /* Menu Bar */
-"menubar.open" = "Open TaskTick";
+"menubar.open" = "Open";
 "menubar.no_tasks" = "No Tasks";
 "menubar.next_run" = "Next Run";
-"menubar.quit" = "Quit TaskTick";
+"menubar.quit" = "Quit";
 
 /* Task List */
 "task.filter.all" = "All";

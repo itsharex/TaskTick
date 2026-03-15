@@ -3,6 +3,9 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
+    /// When true, `NSApp.terminate` actually quits. Otherwise Cmd+Q just closes windows.
+    @MainActor static var shouldReallyQuit = false
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationManager.shared.requestPermission()
 
@@ -13,6 +16,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
         default: NSApp.appearance = nil
         }
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if AppDelegate.shouldReallyQuit {
+            return .terminateNow
+        }
+        // Cmd+Q: just close all windows instead of quitting
+        for window in sender.windows {
+            if window.isVisible && window.canBecomeMain {
+                window.close()
+            }
+        }
+        NSApp.setActivationPolicy(.accessory)
+        return .terminateCancel
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

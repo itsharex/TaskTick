@@ -2,10 +2,10 @@
 "app.name" = "TaskTick";
 
 /* Menu Bar */
-"menubar.open" = "打开 TaskTick";
+"menubar.open" = "打开";
 "menubar.no_tasks" = "暂无任务";
 "menubar.next_run" = "下次执行";
-"menubar.quit" = "退出 TaskTick";
+"menubar.quit" = "退出";
 
 /* Task List */
 "task.filter.all" = "全部";

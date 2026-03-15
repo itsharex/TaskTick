@@ -196,6 +196,7 @@ final class UpdateChecker: ObservableObject {
             try process.run()
 
             // Quit immediately so the script can replace the app
+            AppDelegate.shouldReallyQuit = true
             NSApp.terminate(nil)
         } catch {
             NSWorkspace.shared.open(fileURL)

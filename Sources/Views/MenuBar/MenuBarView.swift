@@ -71,12 +71,8 @@ struct MenuBarView: View {
                     }
                 }) {
                     HStack {
-                        Image(systemName: "macwindow")
                         Text(L10n.tr("menubar.open"))
                         Spacer()
-                        Image(systemName: "arrow.up.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 6)
@@ -89,15 +85,12 @@ struct MenuBarView: View {
 
                 // Quit
                 Button(action: {
+                    AppDelegate.shouldReallyQuit = true
                     NSApp.terminate(nil)
                 }) {
                     HStack {
-                        Image(systemName: "power")
                         Text(L10n.tr("menubar.quit"))
                         Spacer()
-                        Text("⌘Q")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 6)
