@@ -38,7 +38,15 @@
 "task.detail.timeout_value" = "%d 秒";
 "task.detail.recent_logs" = "最近执行";
 "task.detail.no_logs" = "暂无执行记录";
-"task.detail.view_all_logs" = "查看全部日志";
+"task.detail.view_logs" = "查看日志";
+"task.detail.show_full_script" = "查看全部";
+"task.detail.collapse_script" = "收起";
+
+/* Task Editor Tabs */
+"editor.tab.basic" = "基本";
+"editor.tab.schedule" = "调度";
+"editor.tab.script" = "脚本";
+"editor.tab.notification" = "通知";
 
 /* Task Editor */
 "editor.title.new" = "新建任务";
@@ -70,7 +78,36 @@
 "editor.notify_success" = "成功时通知";
 "editor.notify_failure" = "失败时通知";
 
-/* Cron Editor */
+/* Schedule */
+"schedule.cron" = "Cron 表达式";
+"schedule.interval" = "固定间隔";
+"schedule.date" = "日期";
+"schedule.time" = "时间";
+"schedule.repeat" = "重复";
+"schedule.end_repeat" = "结束重复";
+"schedule.end_date" = "结束日期";
+"schedule.end_count" = "重复次数";
+"schedule.times" = "次";
+"schedule.until" = "截止 %@";
+"schedule.after_n_times" = "%d 次";
+
+/* Repeat Types */
+"repeat.never" = "永不";
+"repeat.every_minute" = "每分钟";
+"repeat.every_5_minutes" = "每 5 分钟";
+"repeat.every_15_minutes" = "每 15 分钟";
+"repeat.every_30_minutes" = "每 30 分钟";
+"repeat.hourly" = "每小时";
+"repeat.daily" = "每天";
+"repeat.weekly" = "每周";
+"repeat.monthly" = "每月";
+
+/* End Repeat Types */
+"end_repeat.never" = "永不";
+"end_repeat.on_date" = "指定日期";
+"end_repeat.after_count" = "指定次数";
+
+/* Cron (legacy) */
 "cron.preset" = "预设";
 "cron.custom" = "自定义...";
 "cron.every_minute" = "每分钟";
@@ -85,10 +122,6 @@
 "cron.next_run" = "下次: %@";
 "cron.cannot_compute" = "无法计算";
 "cron.expression.placeholder" = "分 时 日 月 周";
-
-/* Schedule Types */
-"schedule.cron" = "Cron 表达式";
-"schedule.interval" = "固定间隔";
 
 /* Execution Status */
 "status.running" = "运行中";
@@ -156,7 +189,8 @@
 "settings.about.github" = "GitHub 主页";
 "settings.about.issues" = "报告问题";
 "settings.about.sponsor" = "赞助支持";
-"settings.about.copyright" = "© 2026 lifedever. MIT 许可证.";
+"settings.about.copyright" = "© 2026 lifedever. GPL-3.0 许可证.";
+"settings.about.description" = "一款原生 macOS 定时任务管理应用。无需 crontab，无需 launchd，交给 TaskTick。";
 
 /* Commands */
 "command.about" = "关于 TaskTick";
@@ -179,6 +213,21 @@
 "delete.message" = "确定要删除「%@」吗？此操作不可撤销。";
 "delete.cancel" = "取消";
 "delete.confirm" = "删除";
+
+/* Crontab Import */
+"command.import_crontab" = "从系统 Crontab 导入...";
+"crontab.import.title" = "导入系统 Crontab";
+"crontab.import.description" = "选择要导入为 TaskTick 任务的 crontab 条目。";
+"crontab.import.empty" = "无 Crontab 条目";
+"crontab.import.empty_description" = "系统 crontab 中没有找到活跃的定时任务。";
+"crontab.import.select_all" = "全选";
+"crontab.import.action" = "导入选中";
+"crontab.import.success" = "成功导入 %d 个任务。";
+"crontab.import.done" = "完成";
+"crontab.comment.title" = "是否注释已导入的条目？";
+"crontab.comment.message" = "已导入的条目将在系统 crontab 中被注释掉（不会删除），以避免重复执行。";
+"crontab.comment.yes" = "注释掉";
+"crontab.comment.no" = "保留";
 
 /* Cron Human Readable */
 "cron.human.every_minute" = "每分钟";

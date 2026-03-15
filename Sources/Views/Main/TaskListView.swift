@@ -122,16 +122,10 @@ struct TaskListRow: View {
                     .lineLimit(1)
 
                 HStack(spacing: 4) {
-                    Image(systemName: task.schedule == .cron ? "clock" : "timer")
+                    Image(systemName: "repeat")
                         .font(.system(size: 9))
-
-                    if task.schedule == .cron {
-                        Text(task.cronExpression ?? "")
-                            .font(.system(.caption2, design: .monospaced))
-                    } else {
-                        Text(L10n.tr("task.interval.seconds", task.intervalSeconds ?? 0))
-                            .font(.caption2)
-                    }
+                    Text(task.repeatType.displayName)
+                        .font(.caption2)
                 }
                 .foregroundStyle(.secondary)
             }

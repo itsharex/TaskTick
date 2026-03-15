@@ -7,6 +7,8 @@ struct TaskDetailView: View {
     let task: ScheduledTask
     @State private var showingEditor = false
     @State private var showingDeleteAlert = false
+    @State private var isScriptExpanded = false
+    @State private var showingTaskLogs = false
     @StateObject private var scheduler = TaskScheduler.shared
 
     var isRunning: Bool {
@@ -38,6 +40,9 @@ struct TaskDetailView: View {
         }
         .sheet(isPresented: $showingEditor) {
             TaskEditorView(task: task)
+        }
+        .sheet(isPresented: $showingTaskLogs) {
+            TaskLogsView(task: task)
         }
         .alert(L10n.tr("delete.title"), isPresented: $showingDeleteAlert) {
             Button(L10n.tr("delete.cancel"), role: .cancel) {}
@@ -82,7 +87,7 @@ struct TaskDetailView: View {
                     Text("·")
                         .foregroundStyle(.quaternary)
 
-                    Text(task.schedule.displayName)
+                    Text(task.repeatType.displayName)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -149,10 +154,38 @@ struct TaskDetailView: View {
                     .font(.headline)
 
                 VStack(spacing: 8) {
-                    if task.schedule == .cron {
-                        detailRow(L10n.tr("task.detail.cron_expression"), value: task.cronExpression ?? "-")
-                    } else {
-                        detailRow(L10n.tr("task.detail.interval"), value: L10n.tr("task.detail.interval_value", task.intervalSeconds ?? 0))
+                    // Show scheduled date if set
+                    if let date = task.scheduledDate {
+                        detailRow(L10n.tr("schedule.date"), value: date.formatted(date: .abbreviated, time: .omitted))
+                        detailRow(L10n.tr("schedule.time"), value: date.formatted(date: .omitted, time: .shortened))
+                    }
+
+                    // Repeat type
+                    detailRow(L10n.tr("schedule.repeat"), value: task.repeatType.displayName)
+
+                    // End repeat
+                    if task.repeatType != .never {
+                        switch task.endRepeatType {
+                        case .never:
+                            detailRow(L10n.tr("schedule.end_repeat"), value: L10n.tr("end_repeat.never"))
+                        case .onDate:
+                            if let endDate = task.endRepeatDate {
+                                detailRow(L10n.tr("schedule.end_repeat"), value: endDate.formatted(date: .abbreviated, time: .omitted))
+                            }
+                        case .afterCount:
+                            if let count = task.endRepeatCount {
+                                detailRow(L10n.tr("schedule.end_repeat"), value: L10n.tr("schedule.after_n_times", count))
+                            }
+                        }
+                    }
+
+                    // Legacy cron/interval display
+                    if task.scheduledDate == nil {
+                        if task.schedule == .cron {
+                            detailRow(L10n.tr("task.detail.cron_expression"), value: task.cronExpression ?? "-")
+                        } else if let interval = task.intervalSeconds, interval > 0 {
+                            detailRow(L10n.tr("task.detail.interval"), value: L10n.tr("task.detail.interval_value", interval))
+                        }
                     }
 
                     if let nextRun = task.nextRunAt {
@@ -201,19 +234,45 @@ struct TaskDetailView: View {
                     return task.scriptBody
                 }()
 
-                Text(displayScript)
-                    .font(.system(.caption, design: .monospaced))
-                    .textSelection(.enabled)
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.black.opacity(0.04))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(.separator, lineWidth: 0.5)
-                    )
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(displayScript)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxHeight: isScriptExpanded ? nil : 120, alignment: .top)
+                        .clipped()
+
+                    if displayScript.components(separatedBy: .newlines).count > 6 {
+                        Divider()
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isScriptExpanded.toggle()
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(isScriptExpanded ? L10n.tr("task.detail.collapse_script") : L10n.tr("task.detail.show_full_script"))
+                                Image(systemName: isScriptExpanded ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 9, weight: .semibold))
+                            }
+                            .font(.caption)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Color.accentColor)
+                        .pointerCursor()
+                    }
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.black.opacity(0.04))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(.separator, lineWidth: 0.5)
+                )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -228,8 +287,8 @@ struct TaskDetailView: View {
                     Label(L10n.tr("task.detail.recent_logs"), systemImage: "list.bullet.rectangle")
                         .font(.headline)
                     Spacer()
-                    Button(L10n.tr("task.detail.view_all_logs")) {
-                        openWindow(id: "logs")
+                    Button(L10n.tr("task.detail.view_logs")) {
+                        showingTaskLogs = true
                     }
                     .font(.caption)
                     .buttonStyle(.borderless)

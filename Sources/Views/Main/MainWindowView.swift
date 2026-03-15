@@ -2,8 +2,10 @@ import SwiftUI
 import SwiftData
 
 struct MainWindowView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedTask: ScheduledTask?
     @State private var showingEditor = false
+    @Binding var showingCrontabImport: Bool
 
     var body: some View {
         NavigationSplitView {
@@ -32,6 +34,9 @@ struct MainWindowView: View {
         }
         .sheet(isPresented: $showingEditor) {
             TaskEditorView(task: nil)
+        }
+        .sheet(isPresented: $showingCrontabImport) {
+            CrontabImportView()
         }
     }
 }

@@ -7,6 +7,7 @@ struct TaskTickApp: App {
     @StateObject private var scheduler = TaskScheduler.shared
     @StateObject private var updateChecker = UpdateChecker.shared
     @Environment(\.openWindow) private var openWindow
+    @State private var showingCrontabImport = false
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -27,10 +28,11 @@ struct TaskTickApp: App {
     var body: some Scene {
         // Main window
         Window(L10n.tr("app.name"), id: "main") {
-            MainWindowView()
+            MainWindowView(showingCrontabImport: $showingCrontabImport)
                 .localized()
                 .onAppear {
                     NSApp.setActivationPolicy(.regular)
+                    seedDefaultTask(context: sharedModelContainer.mainContext)
                     scheduler.configure(modelContext: sharedModelContainer.mainContext)
                     scheduler.start()
 
@@ -103,11 +105,20 @@ struct TaskTickApp: App {
             Divider()
 
             Button(L10n.tr("command.import")) {
-                // TODO: implement import
+                let count = TaskExporter.importTasks(into: sharedModelContainer.mainContext)
+                if count > 0 {
+                    scheduler.rebuildSchedule()
+                }
             }
 
             Button(L10n.tr("command.export")) {
-                // TODO: implement export
+                TaskExporter.exportTasks(from: sharedModelContainer.mainContext)
+            }
+
+            Divider()
+
+            Button(L10n.tr("command.import_crontab")) {
+                showingCrontabImport = true
             }
         }
 
@@ -148,5 +159,32 @@ struct TaskTickApp: App {
             Link(L10n.tr("command.github_home"), destination: URL(string: "https://github.com/lifedever/TaskTick")!)
             Link(L10n.tr("command.report_issue"), destination: URL(string: "https://github.com/lifedever/TaskTick/issues")!)
         }
+    }
+
+    private func seedDefaultTask(context: ModelContext) {
+        let key = "hasSeededDefaultTask"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+
+        let descriptor = FetchDescriptor<ScheduledTask>()
+        let count = (try? context.fetchCount(descriptor)) ?? 0
+        guard count == 0 else {
+            UserDefaults.standard.set(true, forKey: key)
+            return
+        }
+
+        let task = ScheduledTask(
+            name: "Hello TaskTick",
+            scriptBody: "echo \"Hello from TaskTick! 🎉\"\necho \"Current time: $(date)\"\necho \"Host: $(hostname)\"",
+            shell: "/bin/zsh",
+            scheduledDate: Date(),
+            repeatType: .everyMinute,
+            endRepeatType: .never,
+            isEnabled: true,
+            notifyOnSuccess: true,
+            notifyOnFailure: true
+        )
+        context.insert(task)
+        try? context.save()
+        UserDefaults.standard.set(true, forKey: key)
     }
 }

@@ -40,6 +40,7 @@ struct SettingsView: View {
                 .tabItem { Label(L10n.tr("settings.about"), systemImage: "info.circle") }
         }
         .frame(width: 460)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - General
@@ -175,6 +176,16 @@ struct SettingsView: View {
             Section(L10n.tr("settings.about.section")) {
                 LabeledContent(L10n.tr("settings.about.version"), value: updateChecker.currentVersion)
                 LabeledContent(L10n.tr("settings.about.build"), value: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1")
+
+                Text("A native macOS app for managing scheduled tasks.\nNo crontab, no launchd — just TaskTick.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 2)
+
+                Text("一款原生 macOS 定时任务管理应用。\n无需 crontab，无需 launchd，交给 TaskTick。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 2)
 
                 Link(L10n.tr("settings.about.github"), destination: URL(string: "https://github.com/lifedever/TaskTick")!)
                     .pointerCursor()

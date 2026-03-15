@@ -38,7 +38,15 @@
 "task.detail.timeout_value" = "%d seconds";
 "task.detail.recent_logs" = "Recent Runs";
 "task.detail.no_logs" = "No execution logs yet";
-"task.detail.view_all_logs" = "View All Logs";
+"task.detail.view_logs" = "View Logs";
+"task.detail.show_full_script" = "Show Full Script";
+"task.detail.collapse_script" = "Collapse";
+
+/* Task Editor Tabs */
+"editor.tab.basic" = "Basic";
+"editor.tab.schedule" = "Schedule";
+"editor.tab.script" = "Script";
+"editor.tab.notification" = "Notifications";
 
 /* Task Editor */
 "editor.title.new" = "New Task";
@@ -70,7 +78,36 @@
 "editor.notify_success" = "Notify on Success";
 "editor.notify_failure" = "Notify on Failure";
 
-/* Cron Editor */
+/* Schedule */
+"schedule.cron" = "Cron Expression";
+"schedule.interval" = "Fixed Interval";
+"schedule.date" = "Date";
+"schedule.time" = "Time";
+"schedule.repeat" = "Repeat";
+"schedule.end_repeat" = "End Repeat";
+"schedule.end_date" = "End Date";
+"schedule.end_count" = "Repeat Count";
+"schedule.times" = "times";
+"schedule.until" = "Until %@";
+"schedule.after_n_times" = "%d times";
+
+/* Repeat Types */
+"repeat.never" = "Never";
+"repeat.every_minute" = "Every Minute";
+"repeat.every_5_minutes" = "Every 5 Minutes";
+"repeat.every_15_minutes" = "Every 15 Minutes";
+"repeat.every_30_minutes" = "Every 30 Minutes";
+"repeat.hourly" = "Hourly";
+"repeat.daily" = "Daily";
+"repeat.weekly" = "Weekly";
+"repeat.monthly" = "Monthly";
+
+/* End Repeat Types */
+"end_repeat.never" = "Never";
+"end_repeat.on_date" = "On Date";
+"end_repeat.after_count" = "After Count";
+
+/* Cron (legacy) */
 "cron.preset" = "Preset";
 "cron.custom" = "Custom...";
 "cron.every_minute" = "Every Minute";
@@ -85,10 +122,6 @@
 "cron.next_run" = "Next: %@";
 "cron.cannot_compute" = "Cannot compute";
 "cron.expression.placeholder" = "min hour day month weekday";
-
-/* Schedule Types */
-"schedule.cron" = "Cron Expression";
-"schedule.interval" = "Fixed Interval";
 
 /* Execution Status */
 "status.running" = "Running";
@@ -156,7 +189,8 @@
 "settings.about.github" = "GitHub Repository";
 "settings.about.issues" = "Report an Issue";
 "settings.about.sponsor" = "Sponsor";
-"settings.about.copyright" = "© 2026 lifedever. MIT License.";
+"settings.about.copyright" = "© 2026 lifedever. GPL-3.0 License.";
+"settings.about.description" = "A native macOS app for managing scheduled tasks. No crontab, no launchd — just TaskTick.";
 
 /* Commands */
 "command.about" = "About TaskTick";
@@ -179,6 +213,21 @@
 "delete.message" = "Are you sure you want to delete \"%@\"? This action cannot be undone.";
 "delete.cancel" = "Cancel";
 "delete.confirm" = "Delete";
+
+/* Crontab Import */
+"command.import_crontab" = "Import from System Crontab...";
+"crontab.import.title" = "Import from Crontab";
+"crontab.import.description" = "Select crontab entries to import as TaskTick tasks.";
+"crontab.import.empty" = "No Crontab Entries";
+"crontab.import.empty_description" = "No active entries found in your system crontab.";
+"crontab.import.select_all" = "Select All";
+"crontab.import.action" = "Import Selected";
+"crontab.import.success" = "%d tasks imported successfully.";
+"crontab.import.done" = "Done";
+"crontab.comment.title" = "Comment Out Imported Entries?";
+"crontab.comment.message" = "The imported entries will be commented out (not deleted) in your system crontab to avoid duplicate execution.";
+"crontab.comment.yes" = "Comment Out";
+"crontab.comment.no" = "Keep";
 
 /* Cron Human Readable */
 "cron.human.every_minute" = "Every minute";

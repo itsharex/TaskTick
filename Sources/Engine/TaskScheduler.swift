@@ -113,8 +113,20 @@ final class TaskScheduler: ObservableObject {
 
         runningTaskIDs.insert(taskId)
 
+        // Increment execution count
+        task.executionCount += 1
+
+        // Check end repeat conditions
+        let shouldContinue = checkEndRepeat(for: task)
+
         // Compute next run date before executing
-        task.nextRunAt = computeNextRunDate(for: task, after: Date())
+        if shouldContinue {
+            task.nextRunAt = computeNextRunDate(for: task, after: Date())
+        } else {
+            // End condition met, disable the task
+            task.nextRunAt = nil
+            task.isEnabled = false
+        }
         try? modelContext.save()
 
         Task {
@@ -124,16 +136,88 @@ final class TaskScheduler: ObservableObject {
         }
     }
 
-    func computeNextRunDate(for task: ScheduledTask, after date: Date = Date()) -> Date? {
-        switch task.schedule {
-        case .cron:
-            guard let expr = task.cronExpression,
-                  let cron = try? CronExpression(parsing: expr) else { return nil }
-            return cron.nextFireDate(after: date)
+    /// Check if the task should continue repeating
+    private func checkEndRepeat(for task: ScheduledTask) -> Bool {
+        // Non-repeating tasks run once
+        if task.repeatType == .never {
+            return false
+        }
 
-        case .interval:
-            guard let interval = task.intervalSeconds, interval > 0 else { return nil }
-            return date.addingTimeInterval(TimeInterval(interval))
+        switch task.endRepeatType {
+        case .never:
+            return true
+        case .onDate:
+            if let endDate = task.endRepeatDate {
+                return Date() < endDate
+            }
+            return true
+        case .afterCount:
+            if let maxCount = task.endRepeatCount {
+                return task.executionCount < maxCount
+            }
+            return true
+        }
+    }
+
+    func computeNextRunDate(for task: ScheduledTask, after date: Date = Date()) -> Date? {
+        // Legacy cron support
+        if task.schedule == .cron, let expr = task.cronExpression {
+            if let cron = try? CronExpression(parsing: expr) {
+                return cron.nextFireDate(after: date)
+            }
+            return nil
+        }
+
+        // Legacy interval support
+        if task.schedule == .interval, task.scheduledDate == nil {
+            if let interval = task.intervalSeconds, interval > 0 {
+                return date.addingTimeInterval(TimeInterval(interval))
+            }
+            return nil
+        }
+
+        // New schedule system
+        guard let scheduledDate = task.scheduledDate else { return nil }
+
+        let repeatType = task.repeatType
+        let calendar = Calendar.current
+
+        // Non-repeating: just the scheduled date if in the future
+        if repeatType == .never {
+            return scheduledDate > date ? scheduledDate : nil
+        }
+
+        // Repeating: find the next occurrence after `date`
+        guard let interval = repeatType.calendarInterval else { return nil }
+
+        // If scheduled date is still in the future, use it
+        if scheduledDate > date {
+            return scheduledDate
+        }
+
+        // Compute next occurrence by stepping forward from scheduledDate
+        var candidate = scheduledDate
+        while candidate <= date {
+            guard let next = calendar.date(byAdding: interval.component, value: interval.value, to: candidate) else {
+                return nil
+            }
+            candidate = next
+        }
+
+        // Check end conditions
+        switch task.endRepeatType {
+        case .never:
+            return candidate
+        case .onDate:
+            if let endDate = task.endRepeatDate, candidate > endDate {
+                return nil
+            }
+            return candidate
+        case .afterCount:
+            if let maxCount = task.endRepeatCount, task.executionCount >= maxCount {
+                return nil
+            }
+            return candidate
         }
     }
 
