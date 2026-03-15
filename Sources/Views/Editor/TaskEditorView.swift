@@ -16,9 +16,9 @@ enum ScriptSource: String, CaseIterable {
 
 struct TaskEditorView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var editorState = EditorState.shared
 
-    let task: ScheduledTask?
+    var task: ScheduledTask? { editorState.taskToEdit }
 
     // Basic
     @State private var name = ""
@@ -41,12 +41,17 @@ struct TaskEditorView: View {
     @State private var workingDirectory = ""
     @State private var timeoutSeconds = 300
 
+    // Custom repeat
+    @State private var customIntervalValue = 1
+    @State private var customIntervalUnit: CustomRepeatUnit = .day
+    @State private var showingCustomRepeat = false
+
     // Notification
     @State private var notifyOnSuccess = false
     @State private var notifyOnFailure = true
 
-    // Tab
     @State private var selectedTab = 0
+    @State private var loadedTaskId: UUID?
 
     var isEditing: Bool { task != nil }
 
@@ -62,190 +67,138 @@ struct TaskEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        TabView(selection: $selectedTab) {
+            basicTab
+                .tabItem { Label(L10n.tr("editor.tab.basic"), systemImage: "square.and.pencil") }
+                .tag(0)
+
+            scheduleTab
+                .tabItem { Label(L10n.tr("editor.tab.schedule"), systemImage: "calendar.badge.clock") }
+                .tag(1)
+
+            scriptTab
+                .tabItem { Label(L10n.tr("editor.tab.script"), systemImage: "terminal") }
+                .tag(2)
+
+            notificationTab
+                .tabItem { Label(L10n.tr("editor.tab.notification"), systemImage: "bell") }
+                .tag(3)
+        }
+        .frame(width: 500)
+        .fixedSize(horizontal: true, vertical: true)
+        .safeAreaInset(edge: .bottom) {
             VStack(spacing: 0) {
-                // Tab bar
-                HStack(spacing: 0) {
-                    tabButton(L10n.tr("editor.tab.basic"), icon: "doc.text", index: 0)
-                    tabButton(L10n.tr("editor.tab.schedule"), icon: "calendar.badge.clock", index: 1)
-                    tabButton(L10n.tr("editor.tab.script"), icon: "terminal", index: 2)
-                    tabButton(L10n.tr("editor.tab.notification"), icon: "bell", index: 3)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-
                 Divider()
-                    .padding(.top, 8)
-
-                // Tab content
-                ScrollView {
-                    Group {
-                        switch selectedTab {
-                        case 0: basicTab
-                        case 1: scheduleTab
-                        case 2: scriptTab
-                        case 3: notificationTab
-                        default: EmptyView()
-                        }
+                HStack {
+                    Spacer()
+                    Button(L10n.tr("editor.cancel")) {
+                        closeWindow()
                     }
-                    .padding(20)
+                    .keyboardShortcut(.cancelAction)
+                    .pointerCursor()
+                    Button(L10n.tr("editor.save")) {
+                        save()
+                    }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!canSave)
+                    .pointerCursor()
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
             }
-            .frame(minWidth: 520, minHeight: 440)
-            .navigationTitle(isEditing ? L10n.tr("editor.title.edit") : L10n.tr("editor.title.new"))
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L10n.tr("editor.cancel")) { dismiss() }
-                        .pointerCursor()
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(L10n.tr("editor.save")) { save() }
-                        .pointerCursor()
-                        .disabled(!canSave)
-                        .keyboardShortcut(.return, modifiers: .command)
-                }
-            }
-            .onAppear(perform: loadTask)
         }
-    }
-
-    // MARK: - Tab Button
-
-    private func tabButton(_ title: String, icon: String, index: Int) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                selectedTab = index
-            }
-        } label: {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                Text(title)
-                    .font(.caption)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .foregroundStyle(selectedTab == index ? Color.accentColor : .secondary)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(selectedTab == index ? Color.accentColor.opacity(0.1) : .clear)
-            )
+        .onAppear { loadTask() }
+        .onChange(of: editorState.taskToEdit?.id) { _, _ in
+            loadTask()
         }
-        .buttonStyle(.plain)
-        .pointerCursor()
     }
 
     // MARK: - Basic Tab
 
     private var basicTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sectionHeader(L10n.tr("editor.section.basic"), icon: "doc.text")
-
-            VStack(spacing: 12) {
-                LabeledContent(L10n.tr("editor.name")) {
-                    TextField(L10n.tr("editor.name.placeholder"), text: $name)
-                        .textFieldStyle(.roundedBorder)
-                }
-
-                Divider()
-
+        Form {
+            Section(L10n.tr("editor.section.basic")) {
+                TextField(L10n.tr("editor.name"), text: $name, prompt: Text(L10n.tr("editor.name.placeholder")))
                 Toggle(L10n.tr("editor.enabled"), isOn: $isEnabled)
             }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 10).fill(.background.secondary))
         }
+        .formStyle(.grouped)
     }
 
     // MARK: - Schedule Tab
 
     private var scheduleTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sectionHeader(L10n.tr("editor.tab.schedule"), icon: "calendar.badge.clock")
-
-            VStack(spacing: 0) {
-                // Date toggle & picker
-                HStack {
+        Form {
+            Section(L10n.tr("schedule.date_time")) {
+                Toggle(isOn: $hasDate) {
                     Label(L10n.tr("schedule.date"), systemImage: "calendar")
-                    Spacer()
-                    Toggle("", isOn: $hasDate)
-                        .labelsHidden()
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
 
                 if hasDate {
-                    Divider().padding(.leading, 48)
-                    DatePicker("", selection: $scheduledDate, displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                        .labelsHidden()
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 4)
+                    DatePicker(L10n.tr("schedule.date"), selection: $scheduledDate, displayedComponents: .date)
+                        .datePickerStyle(.stepperField)
                 }
 
-                Divider()
-
-                // Time toggle & picker
-                HStack {
+                Toggle(isOn: $hasTime) {
                     Label(L10n.tr("schedule.time"), systemImage: "clock")
-                    Spacer()
-                    Toggle("", isOn: $hasTime)
-                        .labelsHidden()
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
 
                 if hasTime {
-                    Divider().padding(.leading, 48)
-                    DatePicker("", selection: $scheduledDate, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
+                    DatePicker(L10n.tr("schedule.time"), selection: $scheduledDate, displayedComponents: .hourAndMinute)
+                }
+            }
+
+            Section(L10n.tr("schedule.repeat_section")) {
+                Picker(selection: $repeatType) {
+                    Text(RepeatType.never.displayName).tag(RepeatType.never)
+                    Divider()
+                    ForEach(RepeatType.allCases.filter { $0 != .never && $0 != .custom }, id: \.self) { type in
+                        Text(type.displayName).tag(type)
+                    }
+                    Divider()
+                    Text(RepeatType.custom.displayName).tag(RepeatType.custom)
+                } label: {
+                    Label(L10n.tr("schedule.repeat"), systemImage: "repeat")
+                }
+                .onChange(of: repeatType) { _, newValue in
+                    if newValue == .custom {
+                        showingCustomRepeat = true
+                    }
                 }
 
-                Divider()
+                if repeatType == .custom {
+                    LabeledContent(L10n.tr("repeat.every")) {
+                        HStack(spacing: 6) {
+                            TextField("", value: $customIntervalValue, format: .number)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 50)
+                                .multilineTextAlignment(.center)
+                            Picker("", selection: $customIntervalUnit) {
+                                ForEach(CustomRepeatUnit.allCases, id: \.self) { unit in
+                                    Text(unit.displayName).tag(unit)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 80)
+                        }
+                    }
+                }
 
-                // Repeat
-                HStack {
-                    Label(L10n.tr("schedule.repeat"), systemImage: "repeat")
-                    Spacer()
-                    Picker("", selection: $repeatType) {
-                        ForEach(RepeatType.allCases, id: \.self) { type in
+                if repeatType != .never {
+                    Picker(selection: $endRepeatType) {
+                        ForEach(EndRepeatType.allCases, id: \.self) { type in
                             Text(type.displayName).tag(type)
                         }
+                    } label: {
+                        Label(L10n.tr("schedule.end_repeat"), systemImage: "stop.circle")
                     }
-                    .labelsHidden()
-                    .frame(width: 140)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-
-                // End Repeat (only show when repeating)
-                if repeatType != .never {
-                    Divider()
-
-                    HStack {
-                        Label(L10n.tr("schedule.end_repeat"), systemImage: "arrow.uturn.right.circle")
-                        Spacer()
-                        Picker("", selection: $endRepeatType) {
-                            ForEach(EndRepeatType.allCases, id: \.self) { type in
-                                Text(type.displayName).tag(type)
-                            }
-                        }
-                        .labelsHidden()
-                        .frame(width: 140)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
 
                     if endRepeatType == .onDate {
-                        Divider().padding(.leading, 48)
                         DatePicker(L10n.tr("schedule.end_date"), selection: $endRepeatDate, displayedComponents: .date)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
                     }
 
                     if endRepeatType == .afterCount {
-                        Divider().padding(.leading, 48)
                         LabeledContent(L10n.tr("schedule.end_count")) {
                             HStack(spacing: 6) {
                                 TextField("", value: $endRepeatCount, format: .number)
@@ -256,36 +209,29 @@ struct TaskEditorView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
                     }
                 }
             }
-            .background(RoundedRectangle(cornerRadius: 10).fill(.background.secondary))
 
-            // Next run preview
             if let nextDate = previewNextRun() {
-                HStack(spacing: 6) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.caption)
-                        .foregroundStyle(.tint)
-                    Text(L10n.tr("cron.next_run", nextDate.formatted(date: .abbreviated, time: .standard)))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Section {
+                    LabeledContent {
+                        Text(nextDate.formatted(date: .abbreviated, time: .standard))
+                            .foregroundStyle(.secondary)
+                    } label: {
+                        Label(L10n.tr("task.detail.next_run"), systemImage: "clock.arrow.circlepath")
+                    }
                 }
-                .padding(.horizontal, 4)
             }
         }
+        .formStyle(.grouped)
     }
 
     // MARK: - Script Tab
 
     private var scriptTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sectionHeader(L10n.tr("editor.section.script"), icon: "terminal")
-
-            VStack(spacing: 12) {
-                // Script source picker
+        Form {
+            Section {
                 Picker(L10n.tr("editor.script.source"), selection: $scriptSource) {
                     ForEach(ScriptSource.allCases, id: \.self) { source in
                         Text(source.label).tag(source)
@@ -296,49 +242,35 @@ struct TaskEditorView: View {
                 if scriptSource == .inline {
                     ScriptEditorView(scriptBody: $scriptBody)
                 } else {
-                    // File picker
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "doc.text")
-                                .foregroundStyle(.secondary)
-                            if scriptFilePath.isEmpty {
-                                Text(L10n.tr("editor.script.no_file"))
-                                    .foregroundStyle(.tertiary)
-                            } else {
-                                Text(scriptFilePath)
-                                    .font(.system(.body, design: .monospaced))
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                            }
-                            Spacer()
-                            Button(L10n.tr("editor.script.choose_file")) {
-                                chooseFile()
-                            }
-                            .pointerCursor()
+                    HStack {
+                        Image(systemName: "doc.text")
+                            .foregroundStyle(.secondary)
+                        if scriptFilePath.isEmpty {
+                            Text(L10n.tr("editor.script.no_file"))
+                                .foregroundStyle(.tertiary)
+                        } else {
+                            Text(scriptFilePath)
+                                .font(.system(.body, design: .monospaced))
+                                .lineLimit(1)
+                                .truncationMode(.middle)
                         }
+                        Spacer()
+                        Button(L10n.tr("editor.script.choose_file")) {
+                            chooseFile()
+                        }
+                        .pointerCursor()
+                    }
 
-                        if !scriptFilePath.isEmpty {
-                            if let content = try? String(contentsOfFile: scriptFilePath, encoding: .utf8) {
-                                Text(content.prefix(500) + (content.count > 500 ? "\n..." : ""))
-                                    .font(.system(size: 12, design: .monospaced))
-                                    .foregroundStyle(.secondary)
-                                    .padding(10)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .fill(.black.opacity(0.03))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(.separator, lineWidth: 0.5)
-                                    )
-                            }
-                        }
+                    if !scriptFilePath.isEmpty,
+                       let content = try? String(contentsOfFile: scriptFilePath, encoding: .utf8) {
+                        Text(content.prefix(500) + (content.count > 500 ? "\n..." : ""))
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.secondary)
                     }
                 }
+            }
 
-                Divider()
-
+            Section(L10n.tr("editor.section.script")) {
                 Picker(L10n.tr("editor.shell"), selection: $shell) {
                     Text("/bin/zsh").tag("/bin/zsh")
                     Text("/bin/bash").tag("/bin/bash")
@@ -358,33 +290,36 @@ struct TaskEditorView: View {
                     }
                 }
             }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 10).fill(.background.secondary))
         }
+        .formStyle(.grouped)
     }
 
     // MARK: - Notification Tab
 
     private var notificationTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sectionHeader(L10n.tr("editor.section.notification"), icon: "bell")
-
-            VStack(spacing: 12) {
+        Form {
+            Section {
                 Toggle(L10n.tr("editor.notify_success"), isOn: $notifyOnSuccess)
-                Divider()
                 Toggle(L10n.tr("editor.notify_failure"), isOn: $notifyOnFailure)
+            } header: {
+                Text(L10n.tr("editor.section.notification"))
+            } footer: {
+                Text(L10n.tr("editor.notify_hint"))
             }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 10).fill(.background.secondary))
         }
+        .formStyle(.grouped)
     }
 
     // MARK: - Helpers
 
-    private func sectionHeader(_ title: String, icon: String) -> some View {
-        Label(title, systemImage: icon)
-            .font(.headline)
-            .padding(.bottom, 4)
+    private func closeWindow() {
+        editorState.close()
+        // Close the editor window by finding it
+        for window in NSApp.windows where window.identifier?.rawValue == "editor" || window.title == L10n.tr("editor.title.edit") || window.title == L10n.tr("editor.title.new") {
+            window.close()
+            return
+        }
+        NSApp.keyWindow?.close()
     }
 
     private func previewNextRun() -> Date? {
@@ -419,6 +354,32 @@ struct TaskEditorView: View {
     }
 
     private func loadTask() {
+        let currentId = task?.id
+        guard currentId != loadedTaskId else { return }
+        loadedTaskId = currentId
+
+        // Reset to defaults for new task
+        name = ""
+        isEnabled = true
+        scheduledDate = Date()
+        hasDate = true
+        hasTime = true
+        repeatType = .daily
+        endRepeatType = .never
+        endRepeatDate = Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
+        endRepeatCount = 10
+        customIntervalValue = 1
+        customIntervalUnit = .day
+        shell = "/bin/zsh"
+        scriptBody = ""
+        scriptSource = .inline
+        scriptFilePath = ""
+        workingDirectory = ""
+        timeoutSeconds = 300
+        notifyOnSuccess = false
+        notifyOnFailure = true
+        selectedTab = 0
+
         guard let task else { return }
         name = task.name
         isEnabled = task.isEnabled
@@ -432,6 +393,8 @@ struct TaskEditorView: View {
         endRepeatType = task.endRepeatType
         endRepeatDate = task.endRepeatDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
         endRepeatCount = task.endRepeatCount ?? 10
+        customIntervalValue = task.customIntervalValue
+        customIntervalUnit = task.customIntervalUnit
 
         if let date = task.scheduledDate {
             scheduledDate = date
@@ -459,22 +422,18 @@ struct TaskEditorView: View {
         target.isEnabled = isEnabled
         target.updatedAt = Date()
 
-        // Schedule
-        if hasDate || hasTime {
-            target.scheduledDate = scheduledDate
-        } else {
-            target.scheduledDate = nil
-        }
+        // Always set scheduledDate so the scheduler has a base time
+        target.scheduledDate = scheduledDate
         target.repeatType = repeatType
         target.endRepeatType = repeatType == .never ? .never : endRepeatType
         target.endRepeatDate = endRepeatType == .onDate ? endRepeatDate : nil
         target.endRepeatCount = endRepeatType == .afterCount ? endRepeatCount : nil
+        target.customIntervalValue = customIntervalValue
+        target.customIntervalUnit = customIntervalUnit
 
-        // Clear legacy fields
         target.cronExpression = nil
         target.intervalSeconds = nil
 
-        // Script
         if scriptSource == .file {
             target.scriptFilePath = scriptFilePath
             target.scriptBody = ""
@@ -485,6 +444,8 @@ struct TaskEditorView: View {
 
         if isEnabled {
             target.nextRunAt = TaskScheduler.shared.computeNextRunDate(for: target)
+        } else {
+            target.nextRunAt = nil
         }
 
         if task == nil {
@@ -493,6 +454,6 @@ struct TaskEditorView: View {
 
         try? modelContext.save()
         TaskScheduler.shared.rebuildSchedule()
-        dismiss()
+        closeWindow()
     }
 }

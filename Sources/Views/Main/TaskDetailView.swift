@@ -5,7 +5,6 @@ struct TaskDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.openWindow) private var openWindow
     let task: ScheduledTask
-    @State private var showingEditor = false
     @State private var showingDeleteAlert = false
     @State private var isScriptExpanded = false
     @State private var showingTaskLogs = false
@@ -32,14 +31,11 @@ struct TaskDetailView: View {
                     VStack(spacing: 16) {
                         recentLogsCard
                     }
-                    .frame(width: 280)
+                    .frame(width: 300, alignment: .top)
                 }
                 .padding(.horizontal)
             }
             .padding(.vertical)
-        }
-        .sheet(isPresented: $showingEditor) {
-            TaskEditorView(task: task)
         }
         .sheet(isPresented: $showingTaskLogs) {
             TaskLogsView(task: task)
@@ -75,6 +71,13 @@ struct TaskDetailView: View {
                     .fontWeight(.bold)
 
                 HStack(spacing: 12) {
+                    if task.serialNumber > 0 {
+                        Text("#\(task.serialNumber)")
+                            .font(.subheadline)
+                            .foregroundStyle(.tertiary)
+                            .monospacedDigit()
+                    }
+
                     HStack(spacing: 4) {
                         Circle()
                             .fill(task.isEnabled ? .green : .gray.opacity(0.4))
@@ -127,7 +130,8 @@ struct TaskDetailView: View {
                 .pointerCursor()
 
                 Button {
-                    showingEditor = true
+                    EditorState.shared.openEdit(task)
+                    openWindow(id: "editor")
                 } label: {
                     Label(L10n.tr("task.detail.edit"), systemImage: "pencil")
                 }
@@ -188,9 +192,7 @@ struct TaskDetailView: View {
                         }
                     }
 
-                    if let nextRun = task.nextRunAt {
-                        detailRow(L10n.tr("task.detail.next_run"), value: nextRun.formatted(date: .abbreviated, time: .standard))
-                    }
+                    detailRow(L10n.tr("task.detail.next_run"), value: task.nextRunAt?.formatted(date: .abbreviated, time: .standard) ?? "-")
 
                     if let lastRun = task.lastRunAt {
                         detailRow(L10n.tr("task.detail.last_run"), value: lastRun.formatted(date: .abbreviated, time: .standard))
@@ -286,6 +288,12 @@ struct TaskDetailView: View {
                 HStack {
                     Label(L10n.tr("task.detail.recent_logs"), systemImage: "list.bullet.rectangle")
                         .font(.headline)
+                    Text("\(task.executionLogs.count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(.quaternary))
                     Spacer()
                     Button(L10n.tr("task.detail.view_logs")) {
                         showingTaskLogs = true
@@ -297,7 +305,7 @@ struct TaskDetailView: View {
 
                 let logs = (task.executionLogs)
                     .sorted { $0.startedAt > $1.startedAt }
-                    .prefix(5)
+                    .prefix(10)
 
                 if logs.isEmpty {
                     HStack {

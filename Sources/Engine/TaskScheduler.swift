@@ -113,20 +113,28 @@ final class TaskScheduler: ObservableObject {
 
         runningTaskIDs.insert(taskId)
 
-        // Increment execution count
-        task.executionCount += 1
+        // Sync executionCount with actual log count
+        task.executionCount = task.executionLogs.count + 1 // +1 for current execution
 
-        // Check end repeat conditions
-        let shouldContinue = checkEndRepeat(for: task)
-
-        // Compute next run date before executing
-        if shouldContinue {
-            task.nextRunAt = computeNextRunDate(for: task, after: Date())
-        } else {
-            // End condition met, disable the task
+        // Check end repeat count directly before computing next date
+        if task.endRepeatType == .afterCount,
+           let maxCount = task.endRepeatCount,
+           task.executionCount >= maxCount {
             task.nextRunAt = nil
             task.isEnabled = false
+            try? modelContext.save()
+
+            Task {
+                await ScriptExecutor.shared.execute(task: task, triggeredBy: .schedule, modelContext: modelContext)
+                runningTaskIDs.remove(taskId)
+                rebuildSchedule()
+            }
+            return
         }
+
+        // Compute next run date
+        let nextDate = computeNextRunDate(for: task, after: Date())
+        task.nextRunAt = nextDate
         try? modelContext.save()
 
         Task {
@@ -136,30 +144,20 @@ final class TaskScheduler: ObservableObject {
         }
     }
 
-    /// Check if the task should continue repeating
-    private func checkEndRepeat(for task: ScheduledTask) -> Bool {
-        // Non-repeating tasks run once
-        if task.repeatType == .never {
-            return false
-        }
-
-        switch task.endRepeatType {
-        case .never:
-            return true
-        case .onDate:
-            if let endDate = task.endRepeatDate {
-                return Date() < endDate
-            }
-            return true
-        case .afterCount:
-            if let maxCount = task.endRepeatCount {
-                return task.executionCount < maxCount
-            }
-            return true
-        }
-    }
-
     func computeNextRunDate(for task: ScheduledTask, after date: Date = Date()) -> Date? {
+        // Check end repeat count first (applies to all schedule types)
+        // Use executionLogs.count as source of truth for completed executions
+        if task.endRepeatType == .afterCount,
+           let maxCount = task.endRepeatCount,
+           task.executionLogs.count >= maxCount {
+            return nil
+        }
+        if task.endRepeatType == .onDate,
+           let endDate = task.endRepeatDate,
+           date >= endDate {
+            return nil
+        }
+
         // Legacy cron support
         if task.schedule == .cron, let expr = task.cronExpression {
             if let cron = try? CronExpression(parsing: expr) {
@@ -177,7 +175,15 @@ final class TaskScheduler: ObservableObject {
         }
 
         // New schedule system
-        guard let scheduledDate = task.scheduledDate else { return nil }
+        // If no scheduledDate but has a repeat type, use current time as base
+        let scheduledDate: Date
+        if let sd = task.scheduledDate {
+            scheduledDate = sd
+        } else if task.repeatType != .never {
+            scheduledDate = date
+        } else {
+            return nil
+        }
 
         let repeatType = task.repeatType
         let calendar = Calendar.current
@@ -187,21 +193,44 @@ final class TaskScheduler: ObservableObject {
             return scheduledDate > date ? scheduledDate : nil
         }
 
-        // Repeating: find the next occurrence after `date`
-        guard let interval = repeatType.calendarInterval else { return nil }
+        // Determine interval
+        let intervalComponent: Calendar.Component
+        let intervalValue: Int
+
+        if repeatType == .custom {
+            intervalComponent = task.customIntervalUnit.calendarComponent
+            intervalValue = max(task.customIntervalValue, 1)
+        } else if let ci = repeatType.calendarInterval {
+            intervalComponent = ci.component
+            intervalValue = ci.value
+        } else {
+            return nil
+        }
 
         // If scheduled date is still in the future, use it
         if scheduledDate > date {
+            if repeatType == .weekdays {
+                return nextWeekday(from: scheduledDate, calendar: calendar)
+            } else if repeatType == .weekends {
+                return nextWeekend(from: scheduledDate, calendar: calendar)
+            }
             return scheduledDate
         }
 
         // Compute next occurrence by stepping forward from scheduledDate
         var candidate = scheduledDate
         while candidate <= date {
-            guard let next = calendar.date(byAdding: interval.component, value: interval.value, to: candidate) else {
+            guard let next = calendar.date(byAdding: intervalComponent, value: intervalValue, to: candidate) else {
                 return nil
             }
             candidate = next
+        }
+
+        // For weekdays/weekends, skip to valid day
+        if repeatType == .weekdays {
+            candidate = nextWeekday(from: candidate, calendar: calendar) ?? candidate
+        } else if repeatType == .weekends {
+            candidate = nextWeekend(from: candidate, calendar: calendar) ?? candidate
         }
 
         // Check end conditions
@@ -214,11 +243,31 @@ final class TaskScheduler: ObservableObject {
             }
             return candidate
         case .afterCount:
-            if let maxCount = task.endRepeatCount, task.executionCount >= maxCount {
+            if let maxCount = task.endRepeatCount, task.executionLogs.count >= maxCount {
                 return nil
             }
             return candidate
         }
+    }
+
+    private func nextWeekday(from date: Date, calendar: Calendar) -> Date? {
+        var d = date
+        for _ in 0..<7 {
+            let weekday = calendar.component(.weekday, from: d)
+            if weekday >= 2 && weekday <= 6 { return d } // Mon-Fri
+            d = calendar.date(byAdding: .day, value: 1, to: d) ?? d
+        }
+        return d
+    }
+
+    private func nextWeekend(from date: Date, calendar: Calendar) -> Date? {
+        var d = date
+        for _ in 0..<7 {
+            let weekday = calendar.component(.weekday, from: d)
+            if weekday == 1 || weekday == 7 { return d } // Sun or Sat
+            d = calendar.date(byAdding: .day, value: 1, to: d) ?? d
+        }
+        return d
     }
 
     // MARK: - Sleep/Wake

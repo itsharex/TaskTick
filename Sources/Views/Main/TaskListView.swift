@@ -17,10 +17,13 @@ enum TaskFilter: String, CaseIterable {
 
 struct TaskListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \ScheduledTask.updatedAt, order: .reverse) private var tasks: [ScheduledTask]
+    @Environment(\.openWindow) private var openWindow
+    @Query(sort: \ScheduledTask.createdAt, order: .reverse) private var tasks: [ScheduledTask]
     @Binding var selectedTask: ScheduledTask?
     @State private var filter: TaskFilter = .all
     @State private var searchText = ""
+    @State private var taskToDelete: ScheduledTask?
+    @State private var showingDeleteAlert = false
     @StateObject private var scheduler = TaskScheduler.shared
 
     var filteredTasks: [ScheduledTask] {
@@ -72,6 +75,10 @@ struct TaskListView: View {
                         )
                         .tag(task)
                         .contextMenu {
+                            Button(L10n.tr("task.detail.edit"), systemImage: "pencil") {
+                                EditorState.shared.openEdit(task)
+                                openWindow(id: "editor")
+                            }
                             Button(L10n.tr("task.detail.run"), systemImage: "play.fill") {
                                 Task {
                                     _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
@@ -79,14 +86,25 @@ struct TaskListView: View {
                             }
                             Divider()
                             Button(L10n.tr("task.detail.delete"), role: .destructive) {
-                                modelContext.delete(task)
-                                try? modelContext.save()
-                                if selectedTask == task { selectedTask = nil }
+                                taskToDelete = task
+                                showingDeleteAlert = true
                             }
                         }
                     }
                 }
                 .listStyle(.sidebar)
+                .alert(L10n.tr("delete.title"), isPresented: $showingDeleteAlert) {
+                    Button(L10n.tr("delete.cancel"), role: .cancel) {}
+                    Button(L10n.tr("delete.confirm"), role: .destructive) {
+                        if let task = taskToDelete {
+                            if selectedTask == task { selectedTask = nil }
+                            modelContext.delete(task)
+                            try? modelContext.save()
+                        }
+                    }
+                } message: {
+                    Text(L10n.tr("delete.message", taskToDelete?.name ?? ""))
+                }
             }
         }
         .searchable(text: $searchText, prompt: Text(L10n.tr("task.search.prompt")))
@@ -122,6 +140,11 @@ struct TaskListRow: View {
                     .lineLimit(1)
 
                 HStack(spacing: 4) {
+                    if task.serialNumber > 0 {
+                        Text("#\(task.serialNumber)")
+                            .font(.caption2)
+                            .monospacedDigit()
+                    }
                     Image(systemName: "repeat")
                         .font(.system(size: 9))
                     Text(task.repeatType.displayName)
@@ -139,4 +162,5 @@ struct TaskListRow: View {
         }
         .padding(.vertical, 3)
     }
+
 }

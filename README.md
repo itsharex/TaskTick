@@ -43,6 +43,19 @@
 
 ## Install
 
+### Homebrew (Recommended)
+
+```bash
+brew tap lifedever/tap
+brew install --cask task-tick
+```
+
+Update to the latest version:
+
+```bash
+brew upgrade --cask task-tick
+```
+
 ### Download
 
 Grab the latest `.dmg` from [Releases](https://github.com/lifedever/TaskTick/releases):

@@ -4,8 +4,12 @@ import SwiftData
 /// Content view displayed in the menu bar popover.
 struct MenuBarView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \ScheduledTask.updatedAt, order: .reverse) private var tasks: [ScheduledTask]
+    @Query(sort: \ScheduledTask.createdAt, order: .reverse) private var tasks: [ScheduledTask]
     @StateObject private var scheduler = TaskScheduler.shared
+
+    var enabledTasks: [ScheduledTask] {
+        tasks.filter(\.isEnabled)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,7 +20,7 @@ struct MenuBarView: View {
                 Text(L10n.tr("app.name"))
                     .font(.headline)
                 Spacer()
-                Text("\(tasks.filter(\.isEnabled).count)/\(tasks.count)")
+                Text("\(enabledTasks.count)/\(tasks.count)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -40,7 +44,7 @@ struct MenuBarView: View {
             } else {
                 ScrollView {
                     VStack(spacing: 2) {
-                        ForEach(tasks.prefix(10)) { task in
+                        ForEach(enabledTasks.prefix(10)) { task in
                             MenuBarTaskRow(task: task, isRunning: scheduler.runningTaskIDs.contains(task.id))
                         }
                     }
@@ -51,30 +55,57 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Footer
-            Button(action: {
-                NSApp.activate(ignoringOtherApps: true)
-                for window in NSApp.windows {
-                    if window.canBecomeMain {
-                        window.makeKeyAndOrderFront(nil)
-                        break
+            // Footer actions
+            VStack(spacing: 0) {
+                // Open main window
+                Button(action: {
+                    NSApp.setActivationPolicy(.regular)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        NSApp.activate(ignoringOtherApps: true)
+                        for window in NSApp.windows {
+                            if window.canBecomeMain {
+                                window.makeKeyAndOrderFront(nil)
+                                break
+                            }
+                        }
                     }
+                }) {
+                    HStack {
+                        Image(systemName: "macwindow")
+                        Text(L10n.tr("menubar.open"))
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
                 }
-            }) {
-                HStack {
-                    Image(systemName: "macwindow")
-                    Text(L10n.tr("menubar.open"))
-                    Spacer()
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                .buttonStyle(.plain)
+                .pointerCursor()
+
+                Divider().padding(.horizontal, 12)
+
+                // Quit
+                Button(action: {
+                    NSApp.terminate(nil)
+                }) {
+                    HStack {
+                        Image(systemName: "power")
+                        Text(L10n.tr("menubar.quit"))
+                        Spacer()
+                        Text("⌘Q")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .pointerCursor()
             }
-            .buttonStyle(.plain)
-            .pointerCursor()
             .padding(.vertical, 4)
         }
         .frame(width: 300)
@@ -87,22 +118,9 @@ struct MenuBarTaskRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            // Status dot with animation
-            ZStack {
-                Circle()
-                    .fill(isRunning ? .blue : (task.isEnabled ? .green : .gray.opacity(0.4)))
-                    .frame(width: 8, height: 8)
-
-                if isRunning {
-                    Circle()
-                        .stroke(.blue.opacity(0.4), lineWidth: 2)
-                        .frame(width: 14, height: 14)
-                        .scaleEffect(isRunning ? 1.3 : 1.0)
-                        .opacity(isRunning ? 0 : 1)
-                        .animation(.easeOut(duration: 1.2).repeatForever(autoreverses: false), value: isRunning)
-                }
-            }
-            .frame(width: 16)
+            Circle()
+                .fill(isRunning ? .blue : (task.isEnabled ? .green : .gray.opacity(0.4)))
+                .frame(width: 8, height: 8)
 
             Text(task.name)
                 .font(.system(.body, design: .default))
@@ -124,7 +142,7 @@ struct MenuBarTaskRow: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(.primary.opacity(0.00001)) // Hit area
+                .fill(.primary.opacity(0.00001))
         )
     }
 }
