@@ -43,7 +43,7 @@ mkdir -p "${APP_BUNDLE}/Contents/Resources"
 cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
 if [ -n "${RESOURCE_BUNDLE}" ]; then
-  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/Contents/Resources/"
+  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/Contents/MacOS/"
 fi
 
 if [ -f "${ICON_PATH}" ]; then

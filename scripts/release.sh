@@ -72,8 +72,9 @@ build_arch() {
   cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
   # Copy resource bundle (contains localization files)
+  # Bundle.module looks for it next to the binary (Contents/MacOS/), not in Resources/
   if [ -n "${RESOURCE_BUNDLE}" ]; then
-    cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/Contents/Resources/"
+    cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/Contents/MacOS/"
     echo "  Resources: ${RESOURCE_BUNDLE}"
   fi
 
