@@ -6,7 +6,7 @@ let package = Package(
     name: "TaskTick",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v15)
+        .macOS(.v14)
     ],
     targets: [
         .executableTarget(
