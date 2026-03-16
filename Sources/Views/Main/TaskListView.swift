@@ -104,6 +104,7 @@ struct TaskListView: View {
                     }
                 }
                 .listStyle(.sidebar)
+                .id(filter)
                 .alert(L10n.tr("clear_logs.title"), isPresented: $showingClearLogsAlert) {
                     Button(L10n.tr("clear_logs.cancel"), role: .cancel) {}
                     Button(L10n.tr("clear_logs.confirm"), role: .destructive) {
