@@ -291,6 +291,9 @@
 "update.cancel" = "取消";
 "update.no_updates" = "已是最新版本！";
 "update.no_updates.message" = "TaskTick %@ 是当前最新版本。";
+"update.download_error" = "下载失败";
+"update.dmg_error" = "更新失败";
+"update.dmg_error.message" = "下载的磁盘映像已损坏，请重新下载更新。";
 
 /* Script Templates */
 "template.menu" = "模板";

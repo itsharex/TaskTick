@@ -291,6 +291,9 @@
 "update.cancel" = "Cancel";
 "update.no_updates" = "You're up to date!";
 "update.no_updates.message" = "TaskTick %@ is the latest version.";
+"update.download_error" = "Download Failed";
+"update.dmg_error" = "Update Failed";
+"update.dmg_error.message" = "The downloaded disk image is corrupted. Please try downloading the update again.";
 
 /* Script Templates */
 "template.menu" = "Templates";

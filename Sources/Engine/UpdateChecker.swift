@@ -26,9 +26,11 @@ final class UpdateChecker: ObservableObject {
 
     let repoOwner = "lifedever"
     let repoName = "TaskTick"
+    let giteeRepo = "lifedever/task-tick"
 
     private var downloadTask: URLSessionDownloadTask?
     private var downloadDelegate: DownloadDelegate?
+    private var githubFallbackURL: URL?
 
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
@@ -71,11 +73,15 @@ final class UpdateChecker: ObservableObject {
 
             // Find the correct DMG for current architecture
             let arch = currentArch()
+            let dmgName = "\(repoName)-\(remoteVersion)-\(arch).dmg"
             if let dmgAsset = release.assets?.first(where: { $0.name.contains(arch) && $0.name.hasSuffix(".dmg") }) {
-                downloadURL = URL(string: dmgAsset.browser_download_url)
+                // GitHub as fallback, Gitee as primary
+                githubFallbackURL = URL(string: dmgAsset.browser_download_url)
+                downloadURL = URL(string: "https://gitee.com/\(giteeRepo)/releases/download/v\(remoteVersion)/\(dmgName)") ?? githubFallbackURL
                 totalBytes = Int64(dmgAsset.size ?? 0)
             } else if let dmgAsset = release.assets?.first(where: { $0.name.hasSuffix(".dmg") }) {
-                downloadURL = URL(string: dmgAsset.browser_download_url)
+                githubFallbackURL = URL(string: dmgAsset.browser_download_url)
+                downloadURL = URL(string: "https://gitee.com/\(giteeRepo)/releases/download/v\(remoteVersion)/\(dmgAsset.name)") ?? githubFallbackURL
                 totalBytes = Int64(dmgAsset.size ?? 0)
             } else {
                 downloadURL = URL(string: release.html_url)
@@ -112,7 +118,10 @@ final class UpdateChecker: ObservableObject {
 
     func downloadUpdate() {
         guard let url = downloadURL else { return }
+        startDownload(from: url)
+    }
 
+    private func startDownload(from url: URL) {
         isDownloading = true
         downloadProgress = 0
         downloadedBytes = 0
@@ -129,6 +138,20 @@ final class UpdateChecker: ObservableObject {
                 self?.downloadComplete = true
                 self?.downloadedFileURL = fileURL
                 self?.isDownloading = false
+            }
+        } onError: { [weak self] errorMessage in
+            Task { @MainActor in
+                guard let self = self else { return }
+                // If Gitee failed and we have a GitHub fallback, try it
+                if let fallback = self.githubFallbackURL, url != fallback {
+                    self.githubFallbackURL = nil
+                    self.startDownload(from: fallback)
+                } else {
+                    self.isDownloading = false
+                    self.downloadComplete = false
+                    self.downloadProgress = 0
+                    self.showDownloadErrorAlert(errorMessage)
+                }
             }
         }
         self.downloadDelegate = delegate
@@ -149,32 +172,56 @@ final class UpdateChecker: ObservableObject {
     func installAndRestart() {
         guard let fileURL = downloadedFileURL else { return }
 
-        let destApp = Bundle.main.bundlePath
         let dmgPath = fileURL.path
 
-        // Use a single shell script to handle the entire update process
-        // This avoids Swift-side hdiutil output parsing issues
+        // Verify DMG can be mounted BEFORE quitting the app
+        let verifyProcess = Process()
+        verifyProcess.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+        verifyProcess.arguments = ["attach", dmgPath, "-nobrowse", "-noverify"]
+        let pipe = Pipe()
+        verifyProcess.standardOutput = pipe
+        verifyProcess.standardError = FileHandle.nullDevice
+
+        do {
+            try verifyProcess.run()
+            verifyProcess.waitUntilExit()
+        } catch {
+            showDMGErrorAlert()
+            return
+        }
+
+        guard verifyProcess.terminationStatus == 0 else {
+            showDMGErrorAlert()
+            return
+        }
+
+        let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        guard let mountLine = output.components(separatedBy: "\n").first(where: { $0.contains("/Volumes/") }),
+              let volumeRange = mountLine.range(of: "/Volumes/") else {
+            showDMGErrorAlert()
+            return
+        }
+        let mountPoint = String(mountLine[volumeRange.lowerBound...]).trimmingCharacters(in: .whitespaces)
+        let sourceApp = "\(mountPoint)/TaskTick.app"
+
+        guard FileManager.default.fileExists(atPath: sourceApp) else {
+            // Detach and show error
+            let detach = Process()
+            detach.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+            detach.arguments = ["detach", mountPoint, "-quiet"]
+            try? detach.run()
+            detach.waitUntilExit()
+            showDMGErrorAlert()
+            return
+        }
+
+        // DMG is valid and mounted — now safe to quit and replace
+        let destApp = Bundle.main.bundlePath
         let script = """
         #!/bin/bash
-        DMG_PATH="\(dmgPath)"
+        MOUNT_POINT="\(mountPoint)"
+        SOURCE_APP="\(sourceApp)"
         DEST_APP="\(destApp)"
-        APP_NAME="TaskTick"
-
-        # Mount DMG and capture mount point
-        MOUNT_POINT=$(hdiutil attach "$DMG_PATH" -nobrowse -noverify 2>/dev/null | grep -o '/Volumes/[^\t]*' | head -1)
-
-        if [ -z "$MOUNT_POINT" ]; then
-            open "$DMG_PATH"
-            exit 1
-        fi
-
-        SOURCE_APP="$MOUNT_POINT/$APP_NAME.app"
-
-        if [ ! -d "$SOURCE_APP" ]; then
-            hdiutil detach "$MOUNT_POINT" -quiet 2>/dev/null
-            open "$DMG_PATH"
-            exit 1
-        fi
 
         # Wait for the app to quit
         sleep 2
@@ -196,12 +243,42 @@ final class UpdateChecker: ObservableObject {
             process.arguments = [scriptPath]
             try process.run()
 
-            // Quit immediately so the script can replace the app
+            // DMG verified, script launched — safe to quit
             AppDelegate.shouldReallyQuit = true
             NSApp.terminate(nil)
         } catch {
+            // Detach DMG on failure
+            let detach = Process()
+            detach.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+            detach.arguments = ["detach", mountPoint, "-quiet"]
+            try? detach.run()
+            detach.waitUntilExit()
             NSWorkspace.shared.open(fileURL)
         }
+    }
+
+    private func showDownloadErrorAlert(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("update.download_error")
+        alert.informativeText = message
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
+    private func showDMGErrorAlert() {
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("update.dmg_error")
+        alert.informativeText = L10n.tr("update.dmg_error.message")
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+
+        // Reset download state so user can retry
+        downloadComplete = false
+        downloadedFileURL = nil
+        isDownloading = false
+        downloadProgress = 0
     }
 
     // MARK: - Private
@@ -255,20 +332,47 @@ final class UpdateChecker: ObservableObject {
 final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
     let onProgress: @Sendable (Double, Int64, Int64) -> Void
     let onComplete: @Sendable (URL) -> Void
+    let onError: @Sendable (String) -> Void
 
     init(
         onProgress: @escaping @Sendable (Double, Int64, Int64) -> Void,
-        onComplete: @escaping @Sendable (URL) -> Void
+        onComplete: @escaping @Sendable (URL) -> Void,
+        onError: @escaping @Sendable (String) -> Void = { _ in }
     ) {
         self.onProgress = onProgress
         self.onComplete = onComplete
+        self.onError = onError
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        // Move to a persistent temp location
         let dest = FileManager.default.temporaryDirectory.appendingPathComponent("TaskTick-update.dmg")
         try? FileManager.default.removeItem(at: dest)
-        try? FileManager.default.moveItem(at: location, to: dest)
+
+        do {
+            try FileManager.default.moveItem(at: location, to: dest)
+        } catch {
+            // Move failed — try copy as fallback
+            do {
+                try FileManager.default.copyItem(at: location, to: dest)
+            } catch {
+                onComplete(location)
+                return
+            }
+        }
+
+        // Verify file size matches expected download size
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: dest.path),
+           let fileSize = attrs[.size] as? Int64,
+           let response = downloadTask.response as? HTTPURLResponse,
+           let expectedSize = response.expectedContentLength as Int64?,
+           expectedSize > 0,
+           fileSize != expectedSize {
+            // File size mismatch — download likely incomplete
+            try? FileManager.default.removeItem(at: dest)
+            onComplete(dest) // will fail at DMG verification stage
+            return
+        }
+
         onComplete(dest)
     }
 
@@ -282,5 +386,11 @@ final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
         let total = totalBytesExpectedToWrite > 0 ? totalBytesExpectedToWrite : 1
         let progress = Double(totalBytesWritten) / Double(total)
         onProgress(progress, totalBytesWritten, totalBytesExpectedToWrite)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
+        if let error = error {
+            onError(error.localizedDescription)
+        }
     }
 }

@@ -11,6 +11,7 @@ set -euo pipefail
 APP_NAME="TaskTick"
 BUNDLE_ID="com.lifedever.TaskTick"
 REPO="lifedever/TaskTick"
+GITEE_REPO="lifedever/task-tick"
 MIN_MACOS="15.0"
 
 # ── Parse version ──
@@ -226,6 +227,50 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 
   echo ""
   echo "  Release uploaded: https://github.com/${REPO}/releases/tag/${TAG}"
+fi
+
+# ── Upload to Gitee Release ──
+echo ""
+echo "── Publishing to Gitee ${GITEE_REPO} ──"
+if [ -n "${GITEE_TOKEN:-}" ]; then
+  # Push tag to Gitee
+  if git remote get-url gitee >/dev/null 2>&1; then
+    git push gitee "${TAG}" 2>/dev/null || echo "  Tag already exists on Gitee"
+  fi
+
+  # Create Gitee release
+  GITEE_RELEASE_RESP=$(curl -s -X POST \
+    "https://gitee.com/api/v5/repos/${GITEE_REPO}/releases" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"access_token\": \"${GITEE_TOKEN}\",
+      \"tag_name\": \"${TAG}\",
+      \"name\": \"TaskTick ${TAG}\",
+      \"body\": \"## TaskTick ${TAG}\n\n### Download\n- **Apple Silicon (M1/M2/M3/M4)**: TaskTick-${VERSION}-arm64.dmg\n- **Intel**: TaskTick-${VERSION}-x86_64.dmg\",
+      \"target_commitish\": \"main\"
+    }")
+
+  GITEE_RELEASE_ID=$(echo "$GITEE_RELEASE_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || true)
+
+  if [ -n "$GITEE_RELEASE_ID" ] && [ "$GITEE_RELEASE_ID" != "None" ]; then
+    for ARCH in arm64 x86_64; do
+      DMG_FILE="${BUILD_DIR}/${APP_NAME}-${VERSION}-${ARCH}.dmg"
+      echo "  Uploading ${APP_NAME}-${VERSION}-${ARCH}.dmg..."
+      curl -s -X POST \
+        "https://gitee.com/api/v5/repos/${GITEE_REPO}/releases/${GITEE_RELEASE_ID}/attach_files" \
+        -H "Content-Type: multipart/form-data" \
+        -F "access_token=${GITEE_TOKEN}" \
+        -F "file=@${DMG_FILE}" > /dev/null
+      echo "  Uploaded."
+    done
+    echo "  Gitee release: https://gitee.com/${GITEE_REPO}/releases/tag/${TAG}"
+  else
+    echo "  Warning: Failed to create Gitee release"
+    echo "  Response: ${GITEE_RELEASE_RESP}"
+  fi
+else
+  echo "  Skipped (no GITEE_TOKEN env var)"
+  echo "  To enable: export GITEE_TOKEN=your_gitee_personal_access_token"
 fi
 
 echo ""
