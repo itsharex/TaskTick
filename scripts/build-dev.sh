@@ -43,7 +43,7 @@ mkdir -p "${APP_BUNDLE}/Contents/Resources"
 cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
 if [ -n "${RESOURCE_BUNDLE}" ]; then
-  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/Contents/MacOS/"
+  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/"
 fi
 
 if [ -f "${ICON_PATH}" ]; then
@@ -125,8 +125,8 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Sign
-codesign --force --deep --sign - "${APP_BUNDLE}"
+# Sign (--no-strict to allow resource bundle at app root for SPM Bundle.module)
+codesign --force --deep --no-strict --sign - "${APP_BUNDLE}"
 
 echo ""
 echo "── Done ──"

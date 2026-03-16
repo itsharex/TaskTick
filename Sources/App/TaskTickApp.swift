@@ -14,9 +14,13 @@ struct TaskTickApp: App {
             ScheduledTask.self,
             ExecutionLog.self,
         ])
+        let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        let dbName = bundleId.hasSuffix(".dev") ? "tasktick-dev" : "default"
+        let storeURL = URL.applicationSupportDirectory.appendingPathComponent("\(dbName).store")
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: false
+            url: storeURL,
+            allowsSave: true
         )
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])

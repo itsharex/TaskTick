@@ -72,9 +72,9 @@ build_arch() {
   cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
   # Copy resource bundle (contains localization files)
-  # Bundle.module looks for it next to the binary (Contents/MacOS/), not in Resources/
+  # Bundle.module (SPM-generated) looks at Bundle.main.bundleURL which is the .app root
   if [ -n "${RESOURCE_BUNDLE}" ]; then
-    cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/Contents/MacOS/"
+    cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/"
     echo "  Resources: ${RESOURCE_BUNDLE}"
   fi
 
@@ -136,7 +136,7 @@ PLIST
 
   # Ad-hoc code sign (deep sign all nested binaries/frameworks)
   echo "  Signing..."
-  codesign --force --deep --sign - "${APP_BUNDLE}"
+  codesign --force --deep --no-strict --sign - "${APP_BUNDLE}"
   echo "  Signed: $(codesign -dv "${APP_BUNDLE}" 2>&1 | grep 'Signature')"
 
   echo "  App bundle: ${APP_BUNDLE}"
