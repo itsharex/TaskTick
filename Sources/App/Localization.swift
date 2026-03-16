@@ -61,29 +61,52 @@ final class LanguageManager: ObservableObject {
 /// SPM `.process()` may lowercase directory names (e.g. `zh-Hans.lproj` -> `zh-hans.lproj`),
 /// so we do a case-insensitive search for the correct `.lproj` bundle.
 enum L10n {
+    /// Safe resource bundle lookup — searches multiple locations, never crashes.
+    private static let _resourceBundle: Bundle = {
+        let bundleName = "TaskTick_TaskTick.bundle"
+        let candidates: [URL] = [
+            // 1. App root (alongside Contents/) — standard SPM placement
+            Bundle.main.bundleURL.appendingPathComponent(bundleName),
+            // 2. Inside Contents/Resources/
+            Bundle.main.bundleURL.appendingPathComponent("Contents/Resources/\(bundleName)"),
+            // 3. Same directory as the executable
+            Bundle.main.executableURL?.deletingLastPathComponent().appendingPathComponent(bundleName),
+            // 4. Two levels up from executable (Contents/MacOS/../../)
+            Bundle.main.executableURL?.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent(bundleName),
+        ].compactMap { $0 }
+
+        for url in candidates {
+            if let bundle = Bundle(url: url) {
+                return bundle
+            }
+        }
+
+        // Last resort: try SPM-generated Bundle.module (may fatalError, but we tried everything else)
+        return Bundle.module
+    }()
+
     nonisolated(unsafe) private static var _bundle: Bundle = {
-        // On first access, try to load the system-preferred language bundle
         let saved = UserDefaults.standard.string(forKey: "appLanguage") ?? "system"
         let lang = AppLanguage(rawValue: saved) ?? .system
-        return findBundle(for: lang.resolvedCode) ?? Bundle.module
+        return findBundle(for: lang.resolvedCode) ?? _resourceBundle
     }()
 
     static func reloadBundle(for language: AppLanguage) {
         let code = language.resolvedCode
-        _bundle = findBundle(for: code) ?? Bundle.module
+        _bundle = findBundle(for: code) ?? _resourceBundle
     }
 
-    /// Case-insensitive search for .lproj bundle inside Bundle.module
+    /// Case-insensitive search for .lproj bundle inside the resource bundle
     private static func findBundle(for code: String) -> Bundle? {
         // Try exact match first
-        if let path = Bundle.module.path(forResource: code, ofType: "lproj"),
+        if let path = _resourceBundle.path(forResource: code, ofType: "lproj"),
            let b = Bundle(path: path) {
             return b
         }
 
         // Fallback: scan the bundle directory for case-insensitive match
         let target = "\(code).lproj".lowercased()
-        let bundleURL = Bundle.module.bundleURL
+        let bundleURL = _resourceBundle.bundleURL
         if let contents = try? FileManager.default.contentsOfDirectory(
             at: bundleURL, includingPropertiesForKeys: nil
         ) {
