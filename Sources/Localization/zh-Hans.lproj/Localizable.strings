@@ -292,6 +292,8 @@
 "update.ready" = "可以开始安装了";
 "update.install_restart" = "安装并重启应用";
 "update.cancel" = "取消";
+"update.check_failed" = "检查更新失败";
+"update.check_failed.hint" = "无法连接更新服务器，请检查网络连接后重试。";
 "update.no_updates" = "已是最新版本！";
 "update.no_updates.message" = "TaskTick %@ 是当前最新版本。";
 "update.download_error" = "下载失败";

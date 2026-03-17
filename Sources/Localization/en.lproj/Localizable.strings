@@ -292,6 +292,8 @@
 "update.ready" = "Ready to install";
 "update.install_restart" = "Install and Restart";
 "update.cancel" = "Cancel";
+"update.check_failed" = "Check for Updates Failed";
+"update.check_failed.hint" = "Unable to connect to the update server. Please check your network connection and try again.";
 "update.no_updates" = "You're up to date!";
 "update.no_updates.message" = "TaskTick %@ is the latest version.";
 "update.download_error" = "Download Failed";

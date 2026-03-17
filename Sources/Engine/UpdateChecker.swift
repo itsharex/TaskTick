@@ -38,11 +38,11 @@ final class UpdateChecker: ObservableObject {
 
     private init() {}
 
-    struct GitHubRelease: Codable {
+    struct ReleaseInfo: Codable {
         let tag_name: String
         let name: String?
         let body: String?
-        let html_url: String
+        let html_url: String?
         let assets: [Asset]?
 
         struct Asset: Codable {
@@ -60,59 +60,74 @@ final class UpdateChecker: ObservableObject {
         if isDev { return }
         isChecking = true
 
-        do {
-            let url = URL(string: "https://api.github.com/repos/\(repoOwner)/\(repoName)/releases/latest")!
-            let (data, response) = try await URLSession.shared.data(from: url)
+        // Try Gitee first, then GitHub as fallback
+        var release = await fetchRelease(
+            from: "https://gitee.com/api/v5/repos/\(giteeRepo)/releases/latest"
+        )
+        if release == nil {
+            release = await fetchRelease(
+                from: "https://api.github.com/repos/\(repoOwner)/\(repoName)/releases/latest"
+            )
+        }
 
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                isChecking = false
-                return
+        guard let release else {
+            isChecking = false
+            if userInitiated {
+                let alert = NSAlert()
+                alert.messageText = L10n.tr("update.check_failed")
+                alert.informativeText = L10n.tr("update.check_failed.hint")
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
             }
+            return
+        }
 
-            let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
-            let remoteVersion = release.tag_name.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+        let remoteVersion = release.tag_name.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+        latestVersion = remoteVersion
+        releaseNotes = release.body
 
-            latestVersion = remoteVersion
-            releaseNotes = release.body
+        // Find the correct DMG for current architecture
+        let arch = currentArch()
+        let dmgName = "\(repoName)-\(remoteVersion)-\(arch).dmg"
+        if let dmgAsset = release.assets?.first(where: { $0.name.contains(arch) && $0.name.hasSuffix(".dmg") }) {
+            githubFallbackURL = URL(string: "https://github.com/\(repoOwner)/\(repoName)/releases/download/v\(remoteVersion)/\(dmgName)")
+            downloadURL = URL(string: "https://gitee.com/\(giteeRepo)/releases/download/v\(remoteVersion)/\(dmgName)") ?? githubFallbackURL
+            totalBytes = Int64(dmgAsset.size ?? 0)
+        } else {
+            githubFallbackURL = URL(string: "https://github.com/\(repoOwner)/\(repoName)/releases/download/v\(remoteVersion)/\(dmgName)")
+            downloadURL = URL(string: "https://gitee.com/\(giteeRepo)/releases/download/v\(remoteVersion)/\(dmgName)") ?? githubFallbackURL
+        }
 
-            // Find the correct DMG for current architecture
-            let arch = currentArch()
-            let dmgName = "\(repoName)-\(remoteVersion)-\(arch).dmg"
-            if let dmgAsset = release.assets?.first(where: { $0.name.contains(arch) && $0.name.hasSuffix(".dmg") }) {
-                // GitHub as fallback, Gitee as primary
-                githubFallbackURL = URL(string: dmgAsset.browser_download_url)
-                downloadURL = URL(string: "https://gitee.com/\(giteeRepo)/releases/download/v\(remoteVersion)/\(dmgName)") ?? githubFallbackURL
-                totalBytes = Int64(dmgAsset.size ?? 0)
-            } else if let dmgAsset = release.assets?.first(where: { $0.name.hasSuffix(".dmg") }) {
-                githubFallbackURL = URL(string: dmgAsset.browser_download_url)
-                downloadURL = URL(string: "https://gitee.com/\(giteeRepo)/releases/download/v\(remoteVersion)/\(dmgAsset.name)") ?? githubFallbackURL
-                totalBytes = Int64(dmgAsset.size ?? 0)
-            } else {
-                downloadURL = URL(string: release.html_url)
-            }
+        // Skip if user has skipped this version
+        let skippedVersion = UserDefaults.standard.string(forKey: "skippedVersion")
+        if !userInitiated && remoteVersion == skippedVersion {
+            updateAvailable = false
+        } else {
+            updateAvailable = isNewer(remote: remoteVersion, current: currentVersion)
+        }
 
-            // Skip if user has skipped this version
-            let skippedVersion = UserDefaults.standard.string(forKey: "skippedVersion")
-            if !userInitiated && remoteVersion == skippedVersion {
-                updateAvailable = false
-            } else {
-                updateAvailable = isNewer(remote: remoteVersion, current: currentVersion)
-            }
+        UserDefaults.standard.set(Date(), forKey: "lastUpdateCheck")
 
-            UserDefaults.standard.set(Date(), forKey: "lastUpdateCheck")
-
-            if updateAvailable {
-                showUpdateDialog = true
-            } else if userInitiated {
-                // Show "up to date" alert
-                showUpToDateAlert()
-            }
-        } catch {
-            // Silently fail
+        if updateAvailable {
+            showUpdateDialog = true
+        } else if userInitiated {
+            showUpToDateAlert()
         }
 
         isChecking = false
+    }
+
+    private func fetchRelease(from urlString: String) async -> ReleaseInfo? {
+        guard let url = URL(string: urlString) else { return nil }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else { return nil }
+            return try JSONDecoder().decode(ReleaseInfo.self, from: data)
+        } catch {
+            return nil
+        }
     }
 
     func skipVersion(_ version: String) {
