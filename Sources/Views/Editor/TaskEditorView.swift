@@ -53,8 +53,9 @@ struct TaskEditorView: View {
     @State private var runMissedExecution = false
 
     // Notification
-    @State private var notifyOnSuccess = false
+    @State private var notifyOnSuccess = true
     @State private var notifyOnFailure = true
+    @State private var strongReminder = false
 
     @State private var selectedTab = 0
     @State private var loadedTaskId: UUID?
@@ -290,9 +291,14 @@ struct TaskEditorView: View {
 
                     if !scriptFilePath.isEmpty,
                        let content = try? String(contentsOfFile: scriptFilePath, encoding: .utf8) {
-                        Text(content.prefix(500) + (content.count > 500 ? "\n..." : ""))
-                            .font(.system(size: 12, design: .monospaced))
-                            .foregroundStyle(.secondary)
+                        ScrollView {
+                            Text(content.prefix(2000) + (content.count > 2000 ? "\n..." : ""))
+                                .font(.system(size: 12, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .textSelection(.enabled)
+                        }
+                        .frame(maxHeight: 200)
                     }
                 case .template:
                     templatePicker
@@ -451,6 +457,12 @@ struct TaskEditorView: View {
                 Text(L10n.tr("editor.section.notification"))
             } footer: {
                 Text(L10n.tr("editor.notify_hint"))
+            }
+
+            Section {
+                Toggle(L10n.tr("editor.strong_reminder"), isOn: $strongReminder)
+            } footer: {
+                Text(L10n.tr("editor.strong_reminder_hint"))
             }
         }
         .formStyle(.grouped)
@@ -685,8 +697,9 @@ struct TaskEditorView: View {
         workingDirectory = ""
         timeoutSeconds = 300
         runMissedExecution = false
-        notifyOnSuccess = false
+        notifyOnSuccess = true
         notifyOnFailure = true
+        strongReminder = false
         selectedTab = 0
 
         // Apply template if present (for new task from template)
@@ -710,6 +723,7 @@ struct TaskEditorView: View {
         timeoutSeconds = task.timeoutSeconds
         notifyOnSuccess = task.notifyOnSuccess
         notifyOnFailure = task.notifyOnFailure
+        strongReminder = task.strongReminder
         repeatType = task.repeatType
         endRepeatType = task.endRepeatType
         endRepeatDate = task.endRepeatDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
@@ -741,6 +755,7 @@ struct TaskEditorView: View {
         target.timeoutSeconds = timeoutSeconds
         target.notifyOnSuccess = notifyOnSuccess
         target.notifyOnFailure = notifyOnFailure
+        target.strongReminder = strongReminder
         target.isEnabled = isEnabled
         target.updatedAt = Date()
 

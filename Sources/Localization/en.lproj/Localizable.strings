@@ -89,6 +89,10 @@
 "editor.notify_success" = "Notify on Success";
 "editor.notify_failure" = "Notify on Failure";
 "editor.notify_hint" = "Notifications are sent via macOS system notifications when a task finishes.";
+"editor.strong_reminder" = "Strong Reminder on Success";
+"editor.strong_reminder_hint" = "Show a floating panel with full output when the task succeeds.";
+"editor.strong_reminder_short" = " Strong Reminder";
+"strong_reminder.dismiss" = "OK";
 "notify.success_short" = "Success";
 "notify.failure_short" = "Failure";
 "notify.both_short" = "All";

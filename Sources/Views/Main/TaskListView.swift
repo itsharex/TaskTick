@@ -96,7 +96,7 @@ struct TaskListView: View {
                                 taskToClearLogs = task
                                 showingClearLogsAlert = true
                             }
-                            .disabled(task.executionLogs.isEmpty)
+                            .disabled(task.executionCount == 0)
                             Button(L10n.tr("task.detail.delete"), systemImage: "trash", role: .destructive) {
                                 taskToDelete = task
                                 showingDeleteAlert = true

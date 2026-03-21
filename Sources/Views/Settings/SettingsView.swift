@@ -37,13 +37,16 @@ struct SettingsView: View {
         }
         .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
+        .onExitCommand {
+            NSApp.keyWindow?.close()
+        }
     }
 
     // MARK: - General
 
     private var generalTab: some View {
         Form {
-            Section(L10n.tr("settings.appearance")) {
+            Section(L10n.tr("settings.general")) {
                 Picker(L10n.tr("settings.appearance"), selection: $appearanceMode) {
                     Text(L10n.tr("settings.appearance.system")).tag("system")
                     Text(L10n.tr("settings.appearance.light")).tag("light")
@@ -52,33 +55,25 @@ struct SettingsView: View {
                 .onChange(of: appearanceMode) { _, newValue in
                     applyAppearance(newValue)
                 }
-            }
 
-            Section(L10n.tr("settings.general.language.section")) {
                 Picker(L10n.tr("settings.general.language"), selection: $languageManager.current) {
                     ForEach(AppLanguage.allCases) { lang in
                         Text(lang.displayName).tag(lang)
                     }
                 }
 
-                Text(L10n.tr("settings.general.language.restart_hint"))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-
-            Section(L10n.tr("settings.general.startup")) {
                 Toggle(L10n.tr("settings.general.launch_at_login"), isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in
                         toggleLaunchAtLogin(newValue)
                     }
             }
 
-            Section(L10n.tr("settings.notifications")) {
+            Section {
                 Toggle(L10n.tr("settings.notifications.enable"), isOn: $notificationsEnabled)
-
+            } header: {
+                Text(L10n.tr("settings.notifications"))
+            } footer: {
                 Text(L10n.tr("settings.notifications.hint"))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
             }
 
             Section(L10n.tr("settings.general.defaults")) {

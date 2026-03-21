@@ -1,0 +1,388 @@
+/* App */
+"app.name" = "TaskTick";
+
+/* Menu Bar */
+"menubar.open" = "開く";
+"menubar.no_tasks" = "タスクなし";
+"menubar.next_run" = "次回実行";
+"menubar.upcoming" = "予定タスク";
+"menubar.quit" = "終了";
+
+/* Task List */
+"task.filter.all" = "すべて";
+"task.filter.enabled" = "有効";
+"task.filter.disabled" = "無効";
+"task.search.prompt" = "タスクを検索...";
+"task.empty.title" = "タスクがありません";
+"task.empty.description" = "＋をクリックして最初のスケジュールタスクを作成しましょう";
+"task.select.title" = "タスクを選択";
+"task.select.description" = "サイドバーからタスクを選択して詳細を表示するか、＋をクリックして新規作成してください";
+"task.interval.seconds" = "%d秒";
+"task.status.enabled" = "有効";
+"task.status.disabled" = "無効";
+"task.duplicate" = "複製";
+"task.duplicate.name" = "%@（コピー）";
+
+/* Task Detail */
+"task.detail.enable" = "有効にする";
+"task.detail.disable" = "無効にする";
+"task.detail.run" = "実行";
+"task.detail.edit" = "編集";
+"task.detail.delete" = "削除";
+"task.detail.schedule" = "スケジュール";
+"task.detail.script" = "スクリプト";
+"task.detail.cron_expression" = "Cron式";
+"task.detail.interval" = "間隔";
+"task.detail.interval_value" = "%d秒";
+"task.detail.next_run" = "次回実行";
+"task.detail.last_run" = "前回実行";
+"task.detail.shell" = "シェル";
+"task.detail.working_dir" = "作業ディレクトリ";
+"task.detail.timeout" = "タイムアウト";
+"task.detail.timeout_value" = "%d秒";
+"task.detail.recent_logs" = "最近の実行";
+"task.detail.no_logs" = "実行ログはまだありません";
+"task.detail.view_logs" = "ログを表示";
+"task.detail.show_full_script" = "スクリプト全体を表示";
+"task.detail.collapse_script" = "折りたたむ";
+
+/* Task Editor Tabs */
+"editor.tab.basic" = "基本";
+"editor.tab.schedule" = "スケジュール";
+"editor.tab.script" = "スクリプト";
+"editor.tab.notification" = "通知";
+
+/* Task Editor */
+"editor.title.new" = "新規タスク";
+"editor.title.edit" = "タスクを編集";
+"editor.cancel" = "キャンセル";
+"editor.save" = "保存";
+"editor.section.basic" = "基本情報";
+"editor.name" = "タスク名";
+"editor.name.placeholder" = "タスク名を入力";
+"editor.enabled" = "有効";
+"editor.section.schedule" = "スケジュール";
+"editor.schedule_type" = "種類";
+"editor.interval" = "間隔";
+"editor.interval.seconds" = "秒";
+"editor.section.script" = "スクリプト";
+"editor.script.source" = "ソース";
+"editor.script.source.inline" = "インラインスクリプト";
+"editor.script.source.file" = "スクリプトファイル";
+"editor.script.choose_file" = "ファイルを選択...";
+"editor.script.file_path" = "ファイルパス";
+"editor.script.no_file" = "ファイルが選択されていません";
+"editor.script.placeholder" = "実行するシェルスクリプトを入力";
+"editor.script.expand" = "エディタを拡大";
+"editor.script.collapse" = "完了";
+"editor.script.validate" = "スクリプトを検証";
+"editor.script.validating" = "検証中...";
+"editor.script.valid" = "構文OK";
+"editor.script.invalid" = "構文エラー";
+"editor.shell" = "シェル";
+"editor.working_dir" = "作業ディレクトリ";
+"editor.working_dir.placeholder" = "作業ディレクトリのパス（任意）";
+"editor.working_dir.choose" = "ディレクトリを選択";
+"editor.timeout" = "タイムアウト";
+"editor.timeout.seconds" = "秒";
+"editor.section.notification" = "通知";
+"editor.notify_success" = "成功時に通知";
+"editor.notify_failure" = "失敗時に通知";
+"editor.notify_hint" = "タスク完了時にmacOSのシステム通知で通知されます。";
+"editor.strong_reminder" = "成功時に強調リマインダー";
+"editor.strong_reminder_hint" = "タスク成功時に出力全文を表示するフローティングパネルを表示します。";
+"editor.strong_reminder_short" = " 強調リマインダー";
+"strong_reminder.dismiss" = "OK";
+"notify.success_short" = "成功";
+"notify.failure_short" = "失敗";
+"notify.both_short" = "すべて";
+"notify.off" = "オフ";
+
+/* Schedule */
+"schedule.cron" = "Cron式";
+"schedule.interval" = "固定間隔";
+"schedule.date" = "日付";
+"schedule.time" = "時刻";
+"schedule.date_time" = "日時";
+"schedule.repeat" = "繰り返し";
+"schedule.repeat_section" = "繰り返し";
+"schedule.end_repeat" = "繰り返し終了";
+"schedule.end_date" = "終了日";
+"schedule.end_count" = "繰り返し回数";
+"schedule.times" = "回";
+"schedule.until" = "%@まで";
+"schedule.after_n_times" = "%d回";
+"schedule.run_missed" = "未実行分を実行";
+
+/* Repeat Types */
+"repeat.never" = "なし";
+"repeat.every_minute" = "毎分";
+"repeat.every_5_minutes" = "5分ごと";
+"repeat.every_15_minutes" = "15分ごと";
+"repeat.every_30_minutes" = "30分ごと";
+"repeat.hourly" = "毎時";
+"repeat.daily" = "毎日";
+"repeat.weekdays" = "平日";
+"repeat.weekends" = "週末";
+"repeat.weekly" = "毎週";
+"repeat.biweekly" = "隔週";
+"repeat.monthly" = "毎月";
+"repeat.every_3_months" = "3か月ごと";
+"repeat.every_6_months" = "6か月ごと";
+"repeat.yearly" = "毎年";
+"repeat.custom" = "カスタム";
+"repeat.unit.hour" = "時間";
+"repeat.unit.day" = "日";
+"repeat.unit.week" = "週";
+"repeat.unit.month" = "月";
+"repeat.unit.year" = "年";
+"repeat.frequency" = "頻度";
+"repeat.every" = "毎";
+"repeat.ok" = "OK";
+
+/* End Repeat Types */
+"end_repeat.never" = "なし";
+"end_repeat.on_date" = "指定日";
+"end_repeat.after_count" = "回数指定";
+
+/* Cron (legacy) */
+"cron.preset" = "プリセット";
+"cron.custom" = "カスタム...";
+"cron.every_minute" = "毎分";
+"cron.every_5_minutes" = "5分ごと";
+"cron.every_15_minutes" = "15分ごと";
+"cron.every_30_minutes" = "30分ごと";
+"cron.every_hour" = "毎時";
+"cron.daily_midnight" = "毎日 0:00";
+"cron.daily_8am" = "毎日 8:00";
+"cron.weekly_monday" = "毎週月曜 9:00";
+"cron.monthly_first" = "毎月1日 0:00";
+"cron.next_run" = "次回: %@";
+"cron.cannot_compute" = "計算できません";
+"cron.expression.placeholder" = "分 時 日 月 曜日";
+
+/* Execution Status */
+"status.running" = "実行中";
+"status.success" = "成功";
+"status.failure" = "失敗";
+"status.timeout" = "タイムアウト";
+"status.cancelled" = "キャンセル済み";
+
+/* Logs */
+"notification.duration" = "所要時間:";
+"notification.success" = "正常に完了しました";
+"notification.succeeded" = "成功";
+"notification.failed" = "失敗";
+
+"log.title" = "実行ログ";
+"log.count_suffix" = "件";
+"log.select.title" = "ログを選択";
+"log.select.description" = "サイドバーからログを選択して詳細を表示してください";
+"log.filter.all" = "すべて";
+"log.detail.title" = "実行詳細";
+"log.detail.trigger" = "トリガー";
+"log.detail.trigger.manual" = "手動";
+"log.detail.trigger.schedule" = "スケジュール";
+"log.detail.exit_code" = "終了コード";
+"log.detail.duration" = "所要時間";
+"log.detail.duration_ms" = "%dミリ秒";
+"log.detail.finished" = "完了時刻";
+"log.detail.stdout" = "標準出力";
+"log.detail.stderr" = "エラー出力";
+"log.unknown_task" = "不明なタスク";
+
+/* Settings */
+"settings.general" = "一般";
+"settings.appearance" = "外観";
+"settings.appearance.system" = "システム";
+"settings.appearance.light" = "ライト";
+"settings.appearance.dark" = "ダーク";
+"settings.general.language" = "言語";
+"settings.general.language.section" = "言語";
+"settings.general.language.restart_hint" = "言語の変更はほとんどのUI要素にすぐ反映されます。";
+"settings.general.startup" = "起動";
+"settings.general.launch_at_login" = "ログイン時に起動";
+"settings.general.defaults" = "デフォルト";
+"settings.general.default_shell" = "デフォルトシェル";
+"settings.general.default_timeout" = "デフォルトタイムアウト";
+"settings.general.seconds" = "秒";
+
+"settings.notifications" = "通知";
+"settings.notifications.section" = "通知設定";
+"settings.notifications.enable" = "通知を有効にする";
+"settings.notifications.on_success" = "タスク成功時に通知";
+"settings.notifications.on_failure" = "タスク失敗時に通知";
+"settings.notifications.hint" = "これはグローバルスイッチです。無効にすると、個別タスクで通知が有効でも通知は送信されません。";
+
+"settings.logs" = "ログ";
+"settings.logs.section" = "ログ管理";
+"settings.logs.retention" = "保持期間";
+"settings.logs.retention.days" = "日";
+"settings.logs.cleanup" = "古いログを削除";
+
+"settings.updates" = "アップデート";
+"settings.updates.section" = "自動アップデート";
+"settings.updates.auto_check" = "自動的にアップデートを確認";
+"settings.updates.frequency" = "確認頻度";
+"settings.updates.frequency.12h" = "12時間ごと";
+"settings.updates.frequency.24h" = "24時間ごと";
+"settings.updates.frequency.3d" = "3日ごと";
+"settings.updates.frequency.1w" = "毎週";
+"settings.updates.check_now" = "今すぐ確認";
+"settings.updates.new_version" = "新しいバージョンが利用可能: %@";
+
+"settings.about" = "TaskTickについて";
+"settings.about.section" = "TaskTickについて";
+"settings.about.version" = "バージョン";
+"settings.about.build" = "ビルド";
+"settings.about.github" = "GitHubリポジトリ";
+"settings.about.issues" = "問題を報告";
+"settings.about.sponsor" = "スポンサー";
+"settings.about.copyright" = "© 2026 lifedever. GPL-3.0 License.";
+"settings.about.description" = "スケジュールタスクを管理するネイティブmacOSアプリ。crontabもlaunchdも不要 — TaskTickだけ。";
+
+/* Commands */
+"command.about" = "TaskTickについて";
+"command.check_updates" = "アップデートを確認...";
+"command.new_task" = "新規タスク";
+"command.import" = "タスクをインポート...";
+"command.export" = "タスクをエクスポート...";
+"command.task_menu" = "タスク";
+"command.run_selected" = "選択したタスクを実行";
+"command.stop_task" = "タスクを停止";
+"command.toggle_enabled" = "有効/無効を切替";
+"command.delete_task" = "タスクを削除";
+"command.show_logs" = "ログを表示";
+"command.refresh" = "更新";
+"command.github_home" = "GitHubリポジトリ";
+"command.report_issue" = "問題を報告";
+"command.sponsor" = "開発者を支援";
+
+/* Clear Logs Confirmation */
+"clear_logs.title" = "ログを消去";
+"clear_logs.message" = "「%@」のすべての実行ログを消去してもよろしいですか？実行回数もリセットされます。この操作は取り消せません。";
+"clear_logs.cancel" = "キャンセル";
+"clear_logs.confirm" = "消去";
+
+/* Delete Confirmation */
+"delete.title" = "削除の確認";
+"delete.message" = "「%@」を削除してもよろしいですか？この操作は取り消せません。";
+"delete.cancel" = "キャンセル";
+"delete.confirm" = "削除";
+
+/* Crontab Import */
+"command.import_crontab" = "システムCrontabからインポート...";
+"crontab.import.title" = "Crontabからインポート";
+"crontab.import.description" = "TaskTickのタスクとしてインポートするcrontabエントリを選択してください。";
+"crontab.import.empty" = "Crontabエントリなし";
+"crontab.import.empty_description" = "システムcrontabにアクティブなエントリが見つかりませんでした。";
+"crontab.import.select_all" = "すべて選択";
+"crontab.import.action" = "選択をインポート";
+"crontab.import.success" = "%d件のタスクが正常にインポートされました。";
+"crontab.import.done" = "完了";
+"crontab.comment.title" = "インポートしたエントリをコメントアウトしますか？";
+"crontab.comment.message" = "インポートしたエントリはシステムcrontabでコメントアウトされます（削除はされません）。重複実行を防ぐためです。";
+"crontab.comment.yes" = "コメントアウト";
+"crontab.comment.no" = "そのまま";
+
+/* Update Dialog */
+"update.available.title" = "TaskTickの新しいバージョンが利用可能です！";
+"update.available.message" = "TaskTick %@が利用可能です（現在%@）。今すぐダウンロードしますか？";
+"update.skip" = "このバージョンをスキップ";
+"update.remind_later" = "後で通知";
+"update.install" = "アップデートをインストール";
+"update.downloading.title" = "TaskTickをアップデート中";
+"update.downloading" = "アップデートをダウンロード中...";
+"update.ready" = "インストール準備完了";
+"update.install_restart" = "インストールして再起動";
+"update.cancel" = "キャンセル";
+"update.check_failed" = "アップデートの確認に失敗しました";
+"update.check_failed.hint" = "アップデートサーバーに接続できません。ネットワーク接続を確認して再度お試しください。";
+"update.no_updates" = "最新の状態です！";
+"update.no_updates.message" = "TaskTick %@は最新バージョンです。";
+"update.download_error" = "ダウンロードに失敗しました";
+"update.dmg_error" = "アップデートに失敗しました";
+"update.dmg_error.message" = "ダウンロードしたディスクイメージが破損しています。もう一度アップデートをダウンロードしてください。";
+
+/* Script Templates */
+"template.menu" = "テンプレート";
+"template.save_as" = "テンプレートとして保存";
+"template.my_templates" = "マイテンプレート";
+"template.builtin" = "組み込みテンプレート";
+"template.add" = "新規テンプレート";
+"template.manage" = "テンプレートを管理...";
+"template.save.title" = "テンプレートとして保存";
+"template.save.name_placeholder" = "テンプレート名";
+"template.overwrite.title" = "スクリプトを置き換えますか？";
+"template.overwrite.message" = "現在のスクリプトがテンプレートの内容に置き換えられます。";
+"template.overwrite.confirm" = "置き換え";
+"template.edit.title" = "テンプレートを編集";
+"template.manage.title" = "テンプレートマネージャー";
+"template.manage.empty" = "テンプレートを選択";
+"template.manage.empty_description" = "サイドバーからテンプレートを選択して内容をプレビューしてください。";
+"template.manage.select_hint" = "サイドバーからテンプレートを選択して内容をプレビューしてください。";
+"template.manage.rename" = "名前を変更";
+"template.manage.delete" = "削除";
+"template.manage.delete_confirm" = "このテンプレートを削除しますか？";
+"template.info" = "情報";
+"template.created_at" = "作成日";
+"template.category" = "カテゴリ";
+"template.category.none" = "未分類";
+"template.category.new" = "新規カテゴリ";
+"template.category.new_placeholder" = "カテゴリ名を入力";
+"template.notes" = "メモ";
+"template.updated_at" = "更新日";
+"template.create_task" = "タスクを作成";
+"template.restore_defaults" = "デフォルトテンプレートを復元";
+"template.import_file" = "ファイルをインポート...";
+"template.script_hint" = "スクリプトを直接記述するか、ローカルファイルからインポートしてください。";
+"editor.script.source.template" = "テンプレートから";
+
+/* Default Template Names & Notes */
+"default_template.category.database" = "データベースバックアップ";
+"default_template.category.logs" = "ログクリーンアップ";
+"default_template.category.git" = "Git同期";
+"default_template.category.health" = "ヘルスチェック";
+"default_template.category.file_watch" = "ファイル監視";
+"default_template.category.docker" = "Docker";
+"default_template.mysql_backup.name" = "MySQLバックアップ";
+"default_template.mysql_backup.notes" = "MySQLデータベースをgzip圧縮されたSQLファイルにダンプします。7日以上前のバックアップを自動削除します。使用前にDB_HOST、DB_USER、DB_PASS、DB_NAMEを編集してください。";
+"default_template.pg_backup.name" = "PostgreSQLバックアップ";
+"default_template.pg_backup.notes" = "pg_dumpを使用してPostgreSQLデータベースをダンプします。gzipで圧縮し、7日以上前のバックアップを削除します。";
+"default_template.log_cleanup.name" = "ログクリーンアップ";
+"default_template.log_cleanup.notes" = "古い.log、.log.gz、およびローテーションされたログファイルを削除します。デフォルトの保持期間: 30日。必要に応じてDAYSとLOG_DIRを調整してください。";
+"default_template.git_sync.name" = "Git Pull & 同期";
+"default_template.git_sync.notes" = "すべてのリモートをフェッチし、古いブランチを整理し、mainからリベースプルします。REPO_DIRをリポジトリのパスに設定してください。";
+"default_template.health_check.name" = "HTTPヘルスチェック";
+"default_template.health_check.notes" = "URLがHTTP 200を返すか確認します。失敗時は終了コード1で終了します — 失敗通知のトリガーに便利です。";
+"default_template.disk_monitor.name" = "ディスク使用量モニター";
+"default_template.disk_monitor.notes" = "ルートパーティションの使用量を監視します。使用量がしきい値（デフォルト80%）を超えると終了コード1で終了します。";
+"default_template.docker_cleanup.name" = "Dockerクリーンアップ";
+"default_template.docker_cleanup.notes" = "未使用のDockerコンテナ、イメージ、ボリューム、ネットワークをすべて削除します。クリーンアップ後にディスク使用量の概要を表示します。";
+"default_template.category.backup" = "バックアップと同期";
+"default_template.category.notification" = "通知";
+"default_template.dir_backup.name" = "ディレクトリバックアップ";
+"default_template.dir_backup.notes" = "ディレクトリをtar.gzに圧縮します。30日以上前のバックアップを自動削除します。SOURCE_DIRとBACKUP_DIRを編集してください。";
+"default_template.redis_backup.name" = "Redisバックアップ";
+"default_template.redis_backup.notes" = "RedisのBGSAVEを実行し、dump.rdbファイルをコピーします。7日以上前のバックアップを削除します。";
+"default_template.mongodb_backup.name" = "MongoDBバックアップ";
+"default_template.mongodb_backup.notes" = "mongodumpでMongoDBデータベースをダンプし、tar.gzに圧縮します。7日以上前のバックアップを削除します。";
+"default_template.ssl_check.name" = "SSL証明書チェック";
+"default_template.ssl_check.notes" = "ドメインのSSL証明書の有効期限を確認します。30日以内に期限切れの場合、終了コード1で終了します。";
+"default_template.process_monitor.name" = "プロセスモニター";
+"default_template.process_monitor.notes" = "特定のプロセスが実行中か確認します。見つからない場合は終了コード1で終了します — 失敗通知との併用に便利です。";
+"default_template.port_check.name" = "ポートチェック";
+"default_template.port_check.notes" = "TCPポートに到達可能か確認します。到達不可の場合は終了コード1で終了します。";
+"default_template.memory_monitor.name" = "メモリ使用量モニター";
+"default_template.memory_monitor.notes" = "macOSのメモリ使用量を監視します。使用量がしきい値（デフォルト80%）を超えると終了コード1で終了します。";
+"default_template.rsync.name" = "rsyncディレクトリ同期";
+"default_template.rsync.notes" = "rsyncを使用してローカルディレクトリをバックアップ先に同期します。--deleteオプションで増分更新に対応しています。";
+"default_template.webhook.name" = "Webhook通知";
+"default_template.webhook.notes" = "Slack/Discordのwebhook URLにメッセージを送信します。タスク後の通知ステップとして便利です。";
+
+/* Cron Human Readable */
+"cron.human.every_minute" = "毎分";
+"cron.human.every_hour" = "毎時";
+"cron.human.daily_midnight" = "毎日0時";
+"cron.human.weekly_sunday" = "毎週日曜0時";
+"cron.human.monthly_first" = "毎月1日0時";

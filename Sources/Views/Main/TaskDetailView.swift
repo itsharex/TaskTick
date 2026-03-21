@@ -9,6 +9,7 @@ struct TaskDetailView: View {
     @State private var showingClearLogsAlert = false
     @State private var isScriptExpanded = false
     @State private var showingTaskLogs = false
+    @State private var cachedFileContent: String?
     @StateObject private var scheduler = TaskScheduler.shared
 
     var isRunning: Bool {
@@ -16,12 +17,13 @@ struct TaskDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                headerSection
-                Divider()
-                    .padding(.horizontal)
+        VStack(spacing: 0) {
+            headerSection
+                .padding(.vertical)
+            Divider()
+                .padding(.horizontal)
 
+            ScrollView {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(spacing: 16) {
                         scheduleCard
@@ -35,9 +37,11 @@ struct TaskDetailView: View {
                     .frame(width: 300, alignment: .top)
                 }
                 .padding(.horizontal)
+                .padding(.vertical)
             }
-            .padding(.vertical)
         }
+        .onAppear { loadFileContent() }
+        .onChange(of: task.scriptFilePath) { loadFileContent() }
         .sheet(isPresented: $showingTaskLogs) {
             TaskLogsView(task: task)
         }
@@ -156,7 +160,7 @@ struct TaskDetailView: View {
                             } label: {
                                 Label(L10n.tr("clear_logs.title"), systemImage: "trash.circle")
                             }
-                            .disabled(task.executionLogs.isEmpty)
+                            .disabled(task.executionCount == 0)
                             .pointerCursor()
 
                             Button(role: .destructive) {
@@ -270,21 +274,24 @@ struct TaskDetailView: View {
                 // Show script content (inline or file preview)
                 let displayScript: String = {
                     if let filePath = task.scriptFilePath, !filePath.isEmpty {
-                        return (try? String(contentsOfFile: filePath, encoding: .utf8)) ?? "⚠️ Cannot read file"
+                        return cachedFileContent ?? ""
                     }
                     return task.scriptBody
                 }()
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(displayScript)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(maxHeight: isScriptExpanded ? nil : 120, alignment: .top)
-                        .clipped()
+                    let previewText = isScriptExpanded ? displayScript : String(displayScript.prefix(500))
 
-                    if displayScript.components(separatedBy: .newlines).count > 6 {
+                    ScrollView {
+                        Text(previewText)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                            .padding(12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: isScriptExpanded ? 400 : 120)
+
+                    if displayScript.count > 500 || displayScript.components(separatedBy: .newlines).count > 6 {
                         Divider()
                         Button {
                             withAnimation(.easeInOut(duration: 0.2)) {
@@ -327,7 +334,7 @@ struct TaskDetailView: View {
                 HStack {
                     Label(L10n.tr("task.detail.recent_logs"), systemImage: "list.bullet.rectangle")
                         .font(.headline)
-                    Text("\(task.executionLogs.count)")
+                    Text("\(task.executionCount)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
@@ -412,6 +419,14 @@ struct TaskDetailView: View {
         f.unitsStyle = .short
         return f
     }()
+
+    private func loadFileContent() {
+        if let filePath = task.scriptFilePath, !filePath.isEmpty {
+            cachedFileContent = try? String(contentsOfFile: filePath, encoding: .utf8)
+        } else {
+            cachedFileContent = nil
+        }
+    }
 
     private static func timeAgo(_ date: Date) -> String {
         relativeFormatter.localizedString(for: date, relativeTo: Date())

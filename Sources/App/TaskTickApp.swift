@@ -10,7 +10,16 @@ struct TaskTickApp: App {
     @Environment(\.openWindow) private var openWindow
     @State private var showingCrontabImport = false
 
-    var sharedModelContainer: ModelContainer = {
+    init() {
+        let container = Self._sharedModelContainer
+        let scheduler = TaskScheduler.shared
+        scheduler.configure(modelContext: container.mainContext)
+        scheduler.start()
+    }
+
+    var sharedModelContainer: ModelContainer { Self._sharedModelContainer }
+
+    private static let _sharedModelContainer: ModelContainer = {
         let schema = Schema([
             ScheduledTask.self,
             ExecutionLog.self,
@@ -41,8 +50,6 @@ struct TaskTickApp: App {
                 .onAppear {
                     NSApp.setActivationPolicy(.regular)
                     seedDefaultTask(context: sharedModelContainer.mainContext)
-                    scheduler.configure(modelContext: sharedModelContainer.mainContext)
-                    scheduler.start()
 
                     Task {
                         await updateChecker.checkForUpdates()
@@ -59,10 +66,10 @@ struct TaskTickApp: App {
         // Menu bar
         MenuBarExtra(L10n.tr("app.name"), systemImage: menuBarIcon) {
             MenuBarView()
+                .modelContainer(sharedModelContainer)
                 .localized()
         }
         .menuBarExtraStyle(.window)
-        .modelContainer(sharedModelContainer)
 
         // Settings
         Settings {

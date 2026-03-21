@@ -75,18 +75,33 @@ final class ScriptExecutor: ObservableObject {
 
         if globalNotificationsEnabled && task.notifyOnFailure && result.status != .success {
             let exitInfo = "Exit code: \(result.exitCode ?? -1)"
-            let stderrLine = result.stderr.isEmpty ? "" : (result.stderr.components(separatedBy: .newlines).first ?? "")
+            let stderrLine = result.stderr.components(separatedBy: .newlines).first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) ?? ""
             let body = [exitInfo, durationText, stderrLine].filter { !$0.isEmpty }.joined(separator: " · ")
             NotificationManager.shared.sendNotification(
                 title: "[\(L10n.tr("notification.failed"))] \(task.name)",
                 body: body
             )
         } else if globalNotificationsEnabled && task.notifyOnSuccess && result.status == .success {
-            let stdoutLine = result.stdout.isEmpty ? "" : (result.stdout.components(separatedBy: .newlines).first ?? "")
+            let stdoutLine = result.stdout.components(separatedBy: .newlines).first(where: {
+                let trimmed = $0.trimmingCharacters(in: .whitespaces)
+                guard !trimmed.isEmpty else { return false }
+                // Skip decorative separator lines (─, ═, -, =, *, etc.)
+                let stripped = trimmed.filter { !("─═—–-=_*#~".contains($0)) }
+                return !stripped.isEmpty
+            }) ?? ""
             let body = [durationText, stdoutLine].filter { !$0.isEmpty }.joined(separator: " · ")
             NotificationManager.shared.sendNotification(
                 title: "[\(L10n.tr("notification.succeeded"))] \(task.name)",
                 body: body.isEmpty ? L10n.tr("notification.success") : body
+            )
+        }
+
+        // Strong reminder: show floating panel with full output
+        if result.status == .success && task.strongReminder {
+            StrongReminderPanel.shared.show(
+                taskName: task.name,
+                output: result.stdout,
+                durationMs: log.durationMs
             )
         }
 

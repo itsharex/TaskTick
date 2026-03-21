@@ -26,6 +26,7 @@ struct MainWindowView: View {
         } detail: {
             if let task = selectedTask {
                 TaskDetailView(task: task)
+                    .id(task.id)
             } else {
                 ContentUnavailableView {
                     Label(L10n.tr("task.select.title"), systemImage: "checklist")

@@ -1,0 +1,379 @@
+/* App */
+"app.name" = "TaskTick";
+
+/* Menu Bar */
+"menubar.open" = "Abrir";
+"menubar.no_tasks" = "Sin tareas";
+"menubar.next_run" = "Siguiente ejecución";
+"menubar.upcoming" = "Tareas próximas";
+"menubar.quit" = "Salir";
+
+/* Task List */
+"task.filter.all" = "Todas";
+"task.filter.enabled" = "Activas";
+"task.filter.disabled" = "Inactivas";
+"task.search.prompt" = "Buscar tareas...";
+"task.empty.title" = "No hay tareas";
+"task.empty.description" = "Haz clic en + para crear tu primera tarea programada";
+"task.select.title" = "Selecciona una tarea";
+"task.select.description" = "Selecciona una tarea de la barra lateral para ver los detalles, o haz clic en + para crear una nueva";
+"task.interval.seconds" = "%d seg";
+"task.status.enabled" = "Activa";
+"task.status.disabled" = "Inactiva";
+"task.duplicate" = "Duplicar";
+"task.duplicate.name" = "%@ (Copia)";
+
+/* Task Detail */
+"task.detail.enable" = "Activar";
+"task.detail.disable" = "Desactivar";
+"task.detail.run" = "Ejecutar";
+"task.detail.edit" = "Editar";
+"task.detail.delete" = "Eliminar";
+"task.detail.schedule" = "Programación";
+"task.detail.script" = "Script";
+"task.detail.cron_expression" = "Expresión cron";
+"task.detail.interval" = "Intervalo";
+"task.detail.interval_value" = "%d segundos";
+"task.detail.next_run" = "Siguiente ejecución";
+"task.detail.last_run" = "Última ejecución";
+"task.detail.shell" = "Shell";
+"task.detail.working_dir" = "Directorio de trabajo";
+"task.detail.timeout" = "Tiempo límite";
+"task.detail.timeout_value" = "%d segundos";
+"task.detail.recent_logs" = "Ejecuciones recientes";
+"task.detail.no_logs" = "Aún no hay registros de ejecución";
+"task.detail.view_logs" = "Ver registros";
+"task.detail.show_full_script" = "Mostrar script completo";
+"task.detail.collapse_script" = "Contraer";
+
+/* Editor */
+"editor.tab.basic" = "Básico";
+"editor.tab.schedule" = "Programación";
+"editor.tab.script" = "Script";
+"editor.tab.notification" = "Notificaciones";
+"editor.title.new" = "Nueva tarea";
+"editor.title.edit" = "Editar tarea";
+"editor.cancel" = "Cancelar";
+"editor.save" = "Guardar";
+"editor.section.basic" = "Información básica";
+"editor.name" = "Nombre de la tarea";
+"editor.name.placeholder" = "Introduce el nombre de la tarea";
+"editor.enabled" = "Activa";
+"editor.section.schedule" = "Programación";
+"editor.schedule_type" = "Tipo";
+"editor.interval" = "Intervalo";
+"editor.interval.seconds" = "segundos";
+"editor.section.script" = "Script";
+"editor.script.source" = "Origen";
+"editor.script.source.inline" = "Script en línea";
+"editor.script.source.file" = "Archivo de script";
+"editor.script.choose_file" = "Elegir archivo...";
+"editor.script.file_path" = "Ruta del archivo";
+"editor.script.no_file" = "Ningún archivo seleccionado";
+"editor.script.placeholder" = "Introduce el script de shell a ejecutar";
+"editor.script.expand" = "Ampliar editor";
+"editor.script.collapse" = "Listo";
+"editor.script.validate" = "Validar script";
+"editor.script.validating" = "Validando...";
+"editor.script.valid" = "Sintaxis correcta";
+"editor.script.invalid" = "Error de sintaxis";
+"editor.shell" = "Shell";
+"editor.working_dir" = "Directorio de trabajo";
+"editor.working_dir.placeholder" = "Ruta del directorio de trabajo (opcional)";
+"editor.working_dir.choose" = "Elegir directorio";
+"editor.timeout" = "Tiempo límite";
+"editor.timeout.seconds" = "segundos";
+"editor.section.notification" = "Notificaciones";
+"editor.notify_success" = "Notificar al completar";
+"editor.notify_failure" = "Notificar al fallar";
+"editor.notify_hint" = "Las notificaciones se envían a través del sistema de notificaciones de macOS cuando una tarea finaliza.";
+"editor.strong_reminder" = "Recordatorio destacado al completar";
+"editor.strong_reminder_hint" = "Mostrar un panel flotante con la salida completa cuando la tarea se ejecuta correctamente.";
+"editor.strong_reminder_short" = " Recordatorio destacado";
+"strong_reminder.dismiss" = "Aceptar";
+"notify.success_short" = "Completada";
+"notify.failure_short" = "Fallida";
+"notify.both_short" = "Todas";
+"notify.off" = "Desactivado";
+
+/* Schedule */
+"schedule.cron" = "Expresión cron";
+"schedule.interval" = "Intervalo fijo";
+"schedule.date" = "Fecha";
+"schedule.time" = "Hora";
+"schedule.date_time" = "Fecha y hora";
+"schedule.repeat" = "Repetir";
+"schedule.repeat_section" = "Repetición";
+"schedule.end_repeat" = "Fin de repetición";
+"schedule.end_date" = "Fecha de fin";
+"schedule.end_count" = "Número de repeticiones";
+"schedule.times" = "veces";
+"schedule.until" = "Hasta %@";
+"schedule.after_n_times" = "%d veces";
+"schedule.run_missed" = "Ejecutar ejecución perdida";
+
+/* Repeat */
+"repeat.never" = "Nunca";
+"repeat.every_minute" = "Cada minuto";
+"repeat.every_5_minutes" = "Cada 5 minutos";
+"repeat.every_15_minutes" = "Cada 15 minutos";
+"repeat.every_30_minutes" = "Cada 30 minutos";
+"repeat.hourly" = "Cada hora";
+"repeat.daily" = "Diariamente";
+"repeat.weekdays" = "Días laborables";
+"repeat.weekends" = "Fines de semana";
+"repeat.weekly" = "Semanalmente";
+"repeat.biweekly" = "Cada dos semanas";
+"repeat.monthly" = "Mensualmente";
+"repeat.every_3_months" = "Cada 3 meses";
+"repeat.every_6_months" = "Cada 6 meses";
+"repeat.yearly" = "Anualmente";
+"repeat.custom" = "Personalizado";
+"repeat.unit.hour" = "Hora";
+"repeat.unit.day" = "Día";
+"repeat.unit.week" = "Semana";
+"repeat.unit.month" = "Mes";
+"repeat.unit.year" = "Año";
+"repeat.frequency" = "Frecuencia";
+"repeat.every" = "Cada";
+"repeat.ok" = "Aceptar";
+
+/* End Repeat */
+"end_repeat.never" = "Nunca";
+"end_repeat.on_date" = "En una fecha";
+"end_repeat.after_count" = "Después de un número";
+
+/* Cron */
+"cron.preset" = "Predefinido";
+"cron.custom" = "Personalizado...";
+"cron.every_minute" = "Cada minuto";
+"cron.every_5_minutes" = "Cada 5 minutos";
+"cron.every_15_minutes" = "Cada 15 minutos";
+"cron.every_30_minutes" = "Cada 30 minutos";
+"cron.every_hour" = "Cada hora";
+"cron.daily_midnight" = "Diario a medianoche";
+"cron.daily_8am" = "Diario a las 8:00";
+"cron.weekly_monday" = "Lunes a las 9:00";
+"cron.monthly_first" = "1.º del mes a medianoche";
+"cron.next_run" = "Siguiente: %@";
+"cron.cannot_compute" = "No se puede calcular";
+"cron.expression.placeholder" = "min hora día mes día_semana";
+
+/* Status */
+"status.running" = "Ejecutando";
+"status.success" = "Completada";
+"status.failure" = "Fallida";
+"status.timeout" = "Tiempo agotado";
+"status.cancelled" = "Cancelada";
+
+/* Logs */
+"notification.duration" = "Duración:";
+"notification.success" = "Completada correctamente";
+"notification.succeeded" = "Completada";
+"notification.failed" = "Fallida";
+"log.title" = "Registros de ejecución";
+"log.count_suffix" = "registros";
+"log.select.title" = "Selecciona un registro";
+"log.select.description" = "Selecciona un registro de la barra lateral para ver los detalles";
+"log.filter.all" = "Todos";
+"log.detail.title" = "Detalles de ejecución";
+"log.detail.trigger" = "Activador";
+"log.detail.trigger.manual" = "Manual";
+"log.detail.trigger.schedule" = "Programada";
+"log.detail.exit_code" = "Código de salida";
+"log.detail.duration" = "Duración";
+"log.detail.duration_ms" = "%d ms";
+"log.detail.finished" = "Finalizada";
+"log.detail.stdout" = "Salida estándar";
+"log.detail.stderr" = "Salida de error";
+"log.unknown_task" = "Tarea desconocida";
+
+/* Settings */
+"settings.general" = "General";
+"settings.appearance" = "Apariencia";
+"settings.appearance.system" = "Sistema";
+"settings.appearance.light" = "Claro";
+"settings.appearance.dark" = "Oscuro";
+"settings.general.language" = "Idioma";
+"settings.general.language.section" = "Idioma";
+"settings.general.language.restart_hint" = "El cambio de idioma se aplica de inmediato en la mayoría de los elementos de la interfaz.";
+"settings.general.startup" = "Inicio";
+"settings.general.launch_at_login" = "Iniciar al iniciar sesión";
+"settings.general.defaults" = "Valores predeterminados";
+"settings.general.default_shell" = "Shell predeterminado";
+"settings.general.default_timeout" = "Tiempo límite predeterminado";
+"settings.general.seconds" = "segundos";
+"settings.notifications" = "Notificaciones";
+"settings.notifications.section" = "Configuración de notificaciones";
+"settings.notifications.enable" = "Activar notificaciones";
+"settings.notifications.on_success" = "Notificar al completar tarea";
+"settings.notifications.on_failure" = "Notificar al fallar tarea";
+"settings.notifications.hint" = "Este es un interruptor global. Cuando está desactivado, no se enviarán notificaciones de ninguna tarea, incluso si las tareas individuales tienen las notificaciones activadas.";
+"settings.logs" = "Registros";
+"settings.logs.section" = "Gestión de registros";
+"settings.logs.retention" = "Período de retención";
+"settings.logs.retention.days" = "días";
+"settings.logs.cleanup" = "Limpiar registros antiguos";
+"settings.updates" = "Actualizaciones";
+"settings.updates.section" = "Actualizaciones automáticas";
+"settings.updates.auto_check" = "Buscar actualizaciones automáticamente";
+"settings.updates.frequency" = "Frecuencia de comprobación";
+"settings.updates.frequency.12h" = "Cada 12 horas";
+"settings.updates.frequency.24h" = "Cada 24 horas";
+"settings.updates.frequency.3d" = "Cada 3 días";
+"settings.updates.frequency.1w" = "Cada semana";
+"settings.updates.check_now" = "Comprobar ahora";
+"settings.updates.new_version" = "Nueva versión disponible: %@";
+"settings.about" = "Acerca de";
+"settings.about.section" = "Acerca de TaskTick";
+"settings.about.version" = "Versión";
+"settings.about.build" = "Compilación";
+"settings.about.github" = "Repositorio en GitHub";
+"settings.about.issues" = "Reportar un problema";
+"settings.about.sponsor" = "Patrocinar";
+"settings.about.copyright" = "© 2026 lifedever. Licencia GPL-3.0.";
+"settings.about.description" = "Una app nativa de macOS para gestionar tareas programadas. Sin crontab, sin launchd — solo TaskTick.";
+
+/* Commands */
+"command.about" = "Acerca de TaskTick";
+"command.check_updates" = "Buscar actualizaciones...";
+"command.new_task" = "Nueva tarea";
+"command.import" = "Importar tareas...";
+"command.export" = "Exportar tareas...";
+"command.task_menu" = "Tarea";
+"command.run_selected" = "Ejecutar tarea seleccionada";
+"command.stop_task" = "Detener tarea";
+"command.toggle_enabled" = "Activar/Desactivar";
+"command.delete_task" = "Eliminar tarea";
+"command.show_logs" = "Mostrar registros";
+"command.refresh" = "Actualizar";
+"command.github_home" = "Repositorio en GitHub";
+"command.report_issue" = "Reportar un problema";
+"command.sponsor" = "Apoyar al desarrollador";
+
+/* Confirmations */
+"clear_logs.title" = "Limpiar registros";
+"clear_logs.message" = "¿Seguro que deseas limpiar todos los registros de ejecución de \"%@\"? El contador de ejecuciones se restablecerá. Esta acción no se puede deshacer.";
+"clear_logs.cancel" = "Cancelar";
+"clear_logs.confirm" = "Limpiar";
+"delete.title" = "Confirmar eliminación";
+"delete.message" = "¿Seguro que deseas eliminar \"%@\"? Esta acción no se puede deshacer.";
+"delete.cancel" = "Cancelar";
+"delete.confirm" = "Eliminar";
+
+/* Crontab Import */
+"command.import_crontab" = "Importar desde crontab del sistema...";
+"crontab.import.title" = "Importar desde crontab";
+"crontab.import.description" = "Selecciona las entradas de crontab para importarlas como tareas de TaskTick.";
+"crontab.import.empty" = "Sin entradas de crontab";
+"crontab.import.empty_description" = "No se encontraron entradas activas en tu crontab del sistema.";
+"crontab.import.select_all" = "Seleccionar todo";
+"crontab.import.action" = "Importar seleccionadas";
+"crontab.import.success" = "%d tareas importadas correctamente.";
+"crontab.import.done" = "Listo";
+"crontab.comment.title" = "¿Comentar las entradas importadas?";
+"crontab.comment.message" = "Las entradas importadas se comentarán (no se eliminarán) en tu crontab del sistema para evitar ejecuciones duplicadas.";
+"crontab.comment.yes" = "Comentar";
+"crontab.comment.no" = "Mantener";
+
+/* Update */
+"update.available.title" = "¡Hay una nueva versión de TaskTick disponible!";
+"update.available.message" = "TaskTick %@ está disponible — tienes la versión %@. ¿Deseas descargarla ahora?";
+"update.skip" = "Omitir esta versión";
+"update.remind_later" = "Recordar más tarde";
+"update.install" = "Instalar actualización";
+"update.downloading.title" = "Actualizando TaskTick";
+"update.downloading" = "Descargando actualización...";
+"update.ready" = "Listo para instalar";
+"update.install_restart" = "Instalar y reiniciar";
+"update.cancel" = "Cancelar";
+"update.check_failed" = "Error al buscar actualizaciones";
+"update.check_failed.hint" = "No se pudo conectar con el servidor de actualizaciones. Verifica tu conexión a internet e inténtalo de nuevo.";
+"update.no_updates" = "¡Estás al día!";
+"update.no_updates.message" = "TaskTick %@ es la última versión.";
+"update.download_error" = "Error en la descarga";
+"update.dmg_error" = "Error en la actualización";
+"update.dmg_error.message" = "La imagen de disco descargada está dañada. Intenta descargar la actualización de nuevo.";
+
+/* Templates */
+"template.menu" = "Plantillas";
+"template.save_as" = "Guardar como plantilla";
+"template.my_templates" = "Mis plantillas";
+"template.builtin" = "Plantillas incluidas";
+"template.add" = "Nueva plantilla";
+"template.manage" = "Gestionar plantillas...";
+"template.save.title" = "Guardar como plantilla";
+"template.save.name_placeholder" = "Nombre de la plantilla";
+"template.overwrite.title" = "¿Reemplazar script?";
+"template.overwrite.message" = "El script actual será reemplazado por el contenido de la plantilla.";
+"template.overwrite.confirm" = "Reemplazar";
+"template.edit.title" = "Editar plantilla";
+"template.manage.title" = "Gestor de plantillas";
+"template.manage.empty" = "Selecciona una plantilla";
+"template.manage.empty_description" = "Selecciona una plantilla de la barra lateral para previsualizar su contenido.";
+"template.manage.select_hint" = "Selecciona una plantilla de la barra lateral para previsualizar su contenido.";
+"template.manage.rename" = "Renombrar";
+"template.manage.delete" = "Eliminar";
+"template.manage.delete_confirm" = "¿Eliminar esta plantilla?";
+"template.info" = "Información";
+"template.created_at" = "Creada";
+"template.category" = "Categoría";
+"template.category.none" = "Sin categoría";
+"template.category.new" = "Nueva categoría";
+"template.category.new_placeholder" = "Introduce el nombre de la categoría";
+"template.notes" = "Notas";
+"template.updated_at" = "Modificada";
+"template.create_task" = "Crear tarea";
+"template.restore_defaults" = "Restaurar plantillas predeterminadas";
+"template.import_file" = "Importar archivo...";
+"template.script_hint" = "Escribe el script directamente o impórtalo desde un archivo local.";
+"editor.script.source.template" = "Desde plantilla";
+
+/* Default Templates */
+"default_template.category.database" = "Copia de seguridad de base de datos";
+"default_template.category.logs" = "Limpieza de registros";
+"default_template.category.git" = "Sincronización Git";
+"default_template.category.health" = "Comprobación de estado";
+"default_template.category.file_watch" = "Monitoreo de archivos";
+"default_template.category.docker" = "Docker";
+"default_template.mysql_backup.name" = "Copia de seguridad MySQL";
+"default_template.mysql_backup.notes" = "Vuelca una base de datos MySQL a un archivo SQL comprimido con gzip. Elimina automáticamente las copias de más de 7 días. Edita DB_HOST, DB_USER, DB_PASS, DB_NAME antes de usar.";
+"default_template.pg_backup.name" = "Copia de seguridad PostgreSQL";
+"default_template.pg_backup.notes" = "Vuelca una base de datos PostgreSQL usando pg_dump. Comprime con gzip y elimina copias de más de 7 días.";
+"default_template.log_cleanup.name" = "Limpieza de registros";
+"default_template.log_cleanup.notes" = "Elimina archivos .log, .log.gz y registros rotados antiguos. Retención predeterminada: 30 días. Ajusta DAYS y LOG_DIR según sea necesario.";
+"default_template.git_sync.name" = "Git Pull y sincronización";
+"default_template.git_sync.notes" = "Obtiene de todos los remotos, elimina ramas obsoletas y hace rebase-pull desde main. Configura REPO_DIR con la ruta de tu repositorio.";
+"default_template.health_check.name" = "Comprobación de estado HTTP";
+"default_template.health_check.notes" = "Verifica si una URL devuelve HTTP 200. Sale con código 1 en caso de fallo — útil para activar notificaciones de error.";
+"default_template.disk_monitor.name" = "Monitor de uso de disco";
+"default_template.disk_monitor.notes" = "Monitorea el uso de la partición raíz. Sale con código 1 cuando el uso supera el umbral (predeterminado 80%).";
+"default_template.docker_cleanup.name" = "Limpieza de Docker";
+"default_template.docker_cleanup.notes" = "Elimina todos los contenedores, imágenes, volúmenes y redes de Docker no utilizados. Muestra un resumen del uso de disco después de la limpieza.";
+"default_template.category.backup" = "Copia de seguridad y sincronización";
+"default_template.category.notification" = "Notificaciones";
+"default_template.dir_backup.name" = "Copia de seguridad de directorio";
+"default_template.dir_backup.notes" = "Comprime un directorio a tar.gz. Elimina automáticamente las copias de más de 30 días. Edita SOURCE_DIR y BACKUP_DIR.";
+"default_template.redis_backup.name" = "Copia de seguridad Redis";
+"default_template.redis_backup.notes" = "Ejecuta BGSAVE en Redis y copia el archivo dump.rdb. Elimina copias de más de 7 días.";
+"default_template.mongodb_backup.name" = "Copia de seguridad MongoDB";
+"default_template.mongodb_backup.notes" = "Vuelca una base de datos MongoDB con mongodump, comprime a tar.gz. Elimina copias de más de 7 días.";
+"default_template.ssl_check.name" = "Verificación de certificado SSL";
+"default_template.ssl_check.notes" = "Verifica la caducidad del certificado SSL de un dominio. Sale con código 1 si caduca en menos de 30 días.";
+"default_template.process_monitor.name" = "Monitor de procesos";
+"default_template.process_monitor.notes" = "Comprueba si un proceso específico está en ejecución. Sale con código 1 si no se encuentra — útil con notificaciones de fallo.";
+"default_template.port_check.name" = "Verificación de puerto";
+"default_template.port_check.notes" = "Comprueba si un puerto TCP es accesible. Sale con código 1 si no es accesible.";
+"default_template.memory_monitor.name" = "Monitor de uso de memoria";
+"default_template.memory_monitor.notes" = "Monitorea el uso de memoria en macOS. Sale con código 1 cuando el uso supera el umbral (predeterminado 80%).";
+"default_template.rsync.name" = "Sincronización de directorio con rsync";
+"default_template.rsync.notes" = "Sincroniza un directorio local a un destino de copia de seguridad usando rsync. Admite actualizaciones incrementales con --delete.";
+"default_template.webhook.name" = "Notificación por webhook";
+"default_template.webhook.notes" = "Envía un mensaje a una URL de webhook de Slack/Discord. Útil como paso de notificación posterior a una tarea.";
+
+/* Cron Human */
+"cron.human.every_minute" = "Cada minuto";
+"cron.human.every_hour" = "Cada hora";
+"cron.human.daily_midnight" = "Diario a medianoche";
+"cron.human.weekly_sunday" = "Domingo a medianoche";
+"cron.human.monthly_first" = "1.º del mes a medianoche";

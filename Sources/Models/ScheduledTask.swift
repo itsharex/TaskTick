@@ -159,6 +159,7 @@ final class ScheduledTask {
     var notifyOnSuccess: Bool
     var notifyOnFailure: Bool
     var runMissedExecution: Bool = false
+    var strongReminder: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \ExecutionLog.task)
     var executionLogs: [ExecutionLog]
@@ -176,7 +177,7 @@ final class ScheduledTask {
         workingDirectory: String? = nil,
         environmentVariablesJSON: String? = nil,
         timeoutSeconds: Int = 300,
-        notifyOnSuccess: Bool = false,
+        notifyOnSuccess: Bool = true,
         notifyOnFailure: Bool = true
     ) {
         self.id = UUID()

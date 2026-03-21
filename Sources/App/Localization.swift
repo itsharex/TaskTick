@@ -6,6 +6,11 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     case system = "system"
     case en = "en"
     case zhHans = "zh-Hans"
+    case ja = "ja"
+    case ko = "ko"
+    case fr = "fr"
+    case de = "de"
+    case es = "es"
 
     var id: String { rawValue }
 
@@ -14,6 +19,11 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         case .system: "System / 跟随系统"
         case .en: "English"
         case .zhHans: "简体中文"
+        case .ja: "日本語"
+        case .ko: "한국어"
+        case .fr: "Français"
+        case .de: "Deutsch"
+        case .es: "Español"
         }
     }
 
@@ -21,13 +31,23 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     var resolvedCode: String {
         switch self {
         case .system:
+            let supportedPrefixes: [(String, String)] = [
+                ("zh", "zh-Hans"), ("en", "en"), ("ja", "ja"),
+                ("ko", "ko"), ("fr", "fr"), ("de", "de"), ("es", "es"),
+            ]
             for lang in Locale.preferredLanguages {
-                if lang.hasPrefix("zh") { return "zh-Hans" }
-                if lang.hasPrefix("en") { return "en" }
+                for (prefix, code) in supportedPrefixes {
+                    if lang.hasPrefix(prefix) { return code }
+                }
             }
             return "en"
         case .en: return "en"
         case .zhHans: return "zh-Hans"
+        case .ja: return "ja"
+        case .ko: return "ko"
+        case .fr: return "fr"
+        case .de: return "de"
+        case .es: return "es"
         }
     }
 }
