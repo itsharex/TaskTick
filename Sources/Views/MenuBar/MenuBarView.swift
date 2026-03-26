@@ -35,6 +35,7 @@ struct MenuBarView: View {
 
             Divider()
 
+            // Task list
             if upcomingTasks.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "tray")
@@ -47,24 +48,21 @@ struct MenuBarView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
             } else {
-                ScrollView {
-                    VStack(spacing: 2) {
-                        HStack {
-                            Text(L10n.tr("menubar.upcoming"))
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                            Spacer()
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.top, 4)
-
-                        ForEach(upcomingTasks) { task in
-                            MenuBarTaskRow(task: task, isRunning: scheduler.runningTaskIDs.contains(task.id))
-                        }
+                VStack(spacing: 2) {
+                    HStack {
+                        Text(L10n.tr("menubar.upcoming"))
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                        Spacer()
                     }
-                    .padding(8)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 4)
+
+                    ForEach(upcomingTasks) { task in
+                        MenuBarTaskRow(task: task, isRunning: scheduler.runningTaskIDs.contains(task.id))
+                    }
                 }
-                .frame(maxHeight: 320)
+                .padding(8)
             }
 
             Divider()
@@ -138,6 +136,12 @@ struct MenuBarView: View {
             .padding(.vertical, 4)
         }
         .frame(width: 300)
+        .onAppear {
+            if !scheduler.isRunning {
+                scheduler.configure(modelContext: modelContext)
+                scheduler.start()
+            }
+        }
     }
 }
 
