@@ -27,6 +27,7 @@ final class ScriptExecutor: ObservableObject {
         let envVars = task.environmentVariables
         let timeoutSeconds = task.timeoutSeconds
         let taskId = task.id
+        let ignoreExitCode = task.ignoreExitCode
 
         // Resolve script: inline body or file content
         let scriptBody: String
@@ -52,7 +53,8 @@ final class ScriptExecutor: ObservableObject {
             workingDirectory: workingDirectory,
             environmentVariables: envVars,
             timeoutSeconds: timeoutSeconds,
-            taskId: taskId
+            taskId: taskId,
+            ignoreExitCode: ignoreExitCode
         )
 
         let endTime = Date()
@@ -131,7 +133,8 @@ final class ScriptExecutor: ObservableObject {
         workingDirectory: String?,
         environmentVariables: [String: String]?,
         timeoutSeconds: Int,
-        taskId: UUID
+        taskId: UUID,
+        ignoreExitCode: Bool = false
     ) async -> ProcessResult {
         // Run the entire process on a background queue to avoid blocking the main thread
         await withCheckedContinuation { (continuation: CheckedContinuation<ProcessResult, Never>) in
@@ -236,7 +239,7 @@ final class ScriptExecutor: ObservableObject {
                 case .uncaughtSignal:
                     status = .timeout
                 case .exit:
-                    status = exitCode == 0 ? .success : .failure
+                    status = (exitCode == 0 || ignoreExitCode) ? .success : .failure
                 @unknown default:
                     status = .failure
                 }

@@ -160,6 +160,7 @@ final class ScheduledTask {
     var notifyOnFailure: Bool
     var runMissedExecution: Bool = false
     var strongReminder: Bool = false
+    var ignoreExitCode: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \ExecutionLog.task)
     var executionLogs: [ExecutionLog]

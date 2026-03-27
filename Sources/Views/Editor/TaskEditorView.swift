@@ -56,6 +56,7 @@ struct TaskEditorView: View {
     @State private var notifyOnSuccess = true
     @State private var notifyOnFailure = true
     @State private var strongReminder = false
+    @State private var ignoreExitCode = false
 
     @State private var selectedTab = 0
     @State private var loadedTaskId: UUID?
@@ -370,6 +371,8 @@ struct TaskEditorView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                Toggle(L10n.tr("editor.ignore_exit_code"), isOn: $ignoreExitCode)
             }
         }
         .formStyle(.grouped)
@@ -700,6 +703,7 @@ struct TaskEditorView: View {
         notifyOnSuccess = true
         notifyOnFailure = true
         strongReminder = false
+        ignoreExitCode = false
         selectedTab = 0
 
         // Apply template if present (for new task from template)
@@ -724,6 +728,7 @@ struct TaskEditorView: View {
         notifyOnSuccess = task.notifyOnSuccess
         notifyOnFailure = task.notifyOnFailure
         strongReminder = task.strongReminder
+        ignoreExitCode = task.ignoreExitCode
         repeatType = task.repeatType
         endRepeatType = task.endRepeatType
         endRepeatDate = task.endRepeatDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
@@ -756,6 +761,7 @@ struct TaskEditorView: View {
         target.notifyOnSuccess = notifyOnSuccess
         target.notifyOnFailure = notifyOnFailure
         target.strongReminder = strongReminder
+        target.ignoreExitCode = ignoreExitCode
         target.isEnabled = isEnabled
         target.updatedAt = Date()
 

@@ -85,6 +85,7 @@
 "editor.working_dir.choose" = "Выбрать директорию";
 "editor.timeout" = "Тайм-аут";
 "editor.timeout.seconds" = "секунд";
+"editor.ignore_exit_code" = "Игнорировать код выхода";
 "editor.section.notification" = "Уведомления";
 "editor.notify_success" = "Уведомлять при успехе";
 "editor.notify_failure" = "Уведомлять при ошибке";

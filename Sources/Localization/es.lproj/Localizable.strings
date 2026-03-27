@@ -83,6 +83,7 @@
 "editor.working_dir.choose" = "Elegir directorio";
 "editor.timeout" = "Tiempo límite";
 "editor.timeout.seconds" = "segundos";
+"editor.ignore_exit_code" = "Ignorar código de salida";
 "editor.section.notification" = "Notificaciones";
 "editor.notify_success" = "Notificar al completar";
 "editor.notify_failure" = "Notificar al fallar";

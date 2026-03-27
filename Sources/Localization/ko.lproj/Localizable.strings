@@ -80,6 +80,7 @@
 "editor.working_dir.choose" = "디렉토리 선택";
 "editor.timeout" = "시간 제한";
 "editor.timeout.seconds" = "초";
+"editor.ignore_exit_code" = "종료 코드 무시";
 "editor.section.notification" = "알림";
 "editor.notify_success" = "성공 시 알림";
 "editor.notify_failure" = "실패 시 알림";

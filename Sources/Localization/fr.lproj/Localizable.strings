@@ -77,6 +77,7 @@
 "editor.working_dir.choose" = "Choisir un repertoire";
 "editor.timeout" = "Delai d'expiration";
 "editor.timeout.seconds" = "secondes";
+"editor.ignore_exit_code" = "Ignorer le code de sortie";
 "editor.section.notification" = "Notifications";
 "editor.notify_success" = "Notifier en cas de succes";
 "editor.notify_failure" = "Notifier en cas d'echec";

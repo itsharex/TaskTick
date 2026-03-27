@@ -85,6 +85,7 @@
 "editor.working_dir.choose" = "Pilih Direktori";
 "editor.timeout" = "Batas Waktu";
 "editor.timeout.seconds" = "detik";
+"editor.ignore_exit_code" = "Abaikan Kode Keluar";
 "editor.section.notification" = "Notifikasi";
 "editor.notify_success" = "Notifikasi saat Berhasil";
 "editor.notify_failure" = "Notifikasi saat Gagal";

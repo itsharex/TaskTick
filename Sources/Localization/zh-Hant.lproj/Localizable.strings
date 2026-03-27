@@ -85,6 +85,7 @@
 "editor.working_dir.choose" = "選擇目錄";
 "editor.timeout" = "逾時時間";
 "editor.timeout.seconds" = "秒";
+"editor.ignore_exit_code" = "忽略退出碼";
 "editor.section.notification" = "通知";
 "editor.notify_success" = "成功時通知";
 "editor.notify_failure" = "失敗時通知";

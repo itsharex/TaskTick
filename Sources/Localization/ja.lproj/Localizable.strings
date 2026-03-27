@@ -85,6 +85,7 @@
 "editor.working_dir.choose" = "ディレクトリを選択";
 "editor.timeout" = "タイムアウト";
 "editor.timeout.seconds" = "秒";
+"editor.ignore_exit_code" = "終了コードを無視";
 "editor.section.notification" = "通知";
 "editor.notify_success" = "成功時に通知";
 "editor.notify_failure" = "失敗時に通知";
