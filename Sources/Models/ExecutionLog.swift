@@ -36,16 +36,16 @@ enum TriggerType: String, Codable, Sendable {
 
 @Model
 final class ExecutionLog {
-    var id: UUID
+    var id: UUID = UUID()
     var task: ScheduledTask?
-    var startedAt: Date
+    var startedAt: Date = Date()
     var finishedAt: Date?
-    var statusRaw: String // ExecutionStatus raw value
+    var statusRaw: String = ExecutionStatus.running.rawValue
     var exitCode: Int?
     var stdout: String?
     var stderr: String?
     var durationMs: Int?
-    var triggeredByRaw: String // TriggerType raw value
+    var triggeredByRaw: String = TriggerType.manual.rawValue
 
     init(
         task: ScheduledTask? = nil,

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import os
 
 /// Manages automatic database backups.
@@ -10,6 +11,7 @@ final class DatabaseBackup: ObservableObject {
     private static let logger = Logger(subsystem: "com.lifedever.TaskTick", category: "DatabaseBackup")
     private var timer: Timer?
     private var storeURL: URL?
+    private var modelContext: ModelContext?
 
     // MARK: - Settings (persisted via UserDefaults)
 
@@ -41,8 +43,9 @@ final class DatabaseBackup: ObservableObject {
 
     // MARK: - Lifecycle
 
-    func configure(storeURL: URL) {
+    func configure(storeURL: URL, modelContext: ModelContext? = nil) {
         self.storeURL = storeURL
+        self.modelContext = modelContext
     }
 
     func startScheduledBackups() {
@@ -108,6 +111,11 @@ final class DatabaseBackup: ObservableObject {
         guard let storeURL else {
             Self.logger.warning("No store URL configured, skipping backup")
             return false
+        }
+
+        // Flush pending writes to disk before copying files
+        if let modelContext {
+            try? modelContext.save()
         }
 
         let fm = FileManager.default

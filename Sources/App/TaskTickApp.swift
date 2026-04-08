@@ -17,7 +17,7 @@ struct TaskTickApp: App {
         scheduler.start()
 
         let backup = DatabaseBackup.shared
-        backup.configure(storeURL: Self._storeURL)
+        backup.configure(storeURL: Self._storeURL, modelContext: container.mainContext)
         backup.startScheduledBackups()
     }
 

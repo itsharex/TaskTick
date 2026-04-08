@@ -199,29 +199,30 @@ struct SettingsView: View {
             Button(L10n.tr("settings.backup.restore_confirm.cancel"), role: .cancel) {}
             Button(L10n.tr("settings.backup.restore_confirm.confirm"), role: .destructive) {
                 if let backup = backupToRestore {
-                    restoreSuccess = backupManager.restoreFrom(backupName: backup.name)
-                    showRestoreResult = true
+                    let success = backupManager.restoreFrom(backupName: backup.name)
+                    if success {
+                        // Restart immediately — the old ModelContainer is invalid after
+                        // file replacement, any SwiftUI re-render will crash.
+                        let appPath = Bundle.main.bundlePath
+                        let script = "sleep 1; open \"\(appPath)\""
+                        let process = Process()
+                        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+                        process.arguments = ["-c", script]
+                        try? process.run()
+                        NSApp.terminate(nil)
+                    } else {
+                        restoreSuccess = false
+                        showRestoreResult = true
+                    }
                 }
             }
         } message: {
             Text(L10n.tr("settings.backup.restore_confirm.message"))
         }
-        .alert(restoreSuccess ? L10n.tr("settings.backup.restore_success") : L10n.tr("settings.backup.restore_failed"), isPresented: $showRestoreResult) {
-            Button("OK") {
-                if restoreSuccess {
-                    // Restart app to reload database
-                    let appURL = Bundle.main.bundleURL
-                    let process = Process()
-                    process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-                    process.arguments = ["-n", appURL.path]
-                    try? process.run()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        NSApp.terminate(nil)
-                    }
-                }
-            }
+        .alert(L10n.tr("settings.backup.restore_failed"), isPresented: $showRestoreResult) {
+            Button("OK") {}
         } message: {
-            Text(restoreSuccess ? L10n.tr("settings.backup.restore_success.message") : L10n.tr("settings.backup.restore_failed.message"))
+            Text(L10n.tr("settings.backup.restore_failed.message"))
         }
     }
 
