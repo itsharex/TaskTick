@@ -10,6 +10,8 @@
 "task.filter.all" = "Toutes";
 "task.filter.enabled" = "Activees";
 "task.filter.disabled" = "Desactivees";
+"task.sort.newest_first" = "Plus récentes";
+"task.sort.oldest_first" = "Plus anciennes";
 "task.search.prompt" = "Rechercher des taches...";
 "task.empty.title" = "Aucune tache";
 "task.empty.description" = "Cliquez sur + pour creer votre premiere tache planifiee";

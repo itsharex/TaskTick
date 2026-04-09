@@ -61,6 +61,7 @@ struct TaskEditorView: View {
     @State private var selectedTab = 0
     @State private var loadedTaskId: UUID?
     @State private var loadedForNew = false
+    @State private var loadedTrigger = -1
 
     // Script validation
     @State private var isValidating = false
@@ -134,8 +135,6 @@ struct TaskEditorView: View {
         }
         .onAppear { loadTask() }
         .onChange(of: editorState.openTrigger) { _, _ in
-            loadedForNew = false
-            loadedTaskId = nil
             loadTask()
         }
     }
@@ -677,15 +676,9 @@ struct TaskEditorView: View {
     }
 
     private func loadTask() {
-        let currentId = task?.id
-        if currentId == nil {
-            guard !loadedForNew else { return }
-            loadedForNew = true
-        } else {
-            guard currentId != loadedTaskId else { return }
-            loadedForNew = false
-        }
-        loadedTaskId = currentId
+        let trigger = editorState.openTrigger
+        guard trigger != loadedTrigger else { return }
+        loadedTrigger = trigger
 
         // Reset to defaults for new task
         name = ""

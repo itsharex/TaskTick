@@ -12,6 +12,8 @@
 "task.filter.all" = "Semua";
 "task.filter.enabled" = "Aktif";
 "task.filter.disabled" = "Nonaktif";
+"task.sort.newest_first" = "Terbaru";
+"task.sort.oldest_first" = "Terlama";
 "task.search.prompt" = "Cari tugas...";
 "task.empty.title" = "Belum Ada Tugas";
 "task.empty.description" = "Klik + untuk membuat tugas terjadwal pertama Anda";

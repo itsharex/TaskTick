@@ -18,8 +18,9 @@ enum TaskFilter: String, CaseIterable {
 struct TaskListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.openWindow) private var openWindow
-    @Query(sort: \ScheduledTask.createdAt, order: .forward) private var tasks: [ScheduledTask]
+    @Query(sort: \ScheduledTask.createdAt, order: .reverse) private var tasks: [ScheduledTask]
     @Binding var selectedTask: ScheduledTask?
+    @Binding var sortNewestFirst: Bool
     @State private var filter: TaskFilter = .all
     @State private var searchText = ""
     @State private var taskToDelete: ScheduledTask?
@@ -29,7 +30,7 @@ struct TaskListView: View {
     @StateObject private var scheduler = TaskScheduler.shared
 
     var filteredTasks: [ScheduledTask] {
-        tasks.filter { task in
+        let filtered = tasks.filter { task in
             let matchesFilter: Bool = switch filter {
             case .all: true
             case .enabled: task.isEnabled
@@ -38,6 +39,8 @@ struct TaskListView: View {
             let matchesSearch = searchText.isEmpty || task.name.localizedCaseInsensitiveContains(searchText)
             return matchesFilter && matchesSearch
         }
+        // @Query is .reverse (newest first); flip when user wants oldest first
+        return sortNewestFirst ? filtered : filtered.reversed()
     }
 
     var body: some View {
@@ -69,6 +72,7 @@ struct TaskListView: View {
                 .padding(.horizontal, 20)
                 Spacer()
             } else {
+                ScrollViewReader { proxy in
                 List(selection: $selectedTask) {
                     ForEach(filteredTasks) { task in
                         TaskListRow(
@@ -76,6 +80,7 @@ struct TaskListView: View {
                             isRunning: scheduler.runningTaskIDs.contains(task.id)
                         )
                         .tag(task)
+                        .id(task.id)
                         .pointerCursor()
                         .contextMenu {
                             Button(L10n.tr("task.detail.edit"), systemImage: "pencil") {
@@ -110,7 +115,7 @@ struct TaskListView: View {
                     Button(L10n.tr("clear_logs.cancel"), role: .cancel) {}
                     Button(L10n.tr("clear_logs.confirm"), role: .destructive) {
                         if let task = taskToClearLogs {
-                            for log in task.executionLogs {
+                            for log in Array(task.executionLogs) {
                                 modelContext.delete(log)
                             }
                             task.executionCount = 0
@@ -134,6 +139,14 @@ struct TaskListView: View {
                 } message: {
                     Text(L10n.tr("delete.message", taskToDelete?.name ?? ""))
                 }
+                .onChange(of: selectedTask) { _, newTask in
+                    if let task = newTask {
+                        withAnimation {
+                            proxy.scrollTo(task.id, anchor: .center)
+                        }
+                    }
+                }
+                } // ScrollViewReader
             }
         }
         .searchable(text: $searchText, prompt: Text(L10n.tr("task.search.prompt")))
@@ -187,6 +200,12 @@ struct TaskListRow: View {
     let task: ScheduledTask
     let isRunning: Bool
 
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .short
+        return f
+    }()
+
     var body: some View {
         HStack(spacing: 10) {
             // Status indicator
@@ -220,6 +239,11 @@ struct TaskListRow: View {
                     Image(systemName: "repeat")
                         .font(.system(size: 9))
                     Text(task.repeatType.displayName)
+                        .font(.caption2)
+
+                    Text("·")
+                        .font(.caption2)
+                    Text(Self.relativeFormatter.localizedString(for: task.createdAt, relativeTo: Date()))
                         .font(.caption2)
                 }
                 .foregroundStyle(.secondary)

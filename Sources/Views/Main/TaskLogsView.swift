@@ -8,7 +8,7 @@ struct TaskLogsView: View {
     @State private var selectedLog: ExecutionLog?
 
     var sortedLogs: [ExecutionLog] {
-        task.executionLogs.sorted { $0.startedAt > $1.startedAt }
+        Array(task.executionLogs).sorted { $0.startedAt > $1.startedAt }
     }
 
     var body: some View {

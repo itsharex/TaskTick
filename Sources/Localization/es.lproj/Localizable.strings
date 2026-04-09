@@ -12,6 +12,8 @@
 "task.filter.all" = "Todas";
 "task.filter.enabled" = "Activas";
 "task.filter.disabled" = "Inactivas";
+"task.sort.newest_first" = "Más recientes";
+"task.sort.oldest_first" = "Más antiguas";
 "task.search.prompt" = "Buscar tareas...";
 "task.empty.title" = "No hay tareas";
 "task.empty.description" = "Haz clic en + para crear tu primera tarea programada";

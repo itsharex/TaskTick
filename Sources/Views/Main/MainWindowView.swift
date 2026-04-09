@@ -6,13 +6,39 @@ struct MainWindowView: View {
     @Environment(\.openWindow) private var openWindow
     @StateObject private var editorState = EditorState.shared
     @State private var selectedTask: ScheduledTask?
+    @State private var sortNewestFirst = true
     @Binding var showingCrontabImport: Bool
 
     var body: some View {
         NavigationSplitView {
-            TaskListView(selectedTask: $selectedTask)
+            TaskListView(selectedTask: $selectedTask, sortNewestFirst: $sortNewestFirst)
                 .navigationSplitViewColumnWidth(min: 230, ideal: 270, max: 350)
                 .toolbar {
+                    ToolbarItem(placement: .automatic) {
+                        Menu {
+                            Button {
+                                sortNewestFirst = true
+                            } label: {
+                                if sortNewestFirst {
+                                    Label(L10n.tr("task.sort.newest_first"), systemImage: "checkmark")
+                                } else {
+                                    Text(L10n.tr("task.sort.newest_first"))
+                                }
+                            }
+                            Button {
+                                sortNewestFirst = false
+                            } label: {
+                                if !sortNewestFirst {
+                                    Label(L10n.tr("task.sort.oldest_first"), systemImage: "checkmark")
+                                } else {
+                                    Text(L10n.tr("task.sort.oldest_first"))
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
+                        }
+                        .help(L10n.tr("task.sort.newest_first"))
+                    }
                     ToolbarItem(placement: .primaryAction) {
                         Button {
                             EditorState.shared.openNew()

@@ -209,6 +209,7 @@ struct SettingsView: View {
                         process.executableURL = URL(fileURLWithPath: "/bin/sh")
                         process.arguments = ["-c", script]
                         try? process.run()
+                        AppDelegate.shouldReallyQuit = true
                         NSApp.terminate(nil)
                     } else {
                         restoreSuccess = false

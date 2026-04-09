@@ -12,6 +12,8 @@
 "task.filter.all" = "Tutte";
 "task.filter.enabled" = "Attive";
 "task.filter.disabled" = "Disattivate";
+"task.sort.newest_first" = "Più recenti";
+"task.sort.oldest_first" = "Più vecchie";
 "task.search.prompt" = "Cerca attivita...";
 "task.empty.title" = "Nessuna attivita";
 "task.empty.description" = "Clicca + per creare la tua prima attivita pianificata";

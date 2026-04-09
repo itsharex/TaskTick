@@ -12,6 +12,8 @@
 "task.filter.all" = "All";
 "task.filter.enabled" = "Enabled";
 "task.filter.disabled" = "Disabled";
+"task.sort.newest_first" = "Newest First";
+"task.sort.oldest_first" = "Oldest First";
 "task.search.prompt" = "Search tasks...";
 "task.empty.title" = "No Tasks Yet";
 "task.empty.description" = "Click + to create your first scheduled task";

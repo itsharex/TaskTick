@@ -12,6 +12,8 @@
 "task.filter.all" = "すべて";
 "task.filter.enabled" = "有効";
 "task.filter.disabled" = "無効";
+"task.sort.newest_first" = "新しい順";
+"task.sort.oldest_first" = "古い順";
 "task.search.prompt" = "タスクを検索...";
 "task.empty.title" = "タスクがありません";
 "task.empty.description" = "＋をクリックして最初のスケジュールタスクを作成しましょう";

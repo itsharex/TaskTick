@@ -48,7 +48,7 @@ struct TaskDetailView: View {
         .alert(L10n.tr("clear_logs.title"), isPresented: $showingClearLogsAlert) {
             Button(L10n.tr("clear_logs.cancel"), role: .cancel) {}
             Button(L10n.tr("clear_logs.confirm"), role: .destructive) {
-                for log in task.executionLogs {
+                for log in Array(task.executionLogs) {
                     modelContext.delete(log)
                 }
                 task.executionCount = 0
@@ -349,7 +349,8 @@ struct TaskDetailView: View {
                     .pointerCursor()
                 }
 
-                let logs = (task.executionLogs)
+                let allLogs = Array(task.executionLogs)
+                let logs = allLogs
                     .sorted { $0.startedAt > $1.startedAt }
                     .prefix(10)
 
