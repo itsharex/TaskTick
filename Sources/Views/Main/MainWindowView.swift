@@ -6,7 +6,7 @@ struct MainWindowView: View {
     @Environment(\.openWindow) private var openWindow
     @StateObject private var editorState = EditorState.shared
     @State private var selectedTask: ScheduledTask?
-    @State private var sortNewestFirst = true
+    @AppStorage("sortNewestFirst") private var sortNewestFirst = true
     @Binding var showingCrontabImport: Bool
 
     var body: some View {
@@ -37,7 +37,7 @@ struct MainWindowView: View {
                         } label: {
                             Image(systemName: "arrow.up.arrow.down")
                         }
-                        .help(L10n.tr("task.sort.newest_first"))
+                        .help(sortNewestFirst ? L10n.tr("task.sort.newest_first") : L10n.tr("task.sort.oldest_first"))
                     }
                     ToolbarItem(placement: .primaryAction) {
                         Button {

@@ -416,3 +416,7 @@
 "cron.human.daily_midnight" = "Ogni giorno a mezzanotte";
 "cron.human.weekly_sunday" = "Domenica a mezzanotte";
 "cron.human.monthly_first" = "1 del mese a mezzanotte";
+"recovery.title" = "Errore database";
+"recovery.message" = "Impossibile aprire il database. Il file dei dati è stato conservato. Puoi ripristinare un backup nelle Impostazioni o individuare il file manualmente.";
+"recovery.open_settings" = "Apri Impostazioni";
+"recovery.open_folder" = "Mostra file database";

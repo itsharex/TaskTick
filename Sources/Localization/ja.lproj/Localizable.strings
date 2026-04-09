@@ -416,3 +416,7 @@
 "cron.human.daily_midnight" = "毎日0時";
 "cron.human.weekly_sunday" = "毎週日曜0時";
 "cron.human.monthly_first" = "毎月1日0時";
+"recovery.title" = "データベースエラー";
+"recovery.message" = "データベースを開けませんでした。データファイルは保持されています。設定からバックアップを復元するか、データベースファイルを手動で確認できます。";
+"recovery.open_settings" = "設定を開く";
+"recovery.open_folder" = "データベースファイルを表示";

@@ -9,6 +9,10 @@ struct TaskTickApp: App {
     @StateObject private var templateStore = ScriptTemplateStore.shared
     @Environment(\.openWindow) private var openWindow
     @State private var showingCrontabImport = false
+    @State private var showingRecoveryAlert = false
+
+    /// Set to true when ModelContainer failed and app is running with in-memory fallback
+    private(set) static var _needsRecovery = false
 
     init() {
         let container = Self._sharedModelContainer
@@ -29,7 +33,7 @@ struct TaskTickApp: App {
         return URL.applicationSupportDirectory.appendingPathComponent("\(dbName).store")
     }()
 
-    private static let _sharedModelContainer: ModelContainer = {
+    static let _sharedModelContainer: ModelContainer = {
         let schema = Schema([
             ScheduledTask.self,
             ExecutionLog.self,
@@ -58,8 +62,16 @@ struct TaskTickApp: App {
                 }
             }
 
-            // Never delete user data. Crash and preserve the database file for manual recovery.
-            fatalError("Could not create ModelContainer: \(error). Database at \(storeURL.path) preserved for manual recovery.")
+            // Preserve corrupt database for manual recovery, start with a temporary in-memory store
+            // so the app can launch and user can restore from Settings > Backup
+            NSLog("⚠️ Using in-memory store as fallback. Corrupt database preserved at \(storeURL.path)")
+            _needsRecovery = true
+            let fallbackConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            do {
+                return try ModelContainer(for: schema, configurations: [fallbackConfig])
+            } catch {
+                fatalError("Could not create even in-memory ModelContainer: \(error)")
+            }
         }
     }()
 
@@ -75,10 +87,25 @@ struct TaskTickApp: App {
                     NSApp.setActivationPolicy(.regular)
                     seedDefaultTask(context: sharedModelContainer.mainContext)
 
+                    if Self._needsRecovery {
+                        showingRecoveryAlert = true
+                    }
+
                     Task {
                         await updateChecker.checkForUpdates()
                         updateChecker.startPeriodicChecks()
                     }
+                }
+                .alert(L10n.tr("recovery.title"), isPresented: $showingRecoveryAlert) {
+                    Button(L10n.tr("recovery.open_settings")) {
+                        openWindow(id: "settings")
+                    }
+                    Button(L10n.tr("recovery.open_folder")) {
+                        NSWorkspace.shared.selectFile(Self._storeURL.path, inFileViewerRootedAtPath: Self._storeURL.deletingLastPathComponent().path)
+                    }
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(L10n.tr("recovery.message"))
                 }
         }
         .modelContainer(sharedModelContainer)

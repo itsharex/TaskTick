@@ -373,3 +373,7 @@
 "cron.human.daily_midnight" = "Tous les jours a minuit";
 "cron.human.weekly_sunday" = "Dimanche a minuit";
 "cron.human.monthly_first" = "1er du mois a minuit";
+"recovery.title" = "Erreur de base de données";
+"recovery.message" = "La base de données n'a pas pu être ouverte. Votre fichier de données a été conservé. Vous pouvez restaurer une sauvegarde dans les Réglages ou localiser le fichier manuellement.";
+"recovery.open_settings" = "Ouvrir les Réglages";
+"recovery.open_folder" = "Afficher le fichier";

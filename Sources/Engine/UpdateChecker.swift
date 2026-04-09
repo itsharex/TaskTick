@@ -237,14 +237,21 @@ final class UpdateChecker: ObservableObject {
 
         // DMG is valid and mounted — now safe to quit and replace
         let destApp = Bundle.main.bundlePath
+        let appPid = ProcessInfo.processInfo.processIdentifier
         let script = """
         #!/bin/bash
         MOUNT_POINT="\(mountPoint)"
         SOURCE_APP="\(sourceApp)"
         DEST_APP="\(destApp)"
+        APP_PID=\(appPid)
 
-        # Wait for the app to quit
-        sleep 2
+        # Wait for the app to actually exit (up to 30 seconds)
+        for i in $(seq 1 60); do
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+                break
+            fi
+            sleep 0.5
+        done
 
         # Replace and relaunch
         rm -rf "$DEST_APP"
@@ -263,7 +270,10 @@ final class UpdateChecker: ObservableObject {
             process.arguments = [scriptPath]
             try process.run()
 
-            // DMG verified, script launched — safe to quit
+            // Force backup and flush database before quitting
+            DatabaseBackup.shared.performBackup()
+            try? TaskTickApp._sharedModelContainer.mainContext.save()
+
             AppDelegate.shouldReallyQuit = true
             NSApp.terminate(nil)
         } catch {

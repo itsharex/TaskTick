@@ -59,8 +59,6 @@ struct TaskEditorView: View {
     @State private var ignoreExitCode = false
 
     @State private var selectedTab = 0
-    @State private var loadedTaskId: UUID?
-    @State private var loadedForNew = false
     @State private var loadedTrigger = -1
 
     // Script validation
@@ -633,7 +631,6 @@ struct TaskEditorView: View {
     // MARK: - Helpers
 
     private func closeWindow() {
-        loadedForNew = false
         editorState.close()
         // Close the editor window by finding it
         for window in NSApp.windows where window.identifier?.rawValue == "editor" || window.title == L10n.tr("editor.title.edit") || window.title == L10n.tr("editor.title.new") {

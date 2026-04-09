@@ -407,3 +407,7 @@
 "cron.human.daily_midnight" = "Diario a medianoche";
 "cron.human.weekly_sunday" = "Domingo a medianoche";
 "cron.human.monthly_first" = "1.º del mes a medianoche";
+"recovery.title" = "Error de base de datos";
+"recovery.message" = "No se pudo abrir la base de datos. Su archivo de datos se ha conservado. Puede restaurar desde una copia de seguridad en Ajustes o buscar el archivo manualmente.";
+"recovery.open_settings" = "Abrir Ajustes";
+"recovery.open_folder" = "Mostrar archivo";

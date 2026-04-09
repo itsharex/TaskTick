@@ -416,3 +416,7 @@
 "cron.human.daily_midnight" = "Täglich um Mitternacht";
 "cron.human.weekly_sunday" = "Sonntag um Mitternacht";
 "cron.human.monthly_first" = "1. des Monats um Mitternacht";
+"recovery.title" = "Datenbankfehler";
+"recovery.message" = "Die Datenbank konnte nicht geöffnet werden. Ihre Datendatei wurde beibehalten. Sie können ein Backup in den Einstellungen wiederherstellen oder die Datenbankdatei manuell suchen.";
+"recovery.open_settings" = "Einstellungen öffnen";
+"recovery.open_folder" = "Datenbankdatei anzeigen";

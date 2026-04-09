@@ -423,3 +423,7 @@
 "cron.human.daily_midnight" = "Daily at midnight";
 "cron.human.weekly_sunday" = "Sunday at midnight";
 "cron.human.monthly_first" = "1st of month at midnight";
+"recovery.title" = "Database Error";
+"recovery.message" = "The database could not be opened. Your data file has been preserved. You can restore from a backup in Settings, or locate the database file manually.";
+"recovery.open_settings" = "Open Settings";
+"recovery.open_folder" = "Show Database File";

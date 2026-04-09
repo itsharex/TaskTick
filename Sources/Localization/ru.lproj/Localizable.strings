@@ -416,3 +416,7 @@
 "cron.human.daily_midnight" = "Ежедневно в полночь";
 "cron.human.weekly_sunday" = "Воскресенье в полночь";
 "cron.human.monthly_first" = "1-е число месяца в полночь";
+"recovery.title" = "Ошибка базы данных";
+"recovery.message" = "Не удалось открыть базу данных. Файл данных сохранён. Вы можете восстановить резервную копию в Настройках или найти файл базы данных вручную.";
+"recovery.open_settings" = "Открыть Настройки";
+"recovery.open_folder" = "Показать файл БД";

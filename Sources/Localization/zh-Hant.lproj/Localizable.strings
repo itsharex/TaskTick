@@ -416,3 +416,7 @@
 "cron.human.daily_midnight" = "每天零點";
 "cron.human.weekly_sunday" = "每週日零點";
 "cron.human.monthly_first" = "每月 1 日零點";
+"recovery.title" = "資料庫錯誤";
+"recovery.message" = "資料庫無法開啟，您的資料檔案已保留。您可以在設定中從備份還原，或手動定位資料庫檔案。";
+"recovery.open_settings" = "開啟設定";
+"recovery.open_folder" = "顯示資料庫檔案";

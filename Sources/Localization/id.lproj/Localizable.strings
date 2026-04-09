@@ -416,3 +416,7 @@
 "cron.human.daily_midnight" = "Setiap hari tengah malam";
 "cron.human.weekly_sunday" = "Minggu tengah malam";
 "cron.human.monthly_first" = "Tanggal 1 tengah malam";
+"recovery.title" = "Error Database";
+"recovery.message" = "Database tidak dapat dibuka. File data Anda telah disimpan. Anda dapat memulihkan dari cadangan di Pengaturan atau mencari file database secara manual.";
+"recovery.open_settings" = "Buka Pengaturan";
+"recovery.open_folder" = "Tampilkan File Database";

@@ -391,3 +391,7 @@
 "cron.human.daily_midnight" = "매일 자정";
 "cron.human.weekly_sunday" = "일요일 자정";
 "cron.human.monthly_first" = "매월 1일 자정";
+"recovery.title" = "데이터베이스 오류";
+"recovery.message" = "데이터베이스를 열 수 없습니다. 데이터 파일은 보존되었습니다. 설정에서 백업을 복원하거나 데이터베이스 파일을 직접 찾을 수 있습니다.";
+"recovery.open_settings" = "설정 열기";
+"recovery.open_folder" = "데이터베이스 파일 보기";

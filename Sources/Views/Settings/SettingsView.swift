@@ -199,12 +199,18 @@ struct SettingsView: View {
             Button(L10n.tr("settings.backup.restore_confirm.cancel"), role: .cancel) {}
             Button(L10n.tr("settings.backup.restore_confirm.confirm"), role: .destructive) {
                 if let backup = backupToRestore {
+                    // Flush pending writes before replacing database files
+                    try? TaskTickApp._sharedModelContainer.mainContext.save()
+
                     let success = backupManager.restoreFrom(backupName: backup.name)
                     if success {
-                        // Restart immediately — the old ModelContainer is invalid after
-                        // file replacement, any SwiftUI re-render will crash.
+                        // Restart: wait for this process to exit before relaunching
                         let appPath = Bundle.main.bundlePath
-                        let script = "sleep 1; open \"\(appPath)\""
+                        let pid = ProcessInfo.processInfo.processIdentifier
+                        let script = """
+                        while kill -0 \(pid) 2>/dev/null; do sleep 0.5; done
+                        open "\(appPath)"
+                        """
                         let process = Process()
                         process.executableURL = URL(fileURLWithPath: "/bin/sh")
                         process.arguments = ["-c", script]

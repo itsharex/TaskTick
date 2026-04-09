@@ -423,3 +423,7 @@
 "cron.human.daily_midnight" = "每天零点";
 "cron.human.weekly_sunday" = "每周日零点";
 "cron.human.monthly_first" = "每月 1 日零点";
+"recovery.title" = "数据库错误";
+"recovery.message" = "数据库无法打开，您的数据文件已保留。您可以在设置中从备份恢复，或手动定位数据库文件。";
+"recovery.open_settings" = "打开设置";
+"recovery.open_folder" = "显示数据库文件";

@@ -52,7 +52,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        // Clean up scheduler
         TaskScheduler.shared.stop()
+        // Flush pending SwiftData writes to ensure database is consistent on disk
+        try? TaskTickApp._sharedModelContainer.mainContext.save()
     }
 }
