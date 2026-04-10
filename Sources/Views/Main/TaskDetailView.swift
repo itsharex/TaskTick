@@ -9,6 +9,7 @@ struct TaskDetailView: View {
     @State private var showingClearLogsAlert = false
     @State private var isScriptExpanded = false
     @State private var showingTaskLogs = false
+    @State private var selectedLogIdForSheet: UUID?
     @State private var cachedFileContent: String?
     @StateObject private var scheduler = TaskScheduler.shared
 
@@ -43,7 +44,7 @@ struct TaskDetailView: View {
         .onAppear { loadFileContent() }
         .onChange(of: task.scriptFilePath) { loadFileContent() }
         .sheet(isPresented: $showingTaskLogs) {
-            TaskLogsView(task: task)
+            TaskLogsView(task: task, initialSelectedLogId: selectedLogIdForSheet)
         }
         .alert(L10n.tr("clear_logs.title"), isPresented: $showingClearLogsAlert) {
             Button(L10n.tr("clear_logs.cancel"), role: .cancel) {}
@@ -342,6 +343,7 @@ struct TaskDetailView: View {
                         .background(Capsule().fill(.quaternary))
                     Spacer()
                     Button(L10n.tr("task.detail.view_logs")) {
+                        selectedLogIdForSheet = nil
                         showingTaskLogs = true
                     }
                     .font(.caption)
@@ -371,27 +373,37 @@ struct TaskDetailView: View {
                 } else {
                     VStack(spacing: 4) {
                         ForEach(Array(logs)) { log in
-                            HStack(spacing: 8) {
-                                StatusBadge(status: log.status, compact: true)
+                            Button {
+                                selectedLogIdForSheet = log.id
+                                showingTaskLogs = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    StatusBadge(status: log.status, compact: true)
 
-                                Text(Self.timeAgo(log.startedAt))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    Text(Self.timeAgo(log.startedAt))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
 
-                                Spacer()
+                                    Spacer()
 
-                                if let ms = log.durationMs {
-                                    Text("\(ms)ms")
-                                        .font(.system(.caption2, design: .monospaced))
-                                        .foregroundStyle(.tertiary)
+                                    if log.status == .running {
+                                        ProgressView()
+                                            .controlSize(.mini)
+                                    } else if let ms = log.durationMs {
+                                        Text("\(ms)ms")
+                                            .font(.system(.caption2, design: .monospaced))
+                                            .foregroundStyle(.tertiary)
+                                    }
                                 }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(.primary.opacity(0.02))
+                                )
                             }
-                            .padding(.vertical, 4)
-                            .padding(.horizontal, 6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(.primary.opacity(0.02))
-                            )
+                            .buttonStyle(.plain)
+                            .pointerCursor()
                         }
                     }
                 }
