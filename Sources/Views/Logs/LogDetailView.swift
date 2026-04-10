@@ -3,6 +3,25 @@ import SwiftData
 
 struct LogDetailView: View {
     let log: ExecutionLog
+    @ObservedObject private var liveOutput = LiveOutputManager.shared
+
+    private var currentStdout: String? {
+        if log.status == .running,
+           let taskId = log.task?.id,
+           let live = liveOutput.liveOutputs[taskId] {
+            return live.stdout.isEmpty ? nil : live.stdout
+        }
+        return log.stdout
+    }
+
+    private var currentStderr: String? {
+        if log.status == .running,
+           let taskId = log.task?.id,
+           let live = liveOutput.liveOutputs[taskId] {
+            return live.stderr.isEmpty ? nil : live.stderr
+        }
+        return log.stderr
+    }
 
     var body: some View {
         ScrollView {
@@ -63,8 +82,22 @@ struct LogDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
+                // Running indicator
+                if log.status == .running {
+                    GlassCard {
+                        HStack {
+                            Text(L10n.tr("status.running"))
+                                .font(.subheadline)
+                                .foregroundStyle(.blue)
+                            Spacer()
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                    }
+                }
+
                 // Output sections
-                if let stdout = log.stdout, !stdout.isEmpty {
+                if let stdout = currentStdout, !stdout.isEmpty {
                     OutputSection(
                         title: L10n.tr("log.detail.stdout"),
                         content: stdout,
@@ -73,7 +106,7 @@ struct LogDetailView: View {
                     )
                 }
 
-                if let stderr = log.stderr, !stderr.isEmpty {
+                if let stderr = currentStderr, !stderr.isEmpty {
                     OutputSection(
                         title: L10n.tr("log.detail.stderr"),
                         content: stderr,
