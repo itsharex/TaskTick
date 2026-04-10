@@ -52,6 +52,7 @@ final class ScriptExecutor: ObservableObject {
             scriptBody = task.scriptBody
         }
 
+        LiveOutputManager.shared.startTracking(taskId: taskId)
         let result = await runProcess(
             shell: shell,
             script: scriptBody,
@@ -87,6 +88,7 @@ final class ScriptExecutor: ObservableObject {
         }
 
         do { try modelContext.save() } catch { NSLog("⚠️ ScriptExecutor save failed: \(error)") }
+        LiveOutputManager.shared.stopTracking(taskId: taskId)
 
         // Send notification using pre-captured properties (safe even if task was deleted)
         let globalNotificationsEnabled = UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
@@ -135,6 +137,36 @@ final class ScriptExecutor: ObservableObject {
     }
 
     // MARK: - Private
+
+    /// Thread-safe buffer for collecting pipe output from readabilityHandler closures.
+    private final class PipeOutputBuffer: @unchecked Sendable {
+        private let lock = NSLock()
+        private let _stdout = MutableDataBox()
+        private let _stderr = MutableDataBox()
+
+        func appendStdout(_ data: Data) {
+            lock.lock()
+            _stdout.data.append(data)
+            lock.unlock()
+        }
+
+        func appendStderr(_ data: Data) {
+            lock.lock()
+            _stderr.data.append(data)
+            lock.unlock()
+        }
+
+        func read() -> (stdout: Data, stderr: Data) {
+            lock.lock()
+            let result = (_stdout.data, _stderr.data)
+            lock.unlock()
+            return result
+        }
+
+        private final class MutableDataBox: @unchecked Sendable {
+            var data = Data()
+        }
+    }
 
     private struct ProcessResult: Sendable {
         let stdout: String
@@ -189,31 +221,34 @@ final class ScriptExecutor: ObservableObject {
                     process.environment = env
                 }
 
-                // Collect output asynchronously to prevent pipe buffer deadlock
+                // Collect output incrementally via readabilityHandler for real-time streaming
                 let stdoutHandle = stdoutPipe.fileHandleForReading
                 let stderrHandle = stderrPipe.fileHandleForReading
-                let group = DispatchGroup()
 
-                var stdoutData = Data()
-                var stderrData = Data()
-                let lock = NSLock()
+                let outputBuffer = PipeOutputBuffer()
 
-                group.enter()
-                DispatchQueue.global().async {
-                    let data = stdoutHandle.readDataToEndOfFile()
-                    lock.lock()
-                    stdoutData = data
-                    lock.unlock()
-                    group.leave()
+                stdoutHandle.readabilityHandler = { handle in
+                    let data = handle.availableData
+                    guard !data.isEmpty else {
+                        stdoutHandle.readabilityHandler = nil
+                        return
+                    }
+                    outputBuffer.appendStdout(data)
+                    DispatchQueue.main.async {
+                        LiveOutputManager.shared.appendStdout(taskId: taskId, data: data)
+                    }
                 }
 
-                group.enter()
-                DispatchQueue.global().async {
-                    let data = stderrHandle.readDataToEndOfFile()
-                    lock.lock()
-                    stderrData = data
-                    lock.unlock()
-                    group.leave()
+                stderrHandle.readabilityHandler = { handle in
+                    let data = handle.availableData
+                    guard !data.isEmpty else {
+                        stderrHandle.readabilityHandler = nil
+                        return
+                    }
+                    outputBuffer.appendStderr(data)
+                    DispatchQueue.main.async {
+                        LiveOutputManager.shared.appendStderr(taskId: taskId, data: data)
+                    }
                 }
 
                 do {
@@ -246,18 +281,22 @@ final class ScriptExecutor: ObservableObject {
                 process.waitUntilExit()
                 timeoutWorkItem.cancel()
 
-                // Wait for output collection
-                group.wait()
+                // Drain remaining pipe data after process exits
+                stdoutHandle.readabilityHandler = nil
+                stderrHandle.readabilityHandler = nil
+                let remainingStdout = stdoutHandle.readDataToEndOfFile()
+                let remainingStderr = stderrHandle.readDataToEndOfFile()
+                if !remainingStdout.isEmpty { outputBuffer.appendStdout(remainingStdout) }
+                if !remainingStderr.isEmpty { outputBuffer.appendStderr(remainingStderr) }
 
                 // Remove from running processes
                 Task { @MainActor in
                     self.runningProcesses.removeValue(forKey: taskId)
                 }
 
-                lock.lock()
+                let (stdoutData, stderrData) = outputBuffer.read()
                 let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
                 let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-                lock.unlock()
 
                 let exitCode = Int(process.terminationStatus)
 
