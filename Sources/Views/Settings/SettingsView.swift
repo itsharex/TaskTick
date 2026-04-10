@@ -7,6 +7,7 @@ struct SettingsView: View {
     @AppStorage("defaultShell") private var defaultShell = "/bin/zsh"
     @AppStorage("defaultTimeout") private var defaultTimeout = 300
     @AppStorage("appearanceMode") private var appearanceMode = "system"
+    @AppStorage("showMenuBarIcon") private var showMenuBarIcon = true
 
     // Notifications
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
@@ -79,6 +80,8 @@ struct SettingsView: View {
                     .onChange(of: launchAtLogin) { _, newValue in
                         toggleLaunchAtLogin(newValue)
                     }
+
+                Toggle(L10n.tr("settings.general.show_menubar_icon"), isOn: $showMenuBarIcon)
             }
 
             Section {

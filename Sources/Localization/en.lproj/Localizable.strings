@@ -207,6 +207,7 @@
 "settings.general.language.restart_hint" = "Changing language takes effect immediately for most UI elements.";
 "settings.general.startup" = "Startup";
 "settings.general.launch_at_login" = "Launch at Login";
+"settings.general.show_menubar_icon" = "Show menu bar icon";
 "settings.general.defaults" = "Defaults";
 "settings.general.default_shell" = "Default Shell";
 "settings.general.default_timeout" = "Default Timeout";

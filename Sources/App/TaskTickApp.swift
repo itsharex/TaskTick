@@ -8,6 +8,7 @@ struct TaskTickApp: App {
     @StateObject private var updateChecker = UpdateChecker.shared
     @StateObject private var templateStore = ScriptTemplateStore.shared
     @Environment(\.openWindow) private var openWindow
+    @AppStorage("showMenuBarIcon") private var showMenuBarIcon = true
     @State private var showingCrontabImport = false
     @State private var showingRecoveryAlert = false
 
@@ -117,7 +118,7 @@ struct TaskTickApp: App {
         }
 
         // Menu bar
-        MenuBarExtra(L10n.tr("app.name"), systemImage: menuBarIcon) {
+        MenuBarExtra(L10n.tr("app.name"), systemImage: menuBarIcon, isInserted: $showMenuBarIcon) {
             MenuBarView()
                 .modelContainer(sharedModelContainer)
                 .localized()
