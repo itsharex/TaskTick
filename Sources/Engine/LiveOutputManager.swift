@@ -1,0 +1,74 @@
+import Foundation
+
+@MainActor
+final class LiveOutputManager: ObservableObject {
+    static let shared = LiveOutputManager()
+
+    @Published private(set) var liveOutputs: [UUID: LiveOutput] = [:]
+
+    struct LiveOutput {
+        var stdout: String = ""
+        var stderr: String = ""
+    }
+
+    private var pendingUpdates: [UUID: LiveOutput] = [:]
+    private var throttleWorkItem: DispatchWorkItem?
+
+    private init() {}
+
+    /// Append stdout chunk for a task (called from background thread via DispatchQueue.main)
+    func appendStdout(taskId: UUID, data: Data) {
+        guard let str = String(data: data, encoding: .utf8), !str.isEmpty else { return }
+        var output = pendingUpdates[taskId] ?? liveOutputs[taskId] ?? LiveOutput()
+        output.stdout += str
+        // Enforce 512KB limit
+        if output.stdout.utf8.count > ExecutionLog.maxOutputSize {
+            output.stdout = String(output.stdout.suffix(ExecutionLog.maxOutputSize))
+        }
+        pendingUpdates[taskId] = output
+        scheduleFlush()
+    }
+
+    /// Append stderr chunk for a task (called from background thread via DispatchQueue.main)
+    func appendStderr(taskId: UUID, data: Data) {
+        guard let str = String(data: data, encoding: .utf8), !str.isEmpty else { return }
+        var output = pendingUpdates[taskId] ?? liveOutputs[taskId] ?? LiveOutput()
+        output.stderr += str
+        if output.stderr.utf8.count > ExecutionLog.maxOutputSize {
+            output.stderr = String(output.stderr.suffix(ExecutionLog.maxOutputSize))
+        }
+        pendingUpdates[taskId] = output
+        scheduleFlush()
+    }
+
+    /// Start tracking a task
+    func startTracking(taskId: UUID) {
+        liveOutputs[taskId] = LiveOutput()
+    }
+
+    /// Stop tracking and clear buffer
+    func stopTracking(taskId: UUID) {
+        flushNow()
+        liveOutputs.removeValue(forKey: taskId)
+        pendingUpdates.removeValue(forKey: taskId)
+    }
+
+    /// Flush pending updates to published property (throttled to 100ms)
+    private func scheduleFlush() {
+        throttleWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            self?.flushNow()
+        }
+        throttleWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: item)
+    }
+
+    private func flushNow() {
+        throttleWorkItem?.cancel()
+        throttleWorkItem = nil
+        for (taskId, output) in pendingUpdates {
+            liveOutputs[taskId] = output
+        }
+        pendingUpdates.removeAll()
+    }
+}
