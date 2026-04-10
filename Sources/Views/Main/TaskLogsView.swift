@@ -4,6 +4,7 @@ import SwiftData
 struct TaskLogsView: View {
     @Environment(\.dismiss) private var dismiss
     let task: ScheduledTask
+    var initialSelectedLogId: UUID?
 
     @State private var selectedLog: ExecutionLog?
 
@@ -54,11 +55,40 @@ struct TaskLogsView: View {
             }
         }
         .frame(minWidth: 750, minHeight: 480)
+        .onAppear {
+            if selectedLog == nil {
+                if let targetId = initialSelectedLogId {
+                    selectedLog = sortedLogs.first { $0.id == targetId }
+                }
+                if selectedLog == nil {
+                    selectedLog = sortedLogs.first
+                }
+            }
+        }
     }
 }
 
 private struct LogDetailContent: View {
     let log: ExecutionLog
+    @ObservedObject private var liveOutput = LiveOutputManager.shared
+
+    private var currentStdout: String? {
+        if log.status == .running,
+           let taskId = log.task?.id,
+           let live = liveOutput.liveOutputs[taskId] {
+            return live.stdout.isEmpty ? nil : live.stdout
+        }
+        return log.stdout
+    }
+
+    private var currentStderr: String? {
+        if log.status == .running,
+           let taskId = log.task?.id,
+           let live = liveOutput.liveOutputs[taskId] {
+            return live.stderr.isEmpty ? nil : live.stderr
+        }
+        return log.stderr
+    }
 
     var body: some View {
         ScrollView {
@@ -78,35 +108,52 @@ private struct LogDetailContent: View {
                         if let finished = log.finishedAt {
                             row(L10n.tr("log.detail.finished"), value: finished.formatted(date: .abbreviated, time: .standard))
                         }
+
+                        if log.status == .running {
+                            HStack {
+                                Text(L10n.tr("status.running"))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.blue)
+                                Spacer()
+                                ProgressView()
+                                    .controlSize(.small)
+                            }
+                        }
                     }
                 }
 
-                if let stdout = log.stdout, !stdout.isEmpty {
+                if let stdout = currentStdout, !stdout.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         Label(L10n.tr("log.detail.stdout"), systemImage: "text.alignleft")
                             .font(.headline)
-                        Text(stdout)
-                            .font(.system(.caption, design: .monospaced))
-                            .textSelection(.enabled)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(.black.opacity(0.04)))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
+                        ScrollView([.horizontal]) {
+                            Text(stdout)
+                                .font(.system(.caption, design: .monospaced))
+                                .textSelection(.enabled)
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxHeight: 400)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.black.opacity(0.04)))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
                     }
                 }
 
-                if let stderr = log.stderr, !stderr.isEmpty {
+                if let stderr = currentStderr, !stderr.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         Label(L10n.tr("log.detail.stderr"), systemImage: "exclamationmark.triangle")
                             .font(.headline)
                             .foregroundStyle(.red)
-                        Text(stderr)
-                            .font(.system(.caption, design: .monospaced))
-                            .textSelection(.enabled)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(.red.opacity(0.04)))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.red.opacity(0.2), lineWidth: 0.5))
+                        ScrollView([.horizontal]) {
+                            Text(stderr)
+                                .font(.system(.caption, design: .monospaced))
+                                .textSelection(.enabled)
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxHeight: 400)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.red.opacity(0.04)))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(.red.opacity(0.2), lineWidth: 0.5))
                     }
                 }
             }
