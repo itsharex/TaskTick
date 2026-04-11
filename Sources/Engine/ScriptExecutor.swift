@@ -1,6 +1,73 @@
 import Foundation
 import SwiftData
 
+/// Strip ANSI escape sequences and terminal control codes.
+/// Safe for plain text — only removes invisible control characters.
+func stripANSI(_ text: String) -> String {
+    text.replacingOccurrences(
+        of: "\\x1b\\[[0-9;]*[A-Za-z]|\\x1b\\][^\u{07}]*\u{07}|\\x1b[()][A-Za-z0-9]|[\\x00-\\x08\\x0e-\\x1f]",
+        with: "",
+        options: .regularExpression
+    )
+}
+
+/// Strip ANSI codes, simulate \r overwrites, and collapse consecutive empty lines.
+/// Use for final output (not live streaming).
+func cleanTerminalOutput(_ text: String) -> String {
+    var cleaned = stripANSI(text)
+    // Simulate \r: for lines containing \r, keep only the text after the last \r
+    if cleaned.contains("\r") {
+        cleaned = cleaned
+            .components(separatedBy: "\n")
+            .map { line in
+                guard line.contains("\r") else { return line }
+                let parts = line.components(separatedBy: "\r")
+                return parts.last(where: { !$0.isEmpty }) ?? ""
+            }
+            .joined(separator: "\n")
+    }
+    // Collapse runs of blank lines into a single blank line
+    cleaned = cleaned.replacingOccurrences(
+        of: "\\n{3,}",
+        with: "\n\n",
+        options: .regularExpression
+    )
+    return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
+/// Decode process output data, stripping ANSI escape sequences at the byte level first
+/// to avoid corrupted multi-byte UTF-8 sequences (ANSI codes can split CJK characters).
+func decodeProcessOutput(_ data: Data) -> String {
+    var cleaned = Data()
+    cleaned.reserveCapacity(data.count)
+    var i = data.startIndex
+    while i < data.endIndex {
+        if data[i] == 0x1B { // ESC
+            i = data.index(after: i)
+            guard i < data.endIndex else { break }
+            if data[i] == 0x5B { // [ → CSI: skip until letter
+                i = data.index(after: i)
+                while i < data.endIndex {
+                    let b = data[i]; i = data.index(after: i)
+                    if (0x40...0x7E).contains(b) { break }
+                }
+            } else if data[i] == 0x5D { // ] → OSC: skip until BEL
+                i = data.index(after: i)
+                while i < data.endIndex && data[i] != 0x07 { i = data.index(after: i) }
+                if i < data.endIndex { i = data.index(after: i) }
+            } else if data[i] == 0x28 || data[i] == 0x29 { // charset
+                i = data.index(after: i)
+                if i < data.endIndex { i = data.index(after: i) }
+            }
+        } else if data[i] < 0x20 && data[i] != 0x09 && data[i] != 0x0A && data[i] != 0x0D {
+            i = data.index(after: i) // strip control chars except tab/newline/CR
+        } else {
+            cleaned.append(data[i]); i = data.index(after: i)
+        }
+    }
+    return String(decoding: cleaned, as: UTF8.self)
+}
+
 /// Executes shell scripts using Process (NSTask) with async output capture.
 @MainActor
 final class ScriptExecutor: ObservableObject {
@@ -36,9 +103,12 @@ final class ScriptExecutor: ObservableObject {
 
         // Resolve script: inline body or file content
         let scriptBody: String
+        let effectiveShell: String
         if let filePath = task.scriptFilePath, !filePath.isEmpty {
             if let content = try? String(contentsOfFile: filePath, encoding: .utf8) {
                 scriptBody = content
+                // Respect shebang in script file if present
+                effectiveShell = ScriptExecutor.parseShebang(from: content) ?? shell
             } else {
                 // File not readable
                 log.status = .failure
@@ -50,11 +120,12 @@ final class ScriptExecutor: ObservableObject {
             }
         } else {
             scriptBody = task.scriptBody
+            effectiveShell = shell
         }
 
         LiveOutputManager.shared.startTracking(taskId: taskId)
         let result = await runProcess(
-            shell: shell,
+            shell: effectiveShell,
             script: scriptBody,
             workingDirectory: workingDirectory,
             environmentVariables: envVars,
@@ -103,13 +174,15 @@ final class ScriptExecutor: ObservableObject {
                 body: body
             )
         } else if globalNotificationsEnabled && notifyOnSuccess && result.status == .success {
-            let stdoutLine = result.stdout.components(separatedBy: .newlines).first(where: {
+            // Prefer stdout, fall back to stderr when stdout has no meaningful content
+            let outputSource = ScriptExecutor.hasMeaningfulContent(result.stdout) ? result.stdout : result.stderr
+            let outputLine = outputSource.components(separatedBy: .newlines).first(where: {
                 let trimmed = $0.trimmingCharacters(in: .whitespaces)
                 guard !trimmed.isEmpty else { return false }
                 let stripped = trimmed.filter { !("─═—–-=_*#~".contains($0)) }
                 return !stripped.isEmpty
             }) ?? ""
-            let body = [durationText, stdoutLine].filter { !$0.isEmpty }.joined(separator: " · ")
+            let body = [durationText, outputLine].filter { !$0.isEmpty }.joined(separator: " · ")
             NotificationManager.shared.sendNotification(
                 title: "[\(L10n.tr("notification.succeeded"))] \(taskName)",
                 body: body.isEmpty ? L10n.tr("notification.success") : body
@@ -117,10 +190,13 @@ final class ScriptExecutor: ObservableObject {
         }
 
         // Strong reminder: show floating panel with full output
+        // Prefer stdout (actual results); fall back to stderr only if stdout is truly empty
         if result.status == .success && strongReminder {
+            let trimmedStdout = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+            let output = trimmedStdout.isEmpty ? result.stderr : result.stdout
             StrongReminderPanel.shared.show(
                 taskName: taskName,
-                output: result.stdout,
+                output: output,
                 durationMs: durationMs
             )
         }
@@ -168,6 +244,35 @@ final class ScriptExecutor: ObservableObject {
         }
     }
 
+    /// Extract the interpreter path from a shebang line (e.g. "#!/opt/homebrew/bin/bash" → "/opt/homebrew/bin/bash").
+    /// Returns nil if no valid shebang or the interpreter doesn't exist on disk.
+    static func parseShebang(from script: String) -> String? {
+        guard let firstLine = script.components(separatedBy: .newlines).first,
+              firstLine.hasPrefix("#!") else { return nil }
+        // Strip "#!" and trim whitespace, take the first token (ignore arguments like "#!/usr/bin/env bash")
+        let interpreterLine = firstLine.dropFirst(2).trimmingCharacters(in: .whitespaces)
+        let parts = interpreterLine.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        guard let first = parts.first, !first.isEmpty else { return nil }
+        // Handle "#!/usr/bin/env <interpreter>" — resolve via PATH
+        if first == "/usr/bin/env", let cmd = parts.dropFirst().first {
+            // Use the full command path if it's absolute, otherwise just return nil and fall back to UI shell
+            if cmd.hasPrefix("/") && FileManager.default.isExecutableFile(atPath: cmd) {
+                return cmd
+            }
+            return nil
+        }
+        // Direct path like "#!/opt/homebrew/bin/bash"
+        if FileManager.default.isExecutableFile(atPath: first) {
+            return first
+        }
+        return nil
+    }
+
+    /// Check if a string contains meaningful printable content (not just whitespace).
+    static func hasMeaningfulContent(_ text: String) -> Bool {
+        text.contains(where: { !$0.isWhitespace && !$0.isNewline && ($0.asciiValue.map({ $0 >= 32 }) ?? true) })
+    }
+
     private struct ProcessResult: Sendable {
         let stdout: String
         let stderr: String
@@ -201,7 +306,11 @@ final class ScriptExecutor: ObservableObject {
                 if shell.hasSuffix("zsh") {
                     rcFile = "[ -f ~/.zshrc ] && source ~/.zshrc 2>/dev/null; "
                 } else if shell.hasSuffix("bash") {
-                    rcFile = "[ -f ~/.bashrc ] && source ~/.bashrc 2>/dev/null; "
+                    // For Homebrew bash, ensure brew shellenv is loaded for PATH
+                    let brewPrefix = shell.hasPrefix("/opt/homebrew/")
+                        ? "eval $(/opt/homebrew/bin/brew shellenv 2>/dev/null); "
+                        : ""
+                    rcFile = brewPrefix + "[ -f ~/.bashrc ] && source ~/.bashrc 2>/dev/null; "
                 } else {
                     rcFile = ""
                 }
@@ -295,8 +404,8 @@ final class ScriptExecutor: ObservableObject {
                 }
 
                 let (stdoutData, stderrData) = outputBuffer.read()
-                let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
-                let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+                let stdout = cleanTerminalOutput(decodeProcessOutput(stdoutData))
+                let stderr = cleanTerminalOutput(decodeProcessOutput(stderrData))
 
                 let exitCode = Int(process.terminationStatus)
 

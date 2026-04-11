@@ -15,6 +15,20 @@ final class StrongReminderPanel {
     func show(taskName: String, output: String, durationMs: Int?) {
         dismiss()
 
+        let panelWidth: CGFloat = 420
+        let minHeight: CGFloat = 160
+        let maxHeight: CGFloat = 500
+        let chrome: CGFloat = 110 // header + dividers + footer + padding
+
+        // Calculate text height with line wrapping
+        let displayText = output.isEmpty ? L10n.tr("notification.success") : output
+        let charsPerLine = 48 // approximate for 420px - padding with 12pt monospace
+        let wrappedLines = displayText.components(separatedBy: .newlines).reduce(0) { total, line in
+            total + max(1, Int(ceil(Double(max(1, line.count)) / Double(charsPerLine))))
+        }
+        let textHeight = CGFloat(max(2, wrappedLines)) * 16 + 24
+        let panelHeight = min(maxHeight, max(minHeight, chrome + textHeight))
+
         let content = StrongReminderView(
             taskName: taskName,
             output: output,
@@ -23,10 +37,10 @@ final class StrongReminderPanel {
         )
 
         let hostingView = NSHostingView(rootView: content)
-        hostingView.frame = NSRect(x: 0, y: 0, width: 420, height: 360)
+        hostingView.frame = NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight)
 
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 360),
+            contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight),
             styleMask: [.titled, .nonactivatingPanel, .hudWindow],
             backing: .buffered,
             defer: false
@@ -93,6 +107,7 @@ struct StrongReminderView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
             }
+            .frame(maxHeight: 380) // leave room for header + footer within 500 max
 
             Divider()
 
@@ -108,6 +123,5 @@ struct StrongReminderView: View {
             }
             .padding(12)
         }
-        .frame(width: 420, height: 360)
     }
 }
