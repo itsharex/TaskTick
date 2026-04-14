@@ -147,32 +147,25 @@ private struct LogDetailContent: View {
                     }
                 }
 
-                if let stdout = currentStdout, !stdout.isEmpty {
+                let combined = [currentStdout, currentStderr]
+                    .compactMap { $0?.isEmpty == false ? $0 : nil }
+                    .joined(separator: "\n")
+                if !combined.isEmpty {
+                    let isFailure = log.status == .failure || log.status == .timeout
                     VStack(alignment: .leading, spacing: 6) {
-                        Label(L10n.tr("log.detail.stdout"), systemImage: "text.alignleft")
+                        Label(L10n.tr("log.detail.output"),
+                              systemImage: isFailure ? "exclamationmark.triangle" : "text.alignleft")
                             .font(.headline)
-                        Text(stdout)
+                            .foregroundStyle(isFailure ? Color.red : Color.primary)
+                        Text(combined)
                             .font(.system(.caption, design: .monospaced))
                             .textSelection(.enabled)
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(.black.opacity(0.04)))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
-                    }
-                }
-
-                if let stderr = currentStderr, !stderr.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Label(L10n.tr("log.detail.stderr"), systemImage: "exclamationmark.triangle")
-                            .font(.headline)
-                            .foregroundStyle(.red)
-                        Text(stderr)
-                            .font(.system(.caption, design: .monospaced))
-                            .textSelection(.enabled)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(.red.opacity(0.04)))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.red.opacity(0.2), lineWidth: 0.5))
+                            .background(RoundedRectangle(cornerRadius: 8)
+                                .fill(isFailure ? Color.red.opacity(0.04) : Color.black.opacity(0.04)))
+                            .overlay(RoundedRectangle(cornerRadius: 8)
+                                .stroke(isFailure ? Color.red.opacity(0.2) : Color(nsColor: .separatorColor), lineWidth: 0.5))
                     }
                 }
             }

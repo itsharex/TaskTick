@@ -193,6 +193,7 @@
 "log.detail.finished" = "Завершено";
 "log.detail.stdout" = "Стандартный вывод";
 "log.detail.stderr" = "Вывод ошибок";
+"log.detail.output" = "Вывод";
 "log.unknown_task" = "Неизвестная задача";
 
 /* Settings */

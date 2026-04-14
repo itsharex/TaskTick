@@ -196,6 +196,7 @@
 "log.detail.finished" = "Finished";
 "log.detail.stdout" = "Standard Output";
 "log.detail.stderr" = "Error Output";
+"log.detail.output" = "Output";
 "log.unknown_task" = "Unknown Task";
 
 /* Settings */

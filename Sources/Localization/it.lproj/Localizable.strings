@@ -193,6 +193,7 @@
 "log.detail.finished" = "Terminata";
 "log.detail.stdout" = "Output standard";
 "log.detail.stderr" = "Output errori";
+"log.detail.output" = "Output";
 "log.unknown_task" = "Attivita sconosciuta";
 
 /* Settings */

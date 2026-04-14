@@ -193,6 +193,7 @@
 "log.detail.finished" = "完了時刻";
 "log.detail.stdout" = "標準出力";
 "log.detail.stderr" = "エラー出力";
+"log.detail.output" = "出力";
 "log.unknown_task" = "不明なタスク";
 
 /* Settings */

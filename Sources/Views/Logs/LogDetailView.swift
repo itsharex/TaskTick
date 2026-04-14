@@ -96,22 +96,17 @@ struct LogDetailView: View {
                     }
                 }
 
-                // Output sections
-                if let stdout = currentStdout, !stdout.isEmpty {
+                // Combined output (terminal-like). Color reflects run status.
+                let combined = [currentStdout, currentStderr]
+                    .compactMap { $0?.isEmpty == false ? $0 : nil }
+                    .joined(separator: "\n")
+                if !combined.isEmpty {
+                    let isFailure = log.status == .failure || log.status == .timeout
                     OutputSection(
-                        title: L10n.tr("log.detail.stdout"),
-                        content: stdout,
-                        icon: "text.alignleft",
-                        color: .primary
-                    )
-                }
-
-                if let stderr = currentStderr, !stderr.isEmpty {
-                    OutputSection(
-                        title: L10n.tr("log.detail.stderr"),
-                        content: stderr,
-                        icon: "exclamationmark.triangle",
-                        color: .red
+                        title: L10n.tr("log.detail.output"),
+                        content: combined,
+                        icon: isFailure ? "exclamationmark.triangle" : "text.alignleft",
+                        color: isFailure ? .red : .primary
                     )
                 }
             }

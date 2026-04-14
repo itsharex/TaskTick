@@ -172,6 +172,7 @@
 "log.detail.finished" = "Termine";
 "log.detail.stdout" = "Sortie standard";
 "log.detail.stderr" = "Sortie d'erreur";
+"log.detail.output" = "Sortie";
 "log.unknown_task" = "Tache inconnue";
 "settings.general" = "General";
 "settings.appearance" = "Apparence";

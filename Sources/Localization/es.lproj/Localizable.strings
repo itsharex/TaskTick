@@ -190,6 +190,7 @@
 "log.detail.finished" = "Finalizada";
 "log.detail.stdout" = "Salida estándar";
 "log.detail.stderr" = "Salida de error";
+"log.detail.output" = "Salida";
 "log.unknown_task" = "Tarea desconocida";
 
 /* Settings */

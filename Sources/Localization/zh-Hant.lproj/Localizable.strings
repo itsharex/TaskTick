@@ -193,6 +193,7 @@
 "log.detail.finished" = "結束時間";
 "log.detail.stdout" = "標準輸出";
 "log.detail.stderr" = "錯誤輸出";
+"log.detail.output" = "輸出";
 "log.unknown_task" = "未知任務";
 
 /* Settings */
