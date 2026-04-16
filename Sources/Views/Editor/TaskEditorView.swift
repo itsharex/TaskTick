@@ -353,9 +353,9 @@ struct TaskEditorView: View {
 
             Section(L10n.tr("editor.section.script")) {
                 Picker(L10n.tr("editor.shell"), selection: $shell) {
-                    Text("/bin/zsh").tag("/bin/zsh")
-                    Text("/bin/bash").tag("/bin/bash")
-                    Text("/bin/sh").tag("/bin/sh")
+                    ForEach(AvailableShells.load(including: shell), id: \.self) { s in
+                        Text(s).tag(s)
+                    }
                 }
 
                 WorkingDirectoryField(path: $workingDirectory)

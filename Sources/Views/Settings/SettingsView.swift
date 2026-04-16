@@ -94,9 +94,9 @@ struct SettingsView: View {
 
             Section(L10n.tr("settings.general.defaults")) {
                 Picker(L10n.tr("settings.general.default_shell"), selection: $defaultShell) {
-                    Text("/bin/zsh").tag("/bin/zsh")
-                    Text("/bin/bash").tag("/bin/bash")
-                    Text("/bin/sh").tag("/bin/sh")
+                    ForEach(AvailableShells.load(including: defaultShell), id: \.self) { shell in
+                        Text(shell).tag(shell)
+                    }
                 }
 
                 LabeledContent(L10n.tr("settings.general.default_timeout")) {
