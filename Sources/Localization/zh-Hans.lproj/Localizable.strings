@@ -258,6 +258,7 @@
 "settings.backup.delete_confirm.message" = "此备份将被永久删除，此操作不可撤销。";
 "settings.backup.success" = "备份成功";
 "settings.backup.success.message" = "数据库已成功备份。";
+"settings.backup.success.no_change.message" = "数据自上次备份以来没有变化，最新一份备份依然有效，本次未生成新文件。";
 "settings.backup.last_backup" = "上次备份";
 "settings.backup.next_backup" = "下次备份";
 "settings.backup.tasks_count" = "%d 个任务";

@@ -258,6 +258,7 @@
 "settings.backup.delete_confirm.message" = "This backup will be permanently deleted. This action cannot be undone.";
 "settings.backup.success" = "Backup Successful";
 "settings.backup.success.message" = "Database has been backed up successfully.";
+"settings.backup.success.no_change.message" = "No changes since the last backup. Your most recent snapshot is still valid — no new file was written.";
 "settings.backup.last_backup" = "Last Backup";
 "settings.backup.next_backup" = "Next Backup";
 "settings.backup.tasks_count" = "%d tasks";

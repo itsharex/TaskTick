@@ -202,7 +202,9 @@ struct SettingsView: View {
         .alert(L10n.tr("settings.backup.success"), isPresented: $showBackupSuccess) {
             Button("OK") {}
         } message: {
-            Text(L10n.tr("settings.backup.success.message"))
+            Text(L10n.tr(backupManager.lastBackupWasDedup
+                         ? "settings.backup.success.no_change.message"
+                         : "settings.backup.success.message"))
         }
         .sheet(isPresented: $showBackupList) {
             backupListSheet

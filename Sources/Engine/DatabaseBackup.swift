@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import SwiftData
 import os
@@ -22,6 +23,7 @@ final class DatabaseBackup: ObservableObject {
 
     private static let logger = Logger(subsystem: "com.lifedever.TaskTick", category: "DatabaseBackup")
     private static let fileExtension = "tasktickbackup"
+    private static let contentHashKey = "lastBackupContentHash"
     /// Filenames look like `2026-04-21T10-30-45Z.tasktickbackup` so they sort lexically.
     private static let timestampFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
@@ -52,6 +54,10 @@ final class DatabaseBackup: ObservableObject {
     /// overwriting good data. UI surfaces this so the user knows why their backup
     /// list isn't growing.
     @Published var lastSkipReason: String?
+    /// True when the last performBackup call short-circuited because content hadn't
+    /// changed since the previous snapshot. Lets the manual "Backup Now" alert tell
+    /// the user "nothing to do" instead of pretending it wrote a new file.
+    @Published var lastBackupWasDedup: Bool = false
 
     private init() {
         self.isEnabled = UserDefaults.standard.object(forKey: "backupEnabled") as? Bool ?? true
@@ -162,6 +168,24 @@ final class DatabaseBackup: ObservableObject {
         }
 
         let exportedTasks = tasks.map(TaskExporter.makeExported)
+
+        // Dedup: if user content hasn't changed since the last successful backup,
+        // skip the write. ExportedTask deliberately excludes runtime fields
+        // (lastRunAt / executionCount / nextRunAt — see TaskExporter.makeExported)
+        // so the hash only flips when the user actually edits something.
+        let currentHash = Self.computeContentHash(tasks: exportedTasks, templates: templates)
+        if let currentHash,
+           let cachedHash = UserDefaults.standard.string(forKey: Self.contentHashKey),
+           cachedHash == currentHash,
+           let latest = listBackups().first,
+           latest.format == .json {
+            Self.logger.info("Backup skipped: content unchanged since last snapshot (\(currentHash.prefix(8)))")
+            lastBackupDate = Date()
+            lastBackupWasDedup = true
+            lastSkipReason = nil
+            return true
+        }
+
         let payload = BackupPayload(
             format: BackupPayload.currentFormat,
             appVersion: appVersion,
@@ -169,7 +193,8 @@ final class DatabaseBackup: ObservableObject {
             taskCount: exportedTasks.count,
             templateCount: templates.count,
             tasks: exportedTasks,
-            templates: templates
+            templates: templates,
+            contentHash: currentHash
         )
 
         let encoder = JSONEncoder()
@@ -205,6 +230,10 @@ final class DatabaseBackup: ObservableObject {
             pruneOldBackups(in: backupDir)
             lastBackupDate = Date()
             lastSkipReason = nil
+            lastBackupWasDedup = false
+            if let currentHash {
+                UserDefaults.standard.set(currentHash, forKey: Self.contentHashKey)
+            }
             return true
         } catch {
             Self.logger.error("Backup write failed: \(error.localizedDescription)")
@@ -486,6 +515,27 @@ final class DatabaseBackup: ObservableObject {
         return timestampFormatter.date(from: restored)
     }
 
+    /// Hash a snapshot of user-authored content. Returns nil only if encoding fails,
+    /// in which case the caller must fall back to writing a backup unconditionally —
+    /// dedup must never silently swallow a backup window when we can't prove equality.
+    private static func computeContentHash(tasks: [TaskExporter.ExportedTask],
+                                           templates: [ScriptTemplate]) -> String? {
+        struct HashInput: Encodable {
+            let tasks: [TaskExporter.ExportedTask]
+            let templates: [ScriptTemplate]
+        }
+        let encoder = JSONEncoder()
+        // sortedKeys + iso8601 give a deterministic byte sequence so two semantically
+        // identical snapshots produce identical hashes across processes/launches.
+        encoder.outputFormatting = [.sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(HashInput(tasks: tasks, templates: templates)) else {
+            return nil
+        }
+        let digest = SHA256.hash(data: data)
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
     private static func readPayload(at url: URL) throws -> BackupPayload {
         let data = try Data(contentsOf: url)
         let decoder = JSONDecoder()
@@ -529,4 +579,24 @@ struct BackupPayload: Codable {
     let templateCount: Int
     let tasks: [TaskExporter.ExportedTask]
     let templates: [ScriptTemplate]
+    /// Optional so backups produced by older versions still decode.
+    let contentHash: String?
+
+    init(format: String,
+         appVersion: String,
+         exportDate: Date,
+         taskCount: Int,
+         templateCount: Int,
+         tasks: [TaskExporter.ExportedTask],
+         templates: [ScriptTemplate],
+         contentHash: String? = nil) {
+        self.format = format
+        self.appVersion = appVersion
+        self.exportDate = exportDate
+        self.taskCount = taskCount
+        self.templateCount = templateCount
+        self.tasks = tasks
+        self.templates = templates
+        self.contentHash = contentHash
+    }
 }
