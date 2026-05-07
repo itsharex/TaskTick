@@ -13,9 +13,21 @@ final class MainWindowSelection: ObservableObject {
 }
 
 extension Notification.Name {
-    /// Posted by the Quick Launcher when the user hits ⌘O. The MenuBarExtra
-    /// scene listens because it's always loaded and has `openWindow` in its
-    /// environment — non-Scene SwiftUI hosts (the launcher's NSPanel) can't
-    /// invoke `openWindow` directly.
+    /// Posted by the Quick Launcher when the user hits ⌘O. AppDelegate
+    /// listens (always alive) and uses `WindowOpener.shared` to bring back
+    /// the main window — `Window(id:)` scenes destroy their NSWindow on
+    /// close, so AppKit-only lookups can't recreate them.
     static let revealTaskInMain = Notification.Name("TaskTick.revealTaskInMain")
+}
+
+/// Bridges `EnvironmentValues.openWindow` (a SwiftUI scene-only API) into
+/// non-View contexts like AppDelegate. Stashed by the main window's view on
+/// appear, called from the notification observer when the user wants the
+/// main window surfaced from elsewhere.
+@MainActor
+final class WindowOpener {
+    static let shared = WindowOpener()
+    private init() {}
+
+    var openMain: (() -> Void)?
 }

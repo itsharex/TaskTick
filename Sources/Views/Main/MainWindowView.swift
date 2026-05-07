@@ -72,6 +72,12 @@ struct MainWindowView: View {
             }
         }
         .onAppear {
+            // Capture `openWindow` so AppDelegate / other non-View contexts
+            // can reopen the main window after it's been closed (Window(id:)
+            // destroys the NSWindow on close — only SwiftUI's openWindow
+            // can resurrect it).
+            WindowOpener.shared.openMain = { openWindow(id: "main") }
+
             // When Quick Launcher opens the main window via ⌘O, the window
             // scene may instantiate fresh — pick up the rendezvous selection
             // here so the first render already shows the requested task.

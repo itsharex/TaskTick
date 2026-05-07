@@ -58,22 +58,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Surface the SwiftUI main window. Works whether the window is currently
-    /// visible, hidden behind another app, or closed (NSWindow object still
-    /// alive in `NSApp.windows` until the app terminates).
+    /// Surface the SwiftUI main window. SwiftUI's `Window(id:)` destroys its
+    /// NSWindow on close, so we can't just call `makeKeyAndOrderFront` on a
+    /// stale reference — we need `openWindow` to resurrect it. The action is
+    /// captured by MainWindowView at first appear and stashed in
+    /// `WindowOpener.shared`. The activation+raise step runs after a tick so
+    /// SwiftUI has time to install the new NSWindow into the window list.
     @MainActor
     static func bringMainWindowForward() {
         NSApp.setActivationPolicy(.regular)
-        for window in NSApp.windows where window.canBecomeMain && !(window is NSPanel) {
-            window.makeKeyAndOrderFront(nil)
+        WindowOpener.shared.openMain?()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            for window in NSApp.windows where window.canBecomeMain && !(window is NSPanel) {
+                window.makeKeyAndOrderFront(nil)
+                break
+            }
             NSApp.activate(ignoringOtherApps: true)
-            return
         }
-        // Fallback for the rare case where SwiftUI hasn't materialized the
-        // primary window yet — Apple's documented "reopen" path triggers
-        // SwiftUI to instantiate it.
-        NSApp.activate(ignoringOtherApps: true)
-        _ = NSApp.delegate?.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: false)
     }
 
     /// Finalize logs left in `.running` state by a previous session. These are
