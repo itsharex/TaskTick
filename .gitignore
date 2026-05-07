@@ -5,5 +5,7 @@ xcuserdata/
 DerivedData/
 .DS_Store
 CLAUDE.md
+.claude/
+docs/superpowers/
 .dev-build/
 .release/
