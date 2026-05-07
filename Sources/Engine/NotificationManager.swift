@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import UserNotifications
 
@@ -44,7 +45,47 @@ final class NotificationManager: NSObject, @unchecked Sendable {
             content: content,
             trigger: nil
         )
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
+            if let error {
+                NSLog("⚠️ Notification add failed: \(error.localizedDescription)")
+            }
+            self?.checkPermissionAndPromptIfNeeded()
+        }
+    }
+
+    /// Check authorization status; if the user has explicitly denied notifications,
+    /// surface an NSAlert that deep-links into System Settings. macOS does not let
+    /// apps re-trigger the system permission dialog after a denial, so a custom
+    /// prompt with a settings link is the only recovery path.
+    private func checkPermissionAndPromptIfNeeded() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .denied else { return }
+            DispatchQueue.main.async {
+                Self.presentDeniedAlert()
+            }
+        }
+    }
+
+    @MainActor
+    private static func presentDeniedAlert() {
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("notification.denied.title")
+        alert.informativeText = L10n.tr("notification.denied.message")
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: L10n.tr("notification.denied.open_settings"))
+        alert.addButton(withTitle: L10n.tr("notification.denied.later"))
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            // Deep link directly to the per-app notification pane. Bundle ID is
+            // appended so System Settings opens at the right row instead of the
+            // root notifications list.
+            let bundleID = Bundle.main.bundleIdentifier ?? ""
+            let urlString = "x-apple.systempreferences:com.apple.preference.notifications?id=\(bundleID)"
+            if let url = URL(string: urlString) {
+                NSWorkspace.shared.open(url)
+            }
+        }
     }
 }
 

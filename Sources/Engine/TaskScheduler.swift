@@ -158,7 +158,7 @@ final class TaskScheduler: ObservableObject {
         guard isRunning, let modelContext else { return }
 
         let descriptor = FetchDescriptor<ScheduledTask>(
-            predicate: #Predicate { $0.isEnabled && $0.runOnLaunch }
+            predicate: #Predicate { $0.isEnabled && $0.runOnLaunch && !$0.isManualOnly }
         )
         guard let tasks = try? modelContext.fetch(descriptor) else { return }
 
@@ -203,6 +203,11 @@ final class TaskScheduler: ObservableObject {
     }
 
     func computeNextRunDate(for task: ScheduledTask, after date: Date = Date()) -> Date? {
+        // Manual-only tasks never schedule themselves
+        if task.isManualOnly {
+            return nil
+        }
+
         // Check end repeat count first (applies to all schedule types)
         // Use executionLogs.count as source of truth for completed executions
         if task.endRepeatType == .afterCount,

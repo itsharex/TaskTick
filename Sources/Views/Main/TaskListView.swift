@@ -43,6 +43,9 @@ struct TaskListView: View {
         return sortNewestFirst ? filtered : filtered.reversed()
     }
 
+    var scheduledTasks: [ScheduledTask] { filteredTasks.filter { !$0.isManualOnly } }
+    var manualTasks: [ScheduledTask] { filteredTasks.filter { $0.isManualOnly } }
+
     var body: some View {
         VStack(spacing: 0) {
             // Filter bar
@@ -74,37 +77,17 @@ struct TaskListView: View {
             } else {
                 ScrollViewReader { proxy in
                 List(selection: $selectedTask) {
-                    ForEach(filteredTasks) { task in
-                        TaskListRow(
-                            task: task,
-                            isRunning: scheduler.runningTaskIDs.contains(task.id)
-                        )
-                        .tag(task)
-                        .id(task.id)
-                        .pointerCursor()
-                        .contextMenu {
-                            Button(L10n.tr("task.detail.edit"), systemImage: "pencil") {
-                                EditorState.shared.openEdit(task)
-                                openWindow(id: "editor")
+                    if !scheduledTasks.isEmpty {
+                        Section(L10n.tr("tasklist.section.scheduled")) {
+                            ForEach(scheduledTasks) { task in
+                                taskRow(task)
                             }
-                            Button(L10n.tr("task.detail.run"), systemImage: "play.fill") {
-                                Task {
-                                    _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
-                                }
-                            }
-                            Divider()
-                            Button(L10n.tr("task.duplicate"), systemImage: "doc.on.doc") {
-                                duplicateTask(task)
-                            }
-                            Divider()
-                            Button(L10n.tr("clear_logs.title"), systemImage: "trash.circle") {
-                                taskToClearLogs = task
-                                showingClearLogsAlert = true
-                            }
-                            .disabled(task.executionLogs.filter { $0.modelContext != nil }.isEmpty)
-                            Button(L10n.tr("task.detail.delete"), systemImage: "trash", role: .destructive) {
-                                taskToDelete = task
-                                showingDeleteAlert = true
+                        }
+                    }
+                    if !manualTasks.isEmpty {
+                        Section(L10n.tr("tasklist.section.manual")) {
+                            ForEach(manualTasks) { task in
+                                taskRow(task)
                             }
                         }
                     }
@@ -164,12 +147,13 @@ struct TaskListView: View {
                 Divider()
                 Link(destination: URL(string: "https://www.lifedever.com/sponsor/")!) {
                     HStack(spacing: 4) {
-                        Image(systemName: "heart")
+                        Image(systemName: "heart.fill")
                             .font(.caption2)
+                            .foregroundStyle(.red)
                         Text(L10n.tr("command.sponsor"))
                             .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                 }
@@ -177,6 +161,48 @@ struct TaskListView: View {
                 .pointerCursor()
             }
             .background(.bar)
+        }
+    }
+
+    @ViewBuilder
+    private func taskRow(_ task: ScheduledTask) -> some View {
+        TaskListRow(
+            task: task,
+            isRunning: scheduler.runningTaskIDs.contains(task.id)
+        )
+        .tag(task)
+        .id(task.id)
+        .pointerCursor()
+        .contextMenu {
+            Button(L10n.tr("task.detail.edit"), systemImage: "pencil") {
+                EditorState.shared.openEdit(task)
+                openWindow(id: "editor")
+            }
+            if scheduler.runningTaskIDs.contains(task.id) {
+                Button(L10n.tr("task.detail.stop"), systemImage: "stop.fill") {
+                    ScriptExecutor.shared.cancel(taskId: task.id)
+                }
+            } else {
+                Button(L10n.tr("task.detail.run"), systemImage: "play.fill") {
+                    Task {
+                        _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
+                    }
+                }
+            }
+            Divider()
+            Button(L10n.tr("task.duplicate"), systemImage: "doc.on.doc") {
+                duplicateTask(task)
+            }
+            Divider()
+            Button(L10n.tr("clear_logs.title"), systemImage: "trash.circle") {
+                taskToClearLogs = task
+                showingClearLogsAlert = true
+            }
+            .disabled(task.executionLogs.filter { $0.modelContext != nil }.isEmpty)
+            Button(L10n.tr("task.detail.delete"), systemImage: "trash", role: .destructive) {
+                taskToDelete = task
+                showingDeleteAlert = true
+            }
         }
     }
 
@@ -200,6 +226,7 @@ struct TaskListView: View {
         copy.preRunCommand = task.preRunCommand
         copy.customIntervalValue = task.customIntervalValue
         copy.customIntervalUnit = task.customIntervalUnit
+        copy.isManualOnly = task.isManualOnly
         modelContext.insert(copy)
         do {
             try modelContext.save()
@@ -253,10 +280,17 @@ struct TaskListRow: View {
                             .font(.caption2)
                             .monospacedDigit()
                     }
-                    Image(systemName: "repeat")
-                        .font(.system(size: 9))
-                    Text(task.repeatType.displayName)
-                        .font(.caption2)
+                    if task.isManualOnly {
+                        Image(systemName: "hand.tap")
+                            .font(.system(size: 9))
+                        Text(L10n.tr("schedule.manual_only"))
+                            .font(.caption2)
+                    } else {
+                        Image(systemName: "repeat")
+                            .font(.system(size: 9))
+                        Text(task.repeatType.displayName)
+                            .font(.caption2)
+                    }
 
                     Text("·")
                         .font(.caption2)

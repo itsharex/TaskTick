@@ -39,6 +39,7 @@ struct TaskExporter {
         /// (which @Query sorts by createdAt) survives a restore. Optional for
         /// compat with backups produced before this field existed.
         let createdAt: Date?
+        let isManualOnly: Bool?
     }
 
     /// Export all tasks to a JSON file
@@ -161,7 +162,8 @@ struct TaskExporter {
             strongReminder: task.strongReminder,
             ignoreExitCode: task.ignoreExitCode,
             notifyOnlyWhenOutput: task.notifyOnlyWhenOutput,
-            createdAt: task.createdAt
+            createdAt: task.createdAt,
+            isManualOnly: task.isManualOnly
         )
     }
 
@@ -200,6 +202,7 @@ struct TaskExporter {
         if let v = item.strongReminder { task.strongReminder = v }
         if let v = item.ignoreExitCode { task.ignoreExitCode = v }
         if let v = item.notifyOnlyWhenOutput { task.notifyOnlyWhenOutput = v }
+        if let v = item.isManualOnly { task.isManualOnly = v }
         if let v = item.createdAt {
             task.createdAt = v
             task.updatedAt = v

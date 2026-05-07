@@ -28,6 +28,7 @@ struct TaskEditorView: View {
     @State private var isEnabled = true
 
     // Schedule
+    @State private var isManualOnly = false
     @State private var hasDate = true
     @State private var hasTime = true
     @State private var scheduledDate = Date()
@@ -106,7 +107,7 @@ struct TaskEditorView: View {
                 .tag(1)
 
             scriptContentTab
-                .tabItem { Label(L10n.tr("editor.tab.content"), systemImage: "terminal") }
+                .tabItem { Label(L10n.tr("editor.tab.script"), systemImage: "terminal") }
                 .tag(2)
 
             scriptSettingsTab
@@ -163,6 +164,20 @@ struct TaskEditorView: View {
 
     private var scheduleTab: some View {
         Form {
+            Section {
+                Toggle(isOn: $isManualOnly) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Label(L10n.tr("schedule.manual_only"), systemImage: "hand.tap")
+                        Text(L10n.tr("schedule.manual_only.help"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text(L10n.tr("schedule.trigger_section"))
+            }
+
+            if !isManualOnly {
             Section {
                 Toggle(isOn: $runOnLaunch) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -273,6 +288,7 @@ struct TaskEditorView: View {
                     }
                 }
             }
+            } // end !isManualOnly
         }
         .formStyle(.grouped)
     }
@@ -420,17 +436,26 @@ struct TaskEditorView: View {
                 }
 
                 WorkingDirectoryField(path: $workingDirectory)
+            }
 
+            Section {
                 LabeledContent(L10n.tr("editor.timeout")) {
                     HStack(spacing: 6) {
                         TextField("", value: $timeoutSeconds, format: .number)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                             .multilineTextAlignment(.trailing)
-                        Text(L10n.tr("editor.timeout.seconds"))
-                            .foregroundStyle(.secondary)
+                        if timeoutSeconds <= 0 {
+                            Text(L10n.tr("editor.timeout.unlimited"))
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text(L10n.tr("editor.timeout.seconds"))
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
+            } footer: {
+                Text(L10n.tr("editor.timeout.hint"))
             }
 
             Section {
@@ -747,6 +772,7 @@ struct TaskEditorView: View {
         // Reset to defaults for new task
         name = ""
         isEnabled = true
+        isManualOnly = false
         scheduledDate = Date()
         hasDate = true
         hasTime = true
@@ -807,6 +833,7 @@ struct TaskEditorView: View {
         customIntervalUnit = task.customIntervalUnit
         runMissedExecution = task.runMissedExecution
         runOnLaunch = task.runOnLaunch
+        isManualOnly = task.isManualOnly
         hasDate = task.hasDate
         hasTime = task.hasTime
 
@@ -838,6 +865,7 @@ struct TaskEditorView: View {
         target.isEnabled = isEnabled
         target.updatedAt = Date()
 
+        target.isManualOnly = isManualOnly
         target.hasDate = hasDate
         target.hasTime = hasTime
         // When both toggles are off, drop the anchor so the scheduler falls back
@@ -850,7 +878,9 @@ struct TaskEditorView: View {
         target.customIntervalValue = customIntervalValue
         target.customIntervalUnit = customIntervalUnit
         target.runMissedExecution = runMissedExecution
-        target.runOnLaunch = runOnLaunch
+        // Manual-only tasks have no automatic triggers — drop runOnLaunch even
+        // if the user had toggled it before flipping to manual.
+        target.runOnLaunch = isManualOnly ? false : runOnLaunch
 
         target.cronExpression = nil
         target.intervalSeconds = nil

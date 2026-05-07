@@ -157,6 +157,10 @@ final class ScheduledTask {
     var customIntervalUnitRaw: String = CustomRepeatUnit.day.rawValue
 
     var isEnabled: Bool
+    /// When true, the task has no schedule — it only runs when triggered manually
+    /// (right-click "Run", menu bar ▶, etc.). All schedule fields are ignored.
+    /// Default `false` preserves legacy behavior on SwiftData migration.
+    var isManualOnly: Bool = false
     var createdAt: Date
     var updatedAt: Date
     var lastRunAt: Date?
@@ -265,6 +269,10 @@ final class ScheduledTask {
 
     /// Human-readable schedule description
     var scheduleDescription: String {
+        if isManualOnly {
+            return L10n.tr("schedule.manual_only")
+        }
+
         var parts: [String] = []
 
         if let date = scheduledDate {

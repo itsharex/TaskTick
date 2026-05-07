@@ -11,6 +11,7 @@ struct TaskDetailView: View {
     @State private var showingTaskLogs = false
     @State private var selectedLogIdForSheet: UUID?
     @State private var cachedFileContent: String?
+    @State private var hoveredLogID: UUID?
     @StateObject private var scheduler = TaskScheduler.shared
 
     var isRunning: Bool {
@@ -120,7 +121,7 @@ struct TaskDetailView: View {
                         Text("·")
                             .foregroundStyle(.quaternary)
 
-                        Text(task.repeatType.displayName)
+                        Text(task.isManualOnly ? L10n.tr("schedule.manual_only") : task.repeatType.displayName)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -162,15 +163,24 @@ struct TaskDetailView: View {
                             .tint(task.isEnabled ? .orange : .green)
                             .pointerCursor()
 
-                            Button {
-                                Task {
-                                    _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
+                            if isRunning {
+                                Button {
+                                    ScriptExecutor.shared.cancel(taskId: task.id)
+                                } label: {
+                                    Label(L10n.tr("task.detail.stop"), systemImage: "stop.fill")
                                 }
-                            } label: {
-                                Label(L10n.tr("task.detail.run"), systemImage: "play.fill")
+                                .tint(.red)
+                                .pointerCursor()
+                            } else {
+                                Button {
+                                    Task {
+                                        _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
+                                    }
+                                } label: {
+                                    Label(L10n.tr("task.detail.run"), systemImage: "play.fill")
+                                }
+                                .pointerCursor()
                             }
-                            .disabled(isRunning)
-                            .pointerCursor()
 
                             Button {
                                 EditorState.shared.openEdit(task)
@@ -212,6 +222,9 @@ struct TaskDetailView: View {
                     .font(.headline)
 
                 VStack(spacing: 8) {
+                    if task.isManualOnly {
+                        detailRow(L10n.tr("schedule.trigger_section"), value: L10n.tr("schedule.manual_only"))
+                    } else {
                     // Show scheduled date if set
                     if let date = task.scheduledDate {
                         detailRow(L10n.tr("schedule.date"), value: date.formatted(date: .abbreviated, time: .omitted))
@@ -247,12 +260,16 @@ struct TaskDetailView: View {
                     }
 
                     detailRow(L10n.tr("task.detail.next_run"), value: task.nextRunAt?.formatted(date: .abbreviated, time: .standard) ?? "-")
+                    } // end !isManualOnly
 
                     if let lastRun = task.lastRunAt {
                         detailRow(L10n.tr("task.detail.last_run"), value: lastRun.formatted(date: .abbreviated, time: .standard))
                     }
 
-                    detailRow(L10n.tr("task.detail.timeout"), value: L10n.tr("task.detail.timeout_value", task.timeoutSeconds))
+                    let timeoutLabel = task.timeoutSeconds <= 0
+                        ? L10n.tr("editor.timeout.unlimited")
+                        : L10n.tr("task.detail.timeout_value", task.timeoutSeconds)
+                    detailRow(L10n.tr("task.detail.timeout"), value: timeoutLabel)
 
                     // Notification status
                     let notifyLabel: String = {
@@ -397,42 +414,90 @@ struct TaskDetailView: View {
                 } else {
                     VStack(spacing: 4) {
                         ForEach(Array(logs)) { log in
-                            Button {
-                                selectedLogIdForSheet = log.id
-                                showingTaskLogs = true
-                            } label: {
-                                HStack(spacing: 8) {
-                                    StatusBadge(status: log.status, compact: true)
-
-                                    Text(Self.timeAgo(log.startedAt))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-
-                                    Spacer()
-
-                                    if log.status == .running {
-                                        ProgressView()
-                                            .controlSize(.mini)
-                                    } else if let ms = log.durationMs {
-                                        Text("\(ms)ms")
-                                            .font(.system(.caption2, design: .monospaced))
-                                            .foregroundStyle(.tertiary)
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                                .padding(.horizontal, 6)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(.primary.opacity(0.02))
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .pointerCursor()
+                            recentLogRow(log)
                         }
                     }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
+    private func recentLogRow(_ log: ExecutionLog) -> some View {
+        // Outer button opens the detail sheet; the trailing area conditionally
+        // exposes a stop button on hover for `.running` logs (covers both live
+        // tasks and stale phantoms left over from an earlier session).
+        HStack(spacing: 8) {
+            Button {
+                selectedLogIdForSheet = log.id
+                showingTaskLogs = true
+            } label: {
+                HStack(spacing: 8) {
+                    StatusBadge(status: log.status, compact: true)
+                    Text(Self.timeAgo(log.startedAt))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+            }
+            .buttonStyle(.plain)
+            .pointerCursor()
+
+            // Trailing slot — duration / spinner / stop button
+            Group {
+                if log.status == .running {
+                    if hoveredLogID == log.id {
+                        Button {
+                            stopOrFinalize(log)
+                        } label: {
+                            Image(systemName: "stop.fill")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                        .pointerCursor()
+                        .help(L10n.tr("task.detail.stop"))
+                    } else {
+                        ProgressView()
+                            .controlSize(.mini)
+                    }
+                } else if let ms = log.durationMs {
+                    Text("\(ms)ms")
+                        .font(.system(.caption2, design: .monospaced))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(.primary.opacity(hoveredLogID == log.id ? 0.05 : 0.02))
+        )
+        .onHover { hovering in
+            if hovering { hoveredLogID = log.id }
+            else if hoveredLogID == log.id { hoveredLogID = nil }
+        }
+    }
+
+    /// Stop the run if it's actually live; otherwise just finalize the log so
+    /// the UI stops claiming it's running. Same button covers both cases —
+    /// most users won't know the difference between "live" and "phantom" so
+    /// we shouldn't make them.
+    private func stopOrFinalize(_ log: ExecutionLog) {
+        guard let taskId = log.task?.id else { return }
+        if scheduler.runningTaskIDs.contains(taskId) {
+            ScriptExecutor.shared.cancel(taskId: taskId)
+            ToastCenter.shared.stopped(L10n.tr("toast.task.stopped", task.name))
+        } else {
+            log.status = .cancelled
+            log.finishedAt = Date()
+            if log.durationMs == nil {
+                log.durationMs = Int(Date().timeIntervalSince(log.startedAt) * 1000)
+            }
+            try? modelContext.save()
+            ToastCenter.shared.info(L10n.tr("toast.log.cleared"))
         }
     }
 

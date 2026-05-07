@@ -82,6 +82,13 @@ final class ScriptExecutor: ObservableObject {
     /// Run a task's script and return the execution log entry.
     @discardableResult
     func execute(task: ScheduledTask, triggeredBy: TriggerType = .manual, modelContext: ModelContext) async -> ExecutionLog {
+        // Mark as running so every UI surface (list dot animation, menu bar
+        // spinner, detail view stop button) reacts consistently regardless of
+        // which entry point triggered the run. Set is idempotent, so callers
+        // that also insert (TaskScheduler.fireTask) stay correct.
+        TaskScheduler.shared.runningTaskIDs.insert(task.id)
+        defer { TaskScheduler.shared.runningTaskIDs.remove(task.id) }
+
         let log = ExecutionLog(task: task, triggeredBy: triggeredBy)
         modelContext.insert(log)
         do { try modelContext.save() } catch { NSLog("⚠️ ScriptExecutor save failed: \(error)") }
@@ -310,10 +317,19 @@ final class ScriptExecutor: ObservableObject {
         taskId: UUID,
         ignoreExitCode: Bool = false
     ) async -> ProcessResult {
+        // Treat any non-positive value as "no timeout" — the script runs until it
+        // exits on its own (or the user cancels). Lets users keep dev servers /
+        // long-running interactive processes alive without TaskTick killing them.
+        let isUnlimited = timeoutSeconds <= 0
+
         // Run the entire process on a background queue to avoid blocking the main thread
-        await withCheckedContinuation { (continuation: CheckedContinuation<ProcessResult, Never>) in
-            // Limit concurrent executions to prevent resource exhaustion
-            self.executionSemaphore.wait()
+        return await withCheckedContinuation { (continuation: CheckedContinuation<ProcessResult, Never>) in
+            // Bounded tasks share an 8-slot semaphore to prevent resource exhaustion.
+            // Unlimited tasks would hold their slot indefinitely and starve the
+            // scheduler, so they bypass the semaphore entirely.
+            if !isUnlimited {
+                self.executionSemaphore.wait()
+            }
             DispatchQueue.global(qos: .userInitiated).async {
                 let process = Process()
                 let stdoutPipe = Pipe()
@@ -396,7 +412,7 @@ final class ScriptExecutor: ObservableObject {
                 do {
                     try process.run()
                 } catch {
-                    self.executionSemaphore.signal()
+                    if !isUnlimited { self.executionSemaphore.signal() }
                     continuation.resume(returning: ProcessResult(
                         stdout: "",
                         stderr: "Failed to start process: \(error.localizedDescription)",
@@ -414,6 +430,7 @@ final class ScriptExecutor: ObservableObject {
                 // Timeout handling: send SIGTERM first, then SIGKILL 3s later if still alive.
                 // Prevents scripts that ignore SIGTERM from blocking waitUntilExit forever,
                 // which would leak the execution semaphore slot.
+                // Skipped entirely for unlimited tasks (timeoutSeconds <= 0).
                 let timeoutWorkItem = DispatchWorkItem {
                     if process.isRunning {
                         process.terminate()
@@ -424,8 +441,10 @@ final class ScriptExecutor: ObservableObject {
                         kill(process.processIdentifier, SIGKILL)
                     }
                 }
-                DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(timeoutSeconds), execute: timeoutWorkItem)
-                DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(timeoutSeconds + 3), execute: killWorkItem)
+                if !isUnlimited {
+                    DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(timeoutSeconds), execute: timeoutWorkItem)
+                    DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(timeoutSeconds + 3), execute: killWorkItem)
+                }
 
                 // Wait for process to finish (on background thread — won't block UI)
                 process.waitUntilExit()
@@ -461,7 +480,7 @@ final class ScriptExecutor: ObservableObject {
                     status = .failure
                 }
 
-                self.executionSemaphore.signal()
+                if !isUnlimited { self.executionSemaphore.signal() }
                 continuation.resume(returning: ProcessResult(
                     stdout: stdout,
                     stderr: stderr,

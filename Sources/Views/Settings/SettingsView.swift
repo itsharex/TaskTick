@@ -5,6 +5,7 @@ import ServiceManagement
 struct SettingsView: View {
     // General
     @AppStorage("launchAtLogin") private var launchAtLogin = false
+    @ObservedObject private var quickLauncherSettings = QuickLauncherSettings.shared
     @AppStorage("defaultShell") private var defaultShell = "/bin/zsh"
     @AppStorage("defaultTimeout") private var defaultTimeout = 300
     @AppStorage("appearanceMode") private var appearanceMode = "system"
@@ -101,6 +102,8 @@ struct SettingsView: View {
                 Text(L10n.tr("settings.notifications.hint"))
             }
 
+            quickLauncherSection
+
             Section(L10n.tr("settings.general.defaults")) {
                 Picker(L10n.tr("settings.general.default_shell"), selection: $defaultShell) {
                     ForEach(AvailableShells.load(including: defaultShell), id: \.self) { shell in
@@ -121,6 +124,24 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    // MARK: - Quick Launcher Section
+
+    private var quickLauncherSection: some View {
+        Section {
+            Toggle(L10n.tr("quick_launcher.settings.enable"), isOn: $quickLauncherSettings.isEnabled)
+
+            if quickLauncherSettings.isEnabled {
+                LabeledContent(L10n.tr("quick_launcher.settings.shortcut")) {
+                    HotkeyRecorderView(settings: quickLauncherSettings)
+                }
+            }
+        } header: {
+            Text(L10n.tr("quick_launcher.settings.section"))
+        } footer: {
+            Text(L10n.tr("quick_launcher.settings.hint"))
+        }
     }
 
     // MARK: - Backup

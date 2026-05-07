@@ -7,12 +7,23 @@ struct MenuBarView: View {
     @Environment(\.openWindow) private var openWindow
     @Query(sort: \ScheduledTask.createdAt, order: .reverse) private var tasks: [ScheduledTask]
     @StateObject private var scheduler = TaskScheduler.shared
+    /// Watching the live settings object so the shortcut hint here updates the
+    /// instant the user re-records it in Settings — no stale label.
+    @ObservedObject private var quickLauncherSettings = QuickLauncherSettings.shared
 
     var upcomingTasks: [ScheduledTask] {
         tasks
-            .filter { $0.isEnabled && $0.nextRunAt != nil }
+            .filter { $0.isEnabled && !$0.isManualOnly && $0.nextRunAt != nil }
             .sorted { ($0.nextRunAt ?? .distantFuture) < ($1.nextRunAt ?? .distantFuture) }
             .prefix(5)
+            .map { $0 }
+    }
+
+    var manualTasks: [ScheduledTask] {
+        tasks
+            .filter { $0.isEnabled && $0.isManualOnly }
+            .sorted { $0.createdAt > $1.createdAt }
+            .prefix(8)
             .map { $0 }
     }
 
@@ -36,7 +47,7 @@ struct MenuBarView: View {
             Divider()
 
             // Task list
-            if upcomingTasks.isEmpty {
+            if upcomingTasks.isEmpty && manualTasks.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "tray")
                         .font(.largeTitle)
@@ -49,17 +60,34 @@ struct MenuBarView: View {
                 .padding(.vertical, 24)
             } else {
                 VStack(spacing: 2) {
-                    HStack {
-                        Text(L10n.tr("menubar.upcoming"))
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.top, 4)
+                    if !upcomingTasks.isEmpty {
+                        HStack {
+                            Text(L10n.tr("menubar.upcoming"))
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.top, 4)
 
-                    ForEach(upcomingTasks) { task in
-                        MenuBarTaskRow(task: task, isRunning: scheduler.runningTaskIDs.contains(task.id))
+                        ForEach(upcomingTasks) { task in
+                            MenuBarTaskRow(task: task, isRunning: scheduler.runningTaskIDs.contains(task.id))
+                        }
+                    }
+
+                    if !manualTasks.isEmpty {
+                        HStack {
+                            Text(L10n.tr("menubar.manual_scripts"))
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.top, upcomingTasks.isEmpty ? 4 : 8)
+
+                        ForEach(manualTasks) { task in
+                            MenuBarTaskRow(task: task, isRunning: scheduler.runningTaskIDs.contains(task.id))
+                        }
                     }
                 }
                 .padding(8)
@@ -99,6 +127,47 @@ struct MenuBarView: View {
                 .pointerCursor()
 
                 Divider().padding(.horizontal, 12)
+
+                // Quick Launcher (only when enabled in Settings)
+                if quickLauncherSettings.isEnabled {
+                    Button(action: {
+                        if let panel = NSApp.keyWindow as? NSPanel {
+                            panel.orderOut(nil)
+                        }
+                        QuickLauncherController.shared.toggle()
+                    }) {
+                        HStack(spacing: 6) {
+                            Text(L10n.tr("quick_launcher.menu_item"))
+                            Spacer()
+                            // 1Password-style: each modifier and the key get
+                            // their own kbd pill so the shortcut is legible
+                            // at a glance.
+                            ForEach(quickLauncherSettings.displayChips, id: \.self) { chip in
+                                Text(chip)
+                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(.primary.opacity(0.85))
+                                    .frame(minWidth: 16)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .fill(Color.primary.opacity(0.10))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
+                                    )
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .pointerCursor()
+
+                    Divider().padding(.horizontal, 12)
+                }
 
                 // Check for updates
                 Button(action: {
@@ -164,15 +233,25 @@ struct MenuBarTaskRow: View {
             Spacer()
 
             if isRunning {
-                ProgressView()
-                    .controlSize(.mini)
+                if isHovering {
+                    Button {
+                        ScriptExecutor.shared.cancel(taskId: task.id)
+                    } label: {
+                        Image(systemName: "stop.fill")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(.plain)
+                    .pointerCursor()
+                    .help(L10n.tr("task.detail.stop"))
+                } else {
+                    ProgressView()
+                        .controlSize(.mini)
+                }
             } else if isHovering {
                 Button {
-                    let taskId = task.id
-                    TaskScheduler.shared.runningTaskIDs.insert(taskId)
                     Task {
                         _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
-                        TaskScheduler.shared.runningTaskIDs.remove(taskId)
                     }
                 } label: {
                     Image(systemName: "play.fill")
@@ -181,6 +260,10 @@ struct MenuBarTaskRow: View {
                 }
                 .buttonStyle(.plain)
                 .pointerCursor()
+            } else if task.isManualOnly {
+                Image(systemName: "play.circle")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             } else if let nextRun = task.nextRunAt {
                 Text(nextRun, style: .relative)
                     .font(.caption)

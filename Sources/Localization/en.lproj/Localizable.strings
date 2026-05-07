@@ -6,6 +6,7 @@
 "menubar.no_tasks" = "No Tasks";
 "menubar.next_run" = "Next Run";
 "menubar.upcoming" = "Upcoming Tasks";
+"menubar.manual_scripts" = "Manual Scripts";
 "menubar.quit" = "Quit";
 
 /* Task List */
@@ -29,6 +30,7 @@
 "task.detail.enable" = "Enable";
 "task.detail.disable" = "Disable";
 "task.detail.run" = "Run";
+"task.detail.stop" = "Stop";
 "task.detail.edit" = "Edit";
 "task.detail.delete" = "Delete";
 "task.detail.schedule" = "Schedule";
@@ -52,7 +54,6 @@
 "editor.tab.basic" = "Basic";
 "editor.tab.schedule" = "Schedule";
 "editor.tab.script" = "Script";
-"editor.tab.content" = "Content";
 "editor.tab.settings" = "Settings";
 "editor.tab.notification" = "Notifications";
 
@@ -89,6 +90,8 @@
 "editor.working_dir.choose" = "Choose Directory";
 "editor.timeout" = "Timeout";
 "editor.timeout.seconds" = "seconds";
+"editor.timeout.unlimited" = "no timeout";
+"editor.timeout.hint" = "Enter -1 (or any negative number) for no timeout — the script runs until it exits on its own or is stopped manually. Useful for dev servers and other long-running processes.";
 "editor.ignore_exit_code" = "Ignore Exit Code";
 "editor.ignore_exit_code.hint" = "When enabled, the task is treated as successful regardless of the script's exit code. Useful for scripts that return non-zero codes on normal completion.";
 "editor.pre_run.section" = "Pre-Run Command";
@@ -129,6 +132,11 @@
 "schedule.launch_section" = "Launch";
 "schedule.run_on_launch" = "Run once each time the app launches";
 "schedule.run_on_launch.help" = "Runs whether or not a schedule is set";
+"schedule.trigger_section" = "Trigger";
+"schedule.manual_only" = "Manual trigger only";
+"schedule.manual_only.help" = "Skip the scheduler — runs only via right-click or menu bar";
+"tasklist.section.scheduled" = "Scheduled";
+"tasklist.section.manual" = "Manual";
 
 /* Repeat Types */
 "repeat.never" = "Never";
@@ -189,6 +197,36 @@
 "notification.success" = "Completed successfully";
 "notification.succeeded" = "Success";
 "notification.failed" = "Failed";
+"notification.denied.title" = "Notifications Disabled";
+"notification.denied.message" = "TaskTick wants to deliver task results, but notifications are turned off in System Settings. Please re-enable them to receive task notifications.";
+"notification.denied.open_settings" = "Open System Settings";
+"notification.denied.later" = "Later";
+
+/* Quick Launcher */
+"quick_launcher.placeholder" = "Search tasks...";
+"quick_launcher.empty.no_tasks" = "No tasks available";
+"quick_launcher.empty.no_match" = "No matching tasks";
+"quick_launcher.hint.navigate" = "Navigate";
+"quick_launcher.hint.run" = "Run";
+"quick_launcher.hint.close" = "Close";
+"quick_launcher.recording" = "Press shortcut…";
+"quick_launcher.menu_item" = "Quick Launcher";
+"quick_launcher.action.run" = "Run";
+"quick_launcher.action.stop" = "Stop";
+"quick_launcher.hint.stop" = "Stop";
+"quick_launcher.hint.restart" = "Restart";
+"quick_launcher.subtitle.running" = "Running";
+"quick_launcher.meta.running" = "Running…";
+
+/* Toast messages */
+"toast.task.started" = "Started \"%@\"";
+"toast.task.stopped" = "Stopped \"%@\"";
+"toast.task.restarted" = "Restarted \"%@\"";
+"toast.log.cleared" = "Cleaned up stale log";
+"quick_launcher.settings.section" = "Quick Launcher";
+"quick_launcher.settings.enable" = "Enable Quick Launcher";
+"quick_launcher.settings.shortcut" = "Shortcut";
+"quick_launcher.settings.hint" = "Press the shortcut from any app to open a search panel and run a script. Click the shortcut field to re-record.";
 
 "log.title" = "Execution Logs";
 "log.count_suffix" = "records";

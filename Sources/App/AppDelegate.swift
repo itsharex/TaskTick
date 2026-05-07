@@ -1,4 +1,5 @@
 import AppKit
+import SwiftData
 import SwiftUI
 
 /// Show a modal warning alert for a non-fatal error. Use at sites where we previously
@@ -28,6 +29,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
         default: NSApp.appearance = nil
         }
+
+        // Wire up the quick launcher's SwiftData container and arm the global
+        // hotkey based on persisted settings. Order matters: the controller
+        // needs the container BEFORE the hotkey can fire (otherwise the panel
+        // would open with no @Query data source).
+        Task { @MainActor in
+            QuickLauncherController.shared.configure(modelContainer: TaskTickApp._sharedModelContainer)
+            QuickLauncherSettings.shared.applyToHotkey()
+            cleanupStaleRunningLogs()
+        }
+    }
+
+    /// Finalize logs left in `.running` state by a previous session. These are
+    /// phantoms — the actual process exited (or was killed by a crash / quit)
+    /// but `ScriptExecutor.execute` never got to write the terminal status.
+    /// Without cleanup, the UI keeps showing them as live forever.
+    @MainActor
+    private func cleanupStaleRunningLogs() {
+        let context = TaskTickApp._sharedModelContainer.mainContext
+        let runningRaw = ExecutionStatus.running.rawValue
+        let descriptor = FetchDescriptor<ExecutionLog>(
+            predicate: #Predicate { $0.statusRaw == runningRaw }
+        )
+        guard let logs = try? context.fetch(descriptor), !logs.isEmpty else { return }
+
+        let now = Date()
+        for log in logs {
+            log.status = .cancelled
+            log.finishedAt = now
+            if log.durationMs == nil {
+                log.durationMs = Int(now.timeIntervalSince(log.startedAt) * 1000)
+            }
+        }
+        try? context.save()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
