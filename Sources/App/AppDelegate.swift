@@ -19,6 +19,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// When true, `NSApp.terminate` actually quits. Otherwise Cmd+Q just closes windows.
     @MainActor static var shouldReallyQuit = false
 
+    private var revealObserver: NSObjectProtocol?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationManager.shared.requestPermission()
 
@@ -39,6 +41,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             QuickLauncherSettings.shared.applyToHotkey()
             cleanupStaleRunningLogs()
         }
+
+        // Quick Launcher's ⌘O posts this notification to ask for the main
+        // window to be focused. We listen here (not in MenuBarView) because
+        // MenuBarExtra(.window) lazy-instantiates its body — if the user has
+        // never clicked the menu bar icon this session, the SwiftUI observer
+        // is never wired up and the notification gets dropped.
+        revealObserver = NotificationCenter.default.addObserver(
+            forName: .revealTaskInMain,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                AppDelegate.bringMainWindowForward()
+            }
+        }
+    }
+
+    /// Surface the SwiftUI main window. Works whether the window is currently
+    /// visible, hidden behind another app, or closed (NSWindow object still
+    /// alive in `NSApp.windows` until the app terminates).
+    @MainActor
+    static func bringMainWindowForward() {
+        NSApp.setActivationPolicy(.regular)
+        for window in NSApp.windows where window.canBecomeMain && !(window is NSPanel) {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        // Fallback for the rare case where SwiftUI hasn't materialized the
+        // primary window yet — Apple's documented "reopen" path triggers
+        // SwiftUI to instantiate it.
+        NSApp.activate(ignoringOtherApps: true)
+        _ = NSApp.delegate?.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: false)
     }
 
     /// Finalize logs left in `.running` state by a previous session. These are

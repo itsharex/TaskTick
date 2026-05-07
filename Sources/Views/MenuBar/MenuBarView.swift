@@ -236,6 +236,7 @@ struct MenuBarTaskRow: View {
                 if isHovering {
                     Button {
                         ScriptExecutor.shared.cancel(taskId: task.id)
+                        ToastCenter.shared.stopped(L10n.tr("toast.task.stopped", task.name))
                     } label: {
                         Image(systemName: "stop.fill")
                             .font(.caption)
@@ -250,9 +251,11 @@ struct MenuBarTaskRow: View {
                 }
             } else if isHovering {
                 Button {
+                    let context = modelContext
                     Task {
-                        _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
+                        _ = await ScriptExecutor.shared.execute(task: task, modelContext: context)
                     }
+                    ToastCenter.shared.running(L10n.tr("toast.task.started", task.name))
                 } label: {
                     Image(systemName: "play.fill")
                         .font(.caption)

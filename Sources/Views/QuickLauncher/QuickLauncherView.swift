@@ -164,6 +164,8 @@ struct QuickLauncherView: View {
             case 36, 76: runSelected(); return nil   // return / numpad enter
             case 15 where cmdHeld:                   // ⌘R — restart
                 restartSelected(); return nil
+            case 31 where cmdHeld:                   // ⌘O — reveal in main window
+                revealSelected(); return nil
             default: return event
             }
         }
@@ -274,6 +276,7 @@ struct QuickLauncherView: View {
                     : L10n.tr("quick_launcher.hint.run")
             )
             kbdHint(keys: ["⌘", "R"], label: L10n.tr("quick_launcher.hint.restart"))
+            kbdHint(keys: ["⌘", "O"], label: L10n.tr("quick_launcher.hint.reveal"))
             kbdHint(keys: ["esc"], label: L10n.tr("quick_launcher.hint.close"))
             Spacer()
         }
@@ -353,6 +356,18 @@ struct QuickLauncherView: View {
         }
         QuickLauncherUsage.markUsed(task.id)
         ToastCenter.shared.restart(L10n.tr("toast.task.restarted", name))
+        onDismiss()
+    }
+
+    /// ⌘O — close the launcher and surface the selected task inside the main
+    /// window. Posts via NotificationCenter so MenuBarExtra (which has
+    /// `openWindow` in its environment) can wake the main scene; the main
+    /// window then reads `MainWindowSelection.shared.taskToReveal` and
+    /// focuses that row.
+    private func revealSelected() {
+        guard let task = selectedTask else { return }
+        MainWindowSelection.shared.taskToReveal = task
+        NotificationCenter.default.post(name: .revealTaskInMain, object: nil)
         onDismiss()
     }
 }

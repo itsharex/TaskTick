@@ -215,6 +215,7 @@
 "quick_launcher.action.stop" = "停止";
 "quick_launcher.hint.stop" = "停止";
 "quick_launcher.hint.restart" = "重启";
+"quick_launcher.hint.reveal" = "在主窗口打开";
 "quick_launcher.subtitle.running" = "运行中";
 "quick_launcher.meta.running" = "执行中…";
 

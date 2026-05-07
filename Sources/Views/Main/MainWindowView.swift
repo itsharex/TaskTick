@@ -5,6 +5,7 @@ struct MainWindowView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.openWindow) private var openWindow
     @StateObject private var editorState = EditorState.shared
+    @StateObject private var mainSelection = MainWindowSelection.shared
     @State private var selectedTask: ScheduledTask?
     @AppStorage("sortNewestFirst") private var sortNewestFirst = true
     @Binding var showingCrontabImport: Bool
@@ -68,6 +69,21 @@ struct MainWindowView: View {
             if let task = newTask {
                 selectedTask = task
                 editorState.lastSavedTask = nil
+            }
+        }
+        .onAppear {
+            // When Quick Launcher opens the main window via ⌘O, the window
+            // scene may instantiate fresh — pick up the rendezvous selection
+            // here so the first render already shows the requested task.
+            if let task = mainSelection.taskToReveal {
+                selectedTask = task
+                mainSelection.taskToReveal = nil
+            }
+        }
+        .onChange(of: mainSelection.taskToReveal) { _, newTask in
+            if let task = newTask {
+                selectedTask = task
+                mainSelection.taskToReveal = nil
             }
         }
     }

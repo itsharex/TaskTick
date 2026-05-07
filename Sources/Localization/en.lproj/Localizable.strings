@@ -215,6 +215,7 @@
 "quick_launcher.action.stop" = "Stop";
 "quick_launcher.hint.stop" = "Stop";
 "quick_launcher.hint.restart" = "Restart";
+"quick_launcher.hint.reveal" = "Open in main";
 "quick_launcher.subtitle.running" = "Running";
 "quick_launcher.meta.running" = "Running…";
 
