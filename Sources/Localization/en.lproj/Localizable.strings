@@ -224,6 +224,12 @@
 "toast.task.stopped" = "Stopped \"%@\"";
 "toast.task.restarted" = "Restarted \"%@\"";
 "toast.log.cleared" = "Cleaned up stale log";
+
+/* Quit confirmation */
+"quit.confirm.title" = "Quit TaskTick?";
+"quit.confirm.message" = "%d script(s) are still running. Quitting will terminate them immediately:";
+"quit.confirm.cancel" = "Cancel";
+"quit.confirm.quit" = "Quit and Terminate";
 "quick_launcher.settings.section" = "Quick Launcher";
 "quick_launcher.settings.enable" = "Enable Quick Launcher";
 "quick_launcher.settings.shortcut" = "Shortcut";

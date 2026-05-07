@@ -224,6 +224,12 @@
 "toast.task.stopped" = "已停止「%@」";
 "toast.task.restarted" = "已重启「%@」";
 "toast.log.cleared" = "已清理僵尸日志";
+
+/* Quit confirmation */
+"quit.confirm.title" = "退出 TaskTick？";
+"quit.confirm.message" = "%d 个脚本正在运行，退出后将立即终止它们：";
+"quit.confirm.cancel" = "取消";
+"quit.confirm.quit" = "退出并终止";
 "quick_launcher.settings.section" = "快速访问";
 "quick_launcher.settings.enable" = "启用快速访问";
 "quick_launcher.settings.shortcut" = "快捷键";

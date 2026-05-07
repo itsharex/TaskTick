@@ -232,12 +232,38 @@ final class ScriptExecutor: ObservableObject {
         return log
     }
 
-    /// Cancel a running task
+    /// Cancel a running task. Hits both the immediate child (zsh) and the
+    /// whole process group so descendants like `node`, `python`, etc. don't
+    /// orphan when zsh exits without forwarding SIGTERM.
     func cancel(taskId: UUID) {
         if let process = runningProcesses[taskId], process.isRunning {
-            process.terminate()
+            let pid = process.processIdentifier
+            kill(-pid, SIGTERM)   // process group (no-op if setpgid lost the race)
+            process.terminate()   // belt and suspenders for the immediate child
         }
         runningProcesses.removeValue(forKey: taskId)
+    }
+
+    /// Synchronously terminate every running script. Designed for app-quit:
+    /// SIGTERM the whole tree, give it `graceful` seconds to clean up, then
+    /// SIGKILL anything still alive. Blocks the caller — ok during
+    /// applicationWillTerminate, since the app is dying anyway.
+    func cancelAll(graceful: TimeInterval = 0.3) {
+        let snapshot = Array(runningProcesses.values)
+        runningProcesses.removeAll()
+        guard !snapshot.isEmpty else { return }
+
+        for process in snapshot where process.isRunning {
+            let pid = process.processIdentifier
+            kill(-pid, SIGTERM)
+            process.terminate()
+        }
+        Thread.sleep(forTimeInterval: graceful)
+        for process in snapshot where process.isRunning {
+            let pid = process.processIdentifier
+            kill(-pid, SIGKILL)
+            kill(pid, SIGKILL)
+        }
     }
 
     // MARK: - Private
@@ -421,6 +447,15 @@ final class ScriptExecutor: ObservableObject {
                     ))
                     return
                 }
+
+                // Make the child its own process group leader so we can later
+                // signal the entire descendant tree with `kill(-pgid, sig)`.
+                // Without this, a `npm run dev` style script (zsh → npm → node)
+                // would leave the node grandchild orphaned when we SIGTERM only
+                // zsh — exactly the leak this app's quit-time cleanup must
+                // avoid. Race window is the gap between run() and setpgid; in
+                // practice scripts don't fork that early.
+                setpgid(process.processIdentifier, process.processIdentifier)
 
                 // Store process reference for cancellation
                 Task { @MainActor in

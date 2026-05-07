@@ -103,6 +103,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         if AppDelegate.shouldReallyQuit {
+            // Block the quit behind a confirmation when scripts are still
+            // running. Without this, dev servers / long-running tasks would be
+            // SIGKILLed without warning, sometimes losing in-progress work
+            // (uncommitted edits in a watcher script, half-written DB rows, …).
+            let runningNames = runningTaskNames()
+            if !runningNames.isEmpty, !confirmQuitWithRunningScripts(runningNames) {
+                AppDelegate.shouldReallyQuit = false
+                return .terminateCancel
+            }
             return .terminateNow
         }
         // Cmd+Q: just close all windows instead of quitting
@@ -113,6 +122,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         NSApp.setActivationPolicy(.accessory)
         return .terminateCancel
+    }
+
+    @MainActor
+    private func runningTaskNames() -> [String] {
+        let runningIDs = TaskScheduler.shared.runningTaskIDs
+        guard !runningIDs.isEmpty else { return [] }
+        let context = TaskTickApp._sharedModelContainer.mainContext
+        guard let tasks = try? context.fetch(FetchDescriptor<ScheduledTask>()) else { return [] }
+        return tasks.filter { runningIDs.contains($0.id) }.map(\.name)
+    }
+
+    @MainActor
+    private func confirmQuitWithRunningScripts(_ names: [String]) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("quit.confirm.title")
+        let bullets = names.map { "• \($0)" }.joined(separator: "\n")
+        alert.informativeText = L10n.tr("quit.confirm.message", names.count) + "\n\n" + bullets
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: L10n.tr("quit.confirm.cancel"))
+        let quitButton = alert.addButton(withTitle: L10n.tr("quit.confirm.quit"))
+        quitButton.hasDestructiveAction = true
+        return alert.runModal() == .alertSecondButtonReturn
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -135,6 +166,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // Kill every running script tree before we exit. Without this, the
+        // children get reparented to launchd and survive as orphans —
+        // silent dev servers (no stdout writes) would keep running until the
+        // next reboot, and TaskTick has no way to find them again on relaunch.
+        ScriptExecutor.shared.cancelAll(graceful: 0.3)
+
         TaskScheduler.shared.stop()
         // Flush pending SwiftData writes to ensure database is consistent on disk.
         // We can't block termination for user input here, but logging gives a trail
