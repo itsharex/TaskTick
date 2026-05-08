@@ -216,6 +216,12 @@
 "quick_launcher.hint.stop" = "停止";
 "quick_launcher.hint.restart" = "重启";
 "quick_launcher.hint.reveal" = "在主窗口打开";
+"quick_launcher.hint.settings" = "设置";
+"quick_launcher.settings.results" = "搜索结果";
+"quick_launcher.settings.show_tasks" = "显示任务";
+"quick_launcher.filter.all" = "全部";
+"quick_launcher.filter.scheduled_only" = "仅自动";
+"quick_launcher.filter.manual_only" = "仅手动";
 "quick_launcher.subtitle.running" = "运行中";
 "quick_launcher.meta.running" = "执行中…";
 
@@ -230,6 +236,20 @@
 "quit.confirm.message" = "%d 个脚本正在运行，退出后将立即终止它们：";
 "quit.confirm.cancel" = "取消";
 "quit.confirm.quit" = "退出并终止";
+
+/* Live log file (manual tasks) */
+"settings.logs.streaming" = "实时日志文件";
+"settings.logs.stream_to_file" = "将手动任务输出写入日志文件";
+"settings.logs.stream_to_file.hint" = "每个手动任务的最近一次运行会写到 ~/Library/Logs/TaskTick/<任务名>.log，方便用 tail -f 或 Console.app 实时查看。新一次运行会覆盖旧内容。";
+"settings.logs.reveal_directory" = "在 Finder 中显示";
+"task.detail.live_log_file" = "实时日志文件";
+"task.detail.live_log.reveal" = "在 Finder 显示";
+"task.detail.live_log.console" = "在控制台打开";
+"task.detail.live_log.copy_path" = "复制路径";
+"task.detail.live_log.copied" = "已复制路径";
+"task.detail.live_log.empty_hint" = "任务首次运行后会生成此文件";
+"task.detail.elapsed" = "已运行";
+"quick_launcher.meta.running_for" = "已运行 %@";
 "quick_launcher.settings.section" = "快速访问";
 "quick_launcher.settings.enable" = "启用快速访问";
 "quick_launcher.settings.shortcut" = "快捷键";

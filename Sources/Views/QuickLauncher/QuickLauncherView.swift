@@ -32,8 +32,14 @@ struct QuickLauncherView: View {
         if scheduler.runningTaskIDs.contains(task.id) {
             return RankKey(tier: 0, secondary: .distantFuture)
         }
-        if let used = QuickLauncherUsage.lastUsed(task.id) {
-            return RankKey(tier: 1, secondary: used)
+        // Tier 1 captures any user-initiated recency — Quick Launcher MRU
+        // and "manually executed from anywhere" both count, whichever is
+        // newer. This way play-button presses in the main window or menu
+        // bar bump the task to the top here too, not just QL Enter presses.
+        let qlUsed = QuickLauncherUsage.lastUsed(task.id)
+        let manualUsed = task.lastManualRunAt
+        if let recent = [qlUsed, manualUsed].compactMap({ $0 }).max() {
+            return RankKey(tier: 1, secondary: recent)
         }
         if task.isManualOnly {
             return RankKey(tier: 2, secondary: task.createdAt)
@@ -42,7 +48,19 @@ struct QuickLauncherView: View {
     }
 
     private var rankedTasks: [ScheduledTask] {
-        let enabled = tasks.filter { $0.isEnabled }
+        // Read filter as a snapshot — the panel is recreated on every show()
+        // so picking up the latest value at body time is enough. Avoiding
+        // @ObservedObject prevents a Combine subscription that races with
+        // the show()'s alpha-flash workaround on cold start.
+        let filter = QuickLauncherSettings.shared.taskFilter
+        let enabled = tasks.filter {
+            guard $0.isEnabled else { return false }
+            switch filter {
+            case .all: return true
+            case .scheduledOnly: return !$0.isManualOnly
+            case .manualOnly: return $0.isManualOnly
+            }
+        }
         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
 
         if trimmed.isEmpty {
@@ -126,14 +144,13 @@ struct QuickLauncherView: View {
         .ignoresSafeArea()
         .onAppear {
             installKeyMonitor()
-            // Focus needs a tick to settle: the panel becomes key just after
-            // makeKeyAndOrderFront, but SwiftUI's @FocusState doesn't take
-            // hold reliably if set on the same runloop turn. A 50ms delay
-            // gives AppKit time to finalize the responder chain.
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(50))
-                searchFieldFocused = true
-            }
+            // Focus immediately while the panel is still at alpha=0 (the
+            // controller delays alpha→1 by 100ms specifically to cover this
+            // window). On first launch, NSTextField's first focus spawns
+            // CursorUIViewService — an XPC-hosted remote view that flashes
+            // a default-background frame as it boots. Doing it under alpha=0
+            // makes that flash invisible to the user.
+            searchFieldFocused = true
         }
         .onDisappear { removeKeyMonitor() }
     }
@@ -166,6 +183,8 @@ struct QuickLauncherView: View {
                 restartSelected(); return nil
             case 31 where cmdHeld:                   // ⌘O — reveal in main window
                 revealSelected(); return nil
+            case 43 where cmdHeld:                   // ⌘, — open Settings
+                openSettings(); return nil
             default: return event
             }
         }
@@ -190,6 +209,14 @@ struct QuickLauncherView: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: 14))
                 .focused($searchFieldFocused)
+                // Suppress macOS's focus-time suggestion popovers
+                // (autocorrect / spell / AutoFill hints). Without these the
+                // first time the field gains focus right after panel reveal,
+                // the system flashes a small completion card under the
+                // search box and immediately dismisses it — looking like a
+                // bug in the launcher itself.
+                .autocorrectionDisabled(true)
+                .textContentType(.none)
                 .onChange(of: searchText) { _, _ in selectedIndex = 0 }
                 .onSubmit { runSelected() }
 
@@ -277,6 +304,7 @@ struct QuickLauncherView: View {
             )
             kbdHint(keys: ["⌘", "R"], label: L10n.tr("quick_launcher.hint.restart"))
             kbdHint(keys: ["⌘", "O"], label: L10n.tr("quick_launcher.hint.reveal"))
+            kbdHint(keys: ["⌘", ","], label: L10n.tr("quick_launcher.hint.settings"))
             kbdHint(keys: ["esc"], label: L10n.tr("quick_launcher.hint.close"))
             Spacer()
         }
@@ -370,6 +398,22 @@ struct QuickLauncherView: View {
         NotificationCenter.default.post(name: .revealTaskInMain, object: nil)
         onDismiss()
     }
+
+    /// ⌘, — close the launcher and open the Settings scene. Uses the system
+    /// `showSettingsWindow:` action which SwiftUI's `Settings { }` scene wires
+    /// up automatically, so no environment plumbing is needed from this
+    /// non-Scene NSPanel context.
+    private func openSettings() {
+        NSApp.setActivationPolicy(.regular)
+        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+            // Pre-macOS 13 selector. Harmless when targeting 14+ — kept as a
+            // belt-and-suspenders fallback in case the new selector silently
+            // fails on a future regression.
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        onDismiss()
+    }
 }
 
 // MARK: - Row
@@ -445,10 +489,27 @@ private struct QuickLauncherRow: View {
             } else if isRunning {
                 // While a task is mid-flight the "X minutes ago" label is
                 // misleading — that's the *last completed* run, not the live
-                // one. Replace with a clear in-progress indicator.
-                Text(L10n.tr("quick_launcher.meta.running"))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.green)
+                // one. Show elapsed time since the current run started, ticking
+                // every second. Shares its data source (running ExecutionLog's
+                // startedAt) with the detail-page schedule card.
+                if let startedAt = RunningDuration.startedAt(for: task) {
+                    TimelineView(.periodic(from: .now, by: 1.0)) { context in
+                        Text(L10n.tr(
+                            "quick_launcher.meta.running_for",
+                            RunningDuration.format(since: startedAt, now: context.date)
+                        ))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.green)
+                        .monospacedDigit()
+                    }
+                } else {
+                    // Fallback for the brief race where runningTaskIDs has
+                    // already been flipped but the ExecutionLog hasn't
+                    // hit disk yet.
+                    Text(L10n.tr("quick_launcher.meta.running"))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.green)
+                }
             } else if let lastRun = task.lastRunAt {
                 // Right-edge meta: "Xm ago". Only shown for unselected rows
                 // so the action pill on the selected row stays the visual

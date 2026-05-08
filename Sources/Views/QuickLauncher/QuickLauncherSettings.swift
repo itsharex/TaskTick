@@ -14,6 +14,11 @@ final class QuickLauncherSettings: ObservableObject {
     private let enabledKey = "quickLauncher.enabled"
     private let keyCodeKey = "quickLauncher.keyCode"
     private let modifiersKey = "quickLauncher.modifiers"
+    private let taskFilterKey = "quickLauncher.taskFilter"
+    /// Legacy boolean key — only read for migration from the brief window
+    /// where the filter shipped as a Bool. Safe to delete after a few
+    /// versions when nobody's UserDefaults still has it.
+    private let legacyShowScheduledKey = "quickLauncher.showScheduled"
 
     /// Default binding: ⌘⌥T. Picked because the T-for-TaskTick mnemonic is
     /// memorable and this combo is rarely claimed by other apps.
@@ -41,6 +46,15 @@ final class QuickLauncherSettings: ObservableObject {
         }
     }
 
+    /// Which kinds of tasks the launcher surfaces. `.all` is the default
+    /// (matches v1.7.0 behavior); `.scheduledOnly` and `.manualOnly` let
+    /// users narrow the launcher to one workflow.
+    @Published var taskFilter: QuickLauncherTaskFilter {
+        didSet {
+            UserDefaults.standard.set(taskFilter.rawValue, forKey: taskFilterKey)
+        }
+    }
+
     private init() {
         let defaults = UserDefaults.standard
 
@@ -48,6 +62,16 @@ final class QuickLauncherSettings: ObservableObject {
         self.keyCode = defaults.object(forKey: keyCodeKey) as? Int ?? defaultKeyCode
         let rawMods = defaults.object(forKey: modifiersKey) as? Int ?? Int(defaultModifiers.rawValue)
         self.modifiers = NSEvent.ModifierFlags(rawValue: UInt(rawMods))
+
+        if let raw = defaults.string(forKey: taskFilterKey),
+           let filter = QuickLauncherTaskFilter(rawValue: raw) {
+            self.taskFilter = filter
+        } else if let oldBool = defaults.object(forKey: legacyShowScheduledKey) as? Bool {
+            // Was: true → show all, false → manual only
+            self.taskFilter = oldBool ? .all : .manualOnly
+        } else {
+            self.taskFilter = .all
+        }
     }
 
     /// Re-register the global hotkey based on current state. Called both on
@@ -73,6 +97,23 @@ final class QuickLauncherSettings: ObservableObject {
     /// Per-glyph chips for kbd-style rendering (one chip per modifier + key).
     var displayChips: [String] {
         HotkeyFormatter.chips(keyCode: keyCode, modifiers: modifiers)
+    }
+}
+
+/// What kinds of tasks the Quick Launcher surfaces.
+enum QuickLauncherTaskFilter: String, CaseIterable, Identifiable {
+    case all
+    case scheduledOnly
+    case manualOnly
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .all: return L10n.tr("quick_launcher.filter.all")
+        case .scheduledOnly: return L10n.tr("quick_launcher.filter.scheduled_only")
+        case .manualOnly: return L10n.tr("quick_launcher.filter.manual_only")
+        }
     }
 }
 

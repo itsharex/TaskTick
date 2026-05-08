@@ -11,19 +11,30 @@ struct MenuBarView: View {
     /// instant the user re-records it in Settings — no stale label.
     @ObservedObject private var quickLauncherSettings = QuickLauncherSettings.shared
 
+    /// Caps tuned for the menu bar surface. Scheduled jobs fire on their
+    /// own schedule so the next 3 are usually enough context; manual scripts
+    /// are the day-to-day actions, so they get more room. Combined cap is
+    /// already implicit (3 + 5 = 8), keeping the popover height bounded.
+    private static let maxScheduled = 3
+    private static let maxManual = 5
+
     var upcomingTasks: [ScheduledTask] {
         tasks
             .filter { $0.isEnabled && !$0.isManualOnly && $0.nextRunAt != nil }
             .sorted { ($0.nextRunAt ?? .distantFuture) < ($1.nextRunAt ?? .distantFuture) }
-            .prefix(5)
+            .prefix(Self.maxScheduled)
             .map { $0 }
     }
 
     var manualTasks: [ScheduledTask] {
         tasks
             .filter { $0.isEnabled && $0.isManualOnly }
-            .sorted { $0.createdAt > $1.createdAt }
-            .prefix(8)
+            .sorted {
+                // Most-recently-manually-run first; tasks that have never run
+                // manually fall back to their creation time.
+                ($0.lastManualRunAt ?? $0.createdAt) > ($1.lastManualRunAt ?? $1.createdAt)
+            }
+            .prefix(Self.maxManual)
             .map { $0 }
     }
 
@@ -95,18 +106,15 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Footer actions
-            VStack(spacing: 0) {
-                // Open main window
-                Button(action: {
-                    // Dismiss the MenuBarExtra panel
+            // Footer actions — Raycast-style: no dividers, hover background
+            // does the visual separation work, matching MenuBarTaskRow above.
+            VStack(spacing: 2) {
+                MenuBarFooterButton(title: L10n.tr("menubar.open")) {
                     if let panel = NSApp.keyWindow as? NSPanel {
                         panel.orderOut(nil)
                     }
-
                     NSApp.setActivationPolicy(.regular)
                     openWindow(id: "main")
-
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         for window in NSApp.windows where window.canBecomeMain && !(window is NSPanel) {
                             window.makeKeyAndOrderFront(nil)
@@ -114,95 +122,50 @@ struct MenuBarView: View {
                         }
                         NSApp.activate(ignoringOtherApps: true)
                     }
-                }) {
-                    HStack {
-                        Text(L10n.tr("menubar.open"))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .pointerCursor()
 
-                Divider().padding(.horizontal, 12)
-
-                // Quick Launcher (only when enabled in Settings)
                 if quickLauncherSettings.isEnabled {
-                    Button(action: {
-                        if let panel = NSApp.keyWindow as? NSPanel {
-                            panel.orderOut(nil)
-                        }
-                        QuickLauncherController.shared.toggle()
-                    }) {
-                        HStack(spacing: 6) {
-                            Text(L10n.tr("quick_launcher.menu_item"))
-                            Spacer()
-                            // 1Password-style: each modifier and the key get
-                            // their own kbd pill so the shortcut is legible
-                            // at a glance.
-                            ForEach(quickLauncherSettings.displayChips, id: \.self) { chip in
-                                Text(chip)
-                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                                    .foregroundStyle(.primary.opacity(0.85))
-                                    .frame(minWidth: 16)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 1)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 3)
-                                            .fill(Color.primary.opacity(0.10))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 3)
-                                            .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
-                                    )
+                    MenuBarFooterButton(
+                        title: L10n.tr("quick_launcher.menu_item"),
+                        action: {
+                            if let panel = NSApp.keyWindow as? NSPanel {
+                                panel.orderOut(nil)
                             }
+                            QuickLauncherController.shared.toggle()
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
-                        .contentShape(Rectangle())
+                    ) {
+                        // 1Password-style: each modifier and the key get
+                        // their own kbd pill so the shortcut is legible
+                        // at a glance.
+                        ForEach(quickLauncherSettings.displayChips, id: \.self) { chip in
+                            Text(chip)
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.primary.opacity(0.85))
+                                .frame(minWidth: 16)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .fill(Color.primary.opacity(0.10))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
+                                )
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .pointerCursor()
-
-                    Divider().padding(.horizontal, 12)
                 }
 
-                // Check for updates
-                Button(action: {
+                MenuBarFooterButton(title: L10n.tr("command.check_updates")) {
                     Task { await UpdateChecker.shared.checkForUpdates(userInitiated: true) }
-                }) {
-                    HStack {
-                        Text(L10n.tr("command.check_updates"))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .pointerCursor()
 
-                Divider().padding(.horizontal, 12)
-
-                // Quit
-                Button(action: {
+                MenuBarFooterButton(title: L10n.tr("menubar.quit")) {
                     AppDelegate.shouldReallyQuit = true
                     NSApp.terminate(nil)
-                }) {
-                    HStack {
-                        Text(L10n.tr("menubar.quit"))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .pointerCursor()
             }
-            .padding(.vertical, 4)
+            .padding(8)
         }
         .frame(width: 300)
         .onAppear {
@@ -211,6 +174,42 @@ struct MenuBarView: View {
                 scheduler.start()
             }
         }
+    }
+}
+
+/// Reusable footer row with hover background — same visual contract as
+/// `MenuBarTaskRow` so the menu reads as one coherent list rather than
+/// "task list" + "ruled command list".
+struct MenuBarFooterButton<Trailing: View>: View {
+    let title: String
+    let action: () -> Void
+    @ViewBuilder let trailing: () -> Trailing
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Text(title)
+                Spacer()
+                trailing()
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.primary.opacity(isHovering ? 0.05 : 0.00001))
+            )
+        }
+        .buttonStyle(.plain)
+        .pointerCursor()
+        .onHover { isHovering = $0 }
+    }
+}
+
+extension MenuBarFooterButton where Trailing == EmptyView {
+    init(title: String, action: @escaping () -> Void) {
+        self.init(title: title, action: action, trailing: { EmptyView() })
     }
 }
 
@@ -276,6 +275,7 @@ struct MenuBarTaskRow: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
+        .contentShape(Rectangle())
         .background(
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color.primary.opacity(isHovering ? 0.05 : 0.00001))
@@ -283,5 +283,18 @@ struct MenuBarTaskRow: View {
         .onHover { hovering in
             isHovering = hovering
         }
+        .onTapGesture {
+            if isRunning {
+                ScriptExecutor.shared.cancel(taskId: task.id)
+                ToastCenter.shared.stopped(L10n.tr("toast.task.stopped", task.name))
+            } else {
+                let context = modelContext
+                Task {
+                    _ = await ScriptExecutor.shared.execute(task: task, modelContext: context)
+                }
+                ToastCenter.shared.running(L10n.tr("toast.task.started", task.name))
+            }
+        }
+        .pointerCursor()
     }
 }

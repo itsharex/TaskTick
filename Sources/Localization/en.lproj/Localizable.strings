@@ -216,6 +216,12 @@
 "quick_launcher.hint.stop" = "Stop";
 "quick_launcher.hint.restart" = "Restart";
 "quick_launcher.hint.reveal" = "Open in main";
+"quick_launcher.hint.settings" = "Settings";
+"quick_launcher.settings.results" = "Search Results";
+"quick_launcher.settings.show_tasks" = "Show tasks";
+"quick_launcher.filter.all" = "All";
+"quick_launcher.filter.scheduled_only" = "Scheduled only";
+"quick_launcher.filter.manual_only" = "Manual only";
 "quick_launcher.subtitle.running" = "Running";
 "quick_launcher.meta.running" = "Running…";
 
@@ -230,6 +236,20 @@
 "quit.confirm.message" = "%d script(s) are still running. Quitting will terminate them immediately:";
 "quit.confirm.cancel" = "Cancel";
 "quit.confirm.quit" = "Quit and Terminate";
+
+/* Live log file (manual tasks) */
+"settings.logs.streaming" = "Live Log File";
+"settings.logs.stream_to_file" = "Stream manual task output to file";
+"settings.logs.stream_to_file.hint" = "Each manual task's most recent run is written to ~/Library/Logs/TaskTick/<task-name>.log so you can tail -f from a terminal or open it in Console.app. Each new run overwrites the previous content.";
+"settings.logs.reveal_directory" = "Reveal in Finder";
+"task.detail.live_log_file" = "Live Log File";
+"task.detail.live_log.reveal" = "Reveal in Finder";
+"task.detail.live_log.console" = "Open in Console";
+"task.detail.live_log.copy_path" = "Copy Path";
+"task.detail.live_log.copied" = "Path copied";
+"task.detail.live_log.empty_hint" = "File will be created the first time this task runs.";
+"task.detail.elapsed" = "Running for";
+"quick_launcher.meta.running_for" = "%@ elapsed";
 "quick_launcher.settings.section" = "Quick Launcher";
 "quick_launcher.settings.enable" = "Enable Quick Launcher";
 "quick_launcher.settings.shortcut" = "Shortcut";

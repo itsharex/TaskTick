@@ -16,6 +16,7 @@ struct SettingsView: View {
 
     // Logs
     @AppStorage("logRetentionDays") private var logRetentionDays = 30
+    @AppStorage("logs.streamManualToFile") private var streamManualToFile = true
 
     // Updates
     @AppStorage("autoCheckUpdates") private var autoCheckUpdates = true
@@ -46,6 +47,9 @@ struct SettingsView: View {
         TabView {
             generalTab
                 .tabItem { Label(L10n.tr("settings.general"), systemImage: "gear") }
+
+            quickLauncherTab
+                .tabItem { Label(L10n.tr("quick_launcher.settings.section"), systemImage: "command") }
 
             backupTab
                 .tabItem { Label(L10n.tr("settings.backup"), systemImage: "externaldrive.badge.timemachine") }
@@ -102,8 +106,6 @@ struct SettingsView: View {
                 Text(L10n.tr("settings.notifications.hint"))
             }
 
-            quickLauncherSection
-
             Section(L10n.tr("settings.general.defaults")) {
                 Picker(L10n.tr("settings.general.default_shell"), selection: $defaultShell) {
                     ForEach(AvailableShells.load(including: defaultShell), id: \.self) { shell in
@@ -126,22 +128,37 @@ struct SettingsView: View {
         .formStyle(.grouped)
     }
 
-    // MARK: - Quick Launcher Section
+    // MARK: - Quick Launcher
 
-    private var quickLauncherSection: some View {
-        Section {
-            Toggle(L10n.tr("quick_launcher.settings.enable"), isOn: $quickLauncherSettings.isEnabled)
+    private var quickLauncherTab: some View {
+        Form {
+            Section {
+                Toggle(L10n.tr("quick_launcher.settings.enable"), isOn: $quickLauncherSettings.isEnabled)
 
-            if quickLauncherSettings.isEnabled {
-                LabeledContent(L10n.tr("quick_launcher.settings.shortcut")) {
-                    HotkeyRecorderView(settings: quickLauncherSettings)
+                if quickLauncherSettings.isEnabled {
+                    LabeledContent(L10n.tr("quick_launcher.settings.shortcut")) {
+                        HotkeyRecorderView(settings: quickLauncherSettings)
+                    }
                 }
+            } footer: {
+                Text(L10n.tr("quick_launcher.settings.hint"))
             }
-        } header: {
-            Text(L10n.tr("quick_launcher.settings.section"))
-        } footer: {
-            Text(L10n.tr("quick_launcher.settings.hint"))
+
+            Section {
+                Picker(
+                    L10n.tr("quick_launcher.settings.show_tasks"),
+                    selection: $quickLauncherSettings.taskFilter
+                ) {
+                    ForEach(QuickLauncherTaskFilter.allCases) { filter in
+                        Text(filter.displayName).tag(filter)
+                    }
+                }
+                .disabled(!quickLauncherSettings.isEnabled)
+            } header: {
+                Text(L10n.tr("quick_launcher.settings.results"))
+            }
         }
+        .formStyle(.grouped)
     }
 
     // MARK: - Backup
@@ -463,6 +480,29 @@ struct SettingsView: View {
                             .controlSize(.small)
                     }
                 }
+            }
+
+            Section {
+                Toggle(L10n.tr("settings.logs.stream_to_file"), isOn: $streamManualToFile)
+
+                if streamManualToFile, let dir = LogFileWriter.logsDirectory() {
+                    HStack(spacing: 8) {
+                        Text(dir.path)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button(L10n.tr("settings.logs.reveal_directory")) {
+                            NSWorkspace.shared.activateFileViewerSelecting([dir])
+                        }
+                        .pointerCursor()
+                    }
+                }
+            } header: {
+                Text(L10n.tr("settings.logs.streaming"))
+            } footer: {
+                Text(L10n.tr("settings.logs.stream_to_file.hint"))
             }
         }
         .formStyle(.grouped)

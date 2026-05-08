@@ -13,6 +13,7 @@ struct TaskDetailView: View {
     @State private var cachedFileContent: String?
     @State private var hoveredLogID: UUID?
     @StateObject private var scheduler = TaskScheduler.shared
+    @AppStorage("logs.streamManualToFile") private var streamManualToFile = true
 
     var isRunning: Bool {
         scheduler.runningTaskIDs.contains(task.id)
@@ -30,6 +31,9 @@ struct TaskDetailView: View {
                     VStack(spacing: 16) {
                         scheduleCard
                         scriptCard
+                        if task.isManualOnly && streamManualToFile {
+                            liveLogFileCard
+                        }
                     }
                     .frame(maxWidth: .infinity)
 
@@ -67,9 +71,11 @@ struct TaskDetailView: View {
         .alert(L10n.tr("delete.title"), isPresented: $showingDeleteAlert) {
             Button(L10n.tr("delete.cancel"), role: .cancel) {}
             Button(L10n.tr("delete.confirm"), role: .destructive) {
+                let deletedName = task.name
                 modelContext.delete(task)
                 do {
                     try modelContext.save()
+                    LogFileWriter.deleteFile(for: deletedName)
                 } catch {
                     presentErrorAlert(titleKey: "error.delete_failed.title",
                                       messageKey: "error.delete_failed.message",
@@ -222,6 +228,26 @@ struct TaskDetailView: View {
                     .font(.headline)
 
                 VStack(spacing: 8) {
+                    // Live elapsed-time row — only when a run is in flight.
+                    // Shares its data source (running ExecutionLog's startedAt)
+                    // with the Quick Launcher row so the two surfaces always
+                    // agree to the second.
+                    if isRunning, let startedAt = RunningDuration.startedAt(for: task) {
+                        HStack {
+                            Text(L10n.tr("task.detail.elapsed"))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            TimelineView(.periodic(from: .now, by: 1.0)) { context in
+                                Text(RunningDuration.format(since: startedAt, now: context.date))
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.green)
+                                    .monospacedDigit()
+                            }
+                        }
+                    }
+
                     if task.isManualOnly {
                         detailRow(L10n.tr("schedule.trigger_section"), value: L10n.tr("schedule.manual_only"))
                     } else {
@@ -365,6 +391,104 @@ struct TaskDetailView: View {
                 )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // MARK: - Live Log File Card
+
+    private var liveLogFileCard: some View {
+        let fileURL = LogFileWriter.fileURL(for: task.name)
+        let fileExists = fileURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+        let fileSize: String = {
+            guard let url = fileURL,
+                  fileExists,
+                  let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+                  let bytes = attrs[.size] as? Int else { return "" }
+            return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+        }()
+
+        return GlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Label(L10n.tr("task.detail.live_log_file"), systemImage: "doc.text.below.ecg")
+                    .font(.headline)
+
+                if let fileURL {
+                    HStack(spacing: 8) {
+                        Image(systemName: fileExists ? "doc.fill" : "doc")
+                            .foregroundStyle(fileExists ? .secondary : .tertiary)
+                        Text(fileURL.path)
+                            .font(.system(.caption, design: .monospaced))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .textSelection(.enabled)
+                            .foregroundStyle(fileExists ? .primary : .secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if !fileSize.isEmpty {
+                            Text(fileSize)
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .monospacedDigit()
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.black.opacity(0.04))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(.separator, lineWidth: 0.5)
+                    )
+
+                    HStack(spacing: 8) {
+                        Button {
+                            NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+                        } label: {
+                            Label(L10n.tr("task.detail.live_log.reveal"), systemImage: "folder")
+                        }
+                        .pointerCursor()
+                        .disabled(!fileExists)
+
+                        Button {
+                            openInConsole(fileURL)
+                        } label: {
+                            Label(L10n.tr("task.detail.live_log.console"), systemImage: "terminal")
+                        }
+                        .pointerCursor()
+                        .disabled(!fileExists)
+
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(fileURL.path, forType: .string)
+                            ToastCenter.shared.success(L10n.tr("task.detail.live_log.copied"))
+                        } label: {
+                            Label(L10n.tr("task.detail.live_log.copy_path"), systemImage: "doc.on.doc")
+                        }
+                        .pointerCursor()
+                    }
+                    .controlSize(.small)
+
+                    if !fileExists {
+                        Text(L10n.tr("task.detail.live_log.empty_hint"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// Hand the log file off to Console.app. Falls back to the default URL
+    /// opener if Console isn't available (rare — it ships with macOS).
+    private func openInConsole(_ url: URL) {
+        let consoleURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Console")
+        if let consoleURL {
+            let config = NSWorkspace.OpenConfiguration()
+            NSWorkspace.shared.open([url], withApplicationAt: consoleURL, configuration: config)
+        } else {
+            NSWorkspace.shared.open(url)
         }
     }
 

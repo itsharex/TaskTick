@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor static var shouldReallyQuit = false
 
     private var revealObserver: NSObjectProtocol?
+    private var signalSources: [DispatchSourceSignal] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationManager.shared.requestPermission()
@@ -39,6 +40,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             QuickLauncherController.shared.configure(modelContainer: TaskTickApp._sharedModelContainer)
             QuickLauncherSettings.shared.applyToHotkey()
+            // Spawn macOS's CursorUIViewService now so it's already warm
+            // when the user later opens QL. Without this, the first
+            // text-field focus flashes a default-background overlay frame
+            // beneath the search bar.
+            QuickLauncherController.shared.prewarmCursorUI()
             cleanupStaleRunningLogs()
         }
 
@@ -56,6 +62,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 AppDelegate.bringMainWindowForward()
             }
         }
+
+        installSignalHandlers()
+    }
+
+    /// Catch SIGTERM / SIGINT / SIGHUP so the shutdown path runs on those too.
+    /// AppKit doesn't install signal handlers by default — `pkill TaskTick`,
+    /// `kill <pid>`, terminal Ctrl+C, etc. would otherwise drop the process
+    /// instantly, leaving spawned scripts re-parented to launchd as orphans
+    /// (the exact "zombie task" behavior that fired this fix). SIGKILL we
+    /// can't catch — that's just an unfixable hole the OS reserves.
+    private func installSignalHandlers() {
+        for sig in [SIGTERM, SIGINT, SIGHUP] {
+            // Disable the default disposition so the dispatch source can
+            // deliver the signal at our event handler instead.
+            signal(sig, SIG_IGN)
+            let src = DispatchSource.makeSignalSource(signal: sig, queue: .main)
+            src.setEventHandler {
+                MainActor.assumeIsolated {
+                    AppDelegate.gracefulShutdown()
+                }
+                exit(0)
+            }
+            src.resume()
+            signalSources.append(src)
+        }
+    }
+
+    /// Single shutdown path used by both `applicationWillTerminate` and the
+    /// signal handlers. Idempotent: cancelAll snapshots and clears the
+    /// running-processes dict, so re-entry is a no-op.
+    @MainActor
+    static func gracefulShutdown() {
+        ScriptExecutor.shared.cancelAll(graceful: 0.2)
+        TaskScheduler.shared.stop()
+        do {
+            try TaskTickApp._sharedModelContainer.mainContext.save()
+        } catch {
+            NSLog("⚠️ Final save on shutdown failed: \(error.localizedDescription)")
+        }
+        // save() writes to the -wal sidecar but does NOT merge it into the main store.
+        // If the update installer replaces the .app right after this, a -wal left
+        // behind can be orphaned and its contents lost. Force a checkpoint now so
+        // the main store is self-contained.
+        StoreHardener.checkpoint(at: TaskTickApp._storeURL)
     }
 
     /// Surface the SwiftUI main window. SwiftUI's `Window(id:)` destroys its
@@ -166,25 +216,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        // Kill every running script tree before we exit. Without this, the
-        // children get reparented to launchd and survive as orphans —
-        // silent dev servers (no stdout writes) would keep running until the
-        // next reboot, and TaskTick has no way to find them again on relaunch.
-        ScriptExecutor.shared.cancelAll(graceful: 0.3)
-
-        TaskScheduler.shared.stop()
-        // Flush pending SwiftData writes to ensure database is consistent on disk.
-        // We can't block termination for user input here, but logging gives a trail
-        // when a user later reports "my edits vanished after I quit".
-        do {
-            try TaskTickApp._sharedModelContainer.mainContext.save()
-        } catch {
-            NSLog("⚠️ Final save on terminate failed: \(error.localizedDescription)")
-        }
-        // save() writes to the -wal sidecar but does NOT merge it into the main store.
-        // If the update installer replaces the .app right after this, a -wal left
-        // behind can be orphaned and its contents lost. Force a checkpoint now so
-        // the main store is self-contained.
-        StoreHardener.checkpoint(at: TaskTickApp._storeURL)
+        AppDelegate.gracefulShutdown()
     }
 }

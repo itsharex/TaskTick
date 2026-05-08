@@ -91,9 +91,15 @@ final class ScriptExecutor: ObservableObject {
 
         let log = ExecutionLog(task: task, triggeredBy: triggeredBy)
         modelContext.insert(log)
-        do { try modelContext.save() } catch { NSLog("⚠️ ScriptExecutor save failed: \(error)") }
-
         let startTime = Date()
+        // Bump the manual-run recency NOW (not at end) so long-running scripts
+        // — dev servers, watchers, anything that runs for hours — surface to
+        // the top of the lists immediately when the user hits play, instead
+        // of staying buried until the process eventually exits.
+        if triggeredBy == .manual {
+            task.lastManualRunAt = startTime
+        }
+        do { try modelContext.save() } catch { NSLog("⚠️ ScriptExecutor save failed: \(error)") }
 
         // Capture task properties before going off main actor
         let shell = task.shell
@@ -140,6 +146,19 @@ final class ScriptExecutor: ObservableObject {
         }()
 
         LiveOutputManager.shared.startTracking(taskId: taskId)
+
+        // Manual scripts (dev servers, on-demand jobs) optionally tee their
+        // output to ~/Library/Logs/TaskTick/<slug>.log so the user can
+        // `tail -f` from a terminal or drop the file into Console.app.
+        // Scheduled jobs are excluded — short bursty runs would just churn
+        // the file and the database log already covers their needs.
+        let logFileWriter: LogFileWriter? = {
+            guard task.isManualOnly else { return nil }
+            let enabled = UserDefaults.standard.object(forKey: "logs.streamManualToFile") as? Bool ?? true
+            guard enabled else { return nil }
+            return LogFileWriter(taskName: taskName)
+        }()
+
         let result = await runProcess(
             shell: effectiveShell,
             script: finalScript,
@@ -147,7 +166,8 @@ final class ScriptExecutor: ObservableObject {
             environmentVariables: envVars,
             timeoutSeconds: timeoutSeconds,
             taskId: taskId,
-            ignoreExitCode: ignoreExitCode
+            ignoreExitCode: ignoreExitCode,
+            logFileWriter: logFileWriter
         )
 
         let endTime = Date()
@@ -171,6 +191,8 @@ final class ScriptExecutor: ObservableObject {
 
         if let fetchedTask {
             fetchedTask.lastRunAt = endTime
+            // Note: lastManualRunAt is set at task START (above) so running
+            // scripts surface immediately. No need to update it again here.
             fetchedTask.updatedAt = endTime
             // Keep executionCount in sync for both manual and scheduled runs so the UI
             // badge and any downstream checks reflect actual completed executions.
@@ -341,7 +363,8 @@ final class ScriptExecutor: ObservableObject {
         environmentVariables: [String: String]?,
         timeoutSeconds: Int,
         taskId: UUID,
-        ignoreExitCode: Bool = false
+        ignoreExitCode: Bool = false,
+        logFileWriter: LogFileWriter? = nil
     ) async -> ProcessResult {
         // Treat any non-positive value as "no timeout" — the script runs until it
         // exits on its own (or the user cancels). Lets users keep dev servers /
@@ -418,6 +441,7 @@ final class ScriptExecutor: ObservableObject {
                         return
                     }
                     outputBuffer.appendStdout(data)
+                    logFileWriter?.append(data)
                     DispatchQueue.main.async {
                         LiveOutputManager.shared.appendStdout(taskId: taskId, data: data)
                     }
@@ -430,6 +454,7 @@ final class ScriptExecutor: ObservableObject {
                         return
                     }
                     outputBuffer.appendStderr(data)
+                    logFileWriter?.append(data)
                     DispatchQueue.main.async {
                         LiveOutputManager.shared.appendStderr(taskId: taskId, data: data)
                     }
@@ -491,8 +516,15 @@ final class ScriptExecutor: ObservableObject {
                 stderrHandle.readabilityHandler = nil
                 let remainingStdout = stdoutHandle.readDataToEndOfFile()
                 let remainingStderr = stderrHandle.readDataToEndOfFile()
-                if !remainingStdout.isEmpty { outputBuffer.appendStdout(remainingStdout) }
-                if !remainingStderr.isEmpty { outputBuffer.appendStderr(remainingStderr) }
+                if !remainingStdout.isEmpty {
+                    outputBuffer.appendStdout(remainingStdout)
+                    logFileWriter?.append(remainingStdout)
+                }
+                if !remainingStderr.isEmpty {
+                    outputBuffer.appendStderr(remainingStderr)
+                    logFileWriter?.append(remainingStderr)
+                }
+                logFileWriter?.close()
 
                 // Remove from running processes
                 Task { @MainActor in

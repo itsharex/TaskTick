@@ -39,8 +39,16 @@ struct TaskListView: View {
             let matchesSearch = searchText.isEmpty || task.name.localizedCaseInsensitiveContains(searchText)
             return matchesFilter && matchesSearch
         }
-        // @Query is .reverse (newest first); flip when user wants oldest first
-        return sortNewestFirst ? filtered : filtered.reversed()
+        // Manual-run-aware sort. The signal we want to surface is "what did
+        // the user touch most recently" — `lastManualRunAt` captures that
+        // without scheduled cron runs constantly reshuffling. Tasks that
+        // have never been manually run fall back to creation time.
+        let sorted = filtered.sorted { lhs, rhs in
+            let lk = lhs.lastManualRunAt ?? lhs.createdAt
+            let rk = rhs.lastManualRunAt ?? rhs.createdAt
+            return lk > rk
+        }
+        return sortNewestFirst ? sorted : sorted.reversed()
     }
 
     var scheduledTasks: [ScheduledTask] { filteredTasks.filter { !$0.isManualOnly } }
@@ -117,10 +125,12 @@ struct TaskListView: View {
                     Button(L10n.tr("delete.cancel"), role: .cancel) {}
                     Button(L10n.tr("delete.confirm"), role: .destructive) {
                         if let task = taskToDelete {
+                            let deletedName = task.name
                             if selectedTask == task { selectedTask = nil }
                             modelContext.delete(task)
                             do {
                                 try modelContext.save()
+                                LogFileWriter.deleteFile(for: deletedName)
                             } catch {
                                 presentErrorAlert(titleKey: "error.delete_failed.title",
                                                   messageKey: "error.delete_failed.message",
@@ -294,8 +304,14 @@ struct TaskListRow: View {
 
                     Text("·")
                         .font(.caption2)
-                    Text(Self.relativeFormatter.localizedString(for: task.createdAt, relativeTo: Date()))
-                        .font(.caption2)
+                    // Prefer "last run" since that's the dynamic signal users
+                    // care about (when did this thing last fire?). Fall back
+                    // to createdAt only for tasks that have never run yet.
+                    Text(Self.relativeFormatter.localizedString(
+                        for: task.lastRunAt ?? task.createdAt,
+                        relativeTo: Date()
+                    ))
+                    .font(.caption2)
                 }
                 .foregroundStyle(.secondary)
             }
