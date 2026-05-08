@@ -10,7 +10,8 @@ struct TaskTickCLI: AsyncParsableCommand {
         version: "0.1.0",
         subcommands: [
             ListCommand.self,
-            StatusCommand.self
+            StatusCommand.self,
+            LogsCommand.self
         ]
     )
 }
