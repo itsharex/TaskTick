@@ -15,7 +15,8 @@ struct TaskTickCLI: AsyncParsableCommand {
             RunCommand.self,
             StopCommand.self,
             RestartCommand.self,
-            RevealCommand.self
+            RevealCommand.self,
+            TailCommand.self
         ]
     )
 }
