@@ -50,6 +50,7 @@ struct ListCommand: AsyncParsableCommand {
             formatter.unitsStyle = .short
             let rows = dtos.map { dto in
                 [
+                    "#\(dto.serialNumber)",
                     dto.shortId,
                     dto.name,
                     dto.kind.rawValue,
@@ -58,7 +59,7 @@ struct ListCommand: AsyncParsableCommand {
                 ]
             }
             print(TableRenderer.render(
-                headers: ["ID", "NAME", "KIND", "STATUS", "LAST RUN"],
+                headers: ["NO", "ID", "NAME", "KIND", "STATUS", "LAST RUN"],
                 rows: rows
             ))
         }

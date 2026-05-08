@@ -5,6 +5,7 @@ final class TaskDTOTests: XCTestCase {
     func testEncodesTaskWithAllFields() throws {
         let dto = TaskDTO(
             id: UUID(uuidString: "A3F9C200-0000-0000-0000-000000000000")!,
+            serialNumber: 1,
             shortId: "a3f9",
             name: "Deploy Web",
             kind: .scheduled,
@@ -31,6 +32,7 @@ final class TaskDTOTests: XCTestCase {
     func testRoundTripIdleTaskWithNoLastRun() throws {
         let dto = TaskDTO(
             id: UUID(),
+            serialNumber: 2,
             shortId: "abcd",
             name: "Untouched",
             kind: .manual,

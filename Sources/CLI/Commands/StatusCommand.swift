@@ -20,7 +20,12 @@ struct StatusCommand: AsyncParsableCommand {
         let allTasks = try store.fetchTasks()
 
         if let id = identifier {
-            let resolver = TaskResolver(items: allTasks, idOf: { $0.id }, nameOf: { $0.name })
+            let resolver = TaskResolver(
+                items: allTasks,
+                idOf: { $0.id },
+                nameOf: { $0.name },
+                serialOf: { $0.serialNumber }
+            )
             let task: ScheduledTask
             do {
                 task = try resolver.resolve(id)

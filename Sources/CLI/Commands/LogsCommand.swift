@@ -20,7 +20,12 @@ struct LogsCommand: AsyncParsableCommand {
     func run() async throws {
         let store = try ReadOnlyStore()
         let allTasks = try store.fetchTasks()
-        let resolver = TaskResolver(items: allTasks, idOf: { $0.id }, nameOf: { $0.name })
+        let resolver = TaskResolver(
+            items: allTasks,
+            idOf: { $0.id },
+            nameOf: { $0.name },
+            serialOf: { $0.serialNumber }
+        )
 
         let task: ScheduledTask
         do {

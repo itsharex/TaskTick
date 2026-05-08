@@ -13,6 +13,7 @@ enum TaskStatus: String, Codable {
 
 struct TaskDTO: Codable {
     let id: UUID
+    let serialNumber: Int     // matches the GUI's #N display
     let shortId: String
     let name: String
     let kind: TaskKind
@@ -60,6 +61,7 @@ extension TaskDTO {
     static func from(_ task: ScheduledTask, runningIds: Set<UUID>, lastLog: ExecutionLog?) -> TaskDTO {
         TaskDTO(
             id: task.id,
+            serialNumber: task.serialNumber,
             shortId: String(task.id.uuidString.prefix(4)).lowercased(),
             name: task.name,
             kind: task.isManualOnly ? .manual : .scheduled,
