@@ -43,8 +43,8 @@ cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${DEV_APP_NAME}"
 # Copy CLI binary alongside the GUI binary. Same `swift build` produces both.
 CLI_BIN_PATH=$(find "${BUILD_DIR}/build" -name "tasktick" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
 if [ -n "${CLI_BIN_PATH}" ]; then
-  cp "${CLI_BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/tasktick"
-  echo "  CLI: ${CLI_BIN_PATH} → tasktick"
+  cp "${CLI_BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/tasktick-dev"
+  echo "  CLI: ${CLI_BIN_PATH} → tasktick-dev"
 else
   echo "  Warning: tasktick CLI binary not found"
 fi

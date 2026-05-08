@@ -55,7 +55,7 @@ struct CLIInstallSection: View {
 
     private func refreshState() {
         // Candidate symlink locations, Apple Silicon path first.
-        let candidates = ["/opt/homebrew/bin/tasktick", "/usr/local/bin/tasktick"]
+        let candidates = ["/opt/homebrew/bin/\(cliName)", "/usr/local/bin/\(cliName)"]
         // The CLI binary the user should symlink to. Resolve from the running
         // GUI's own executable path so this stays correct regardless of
         // whether the user installed to /Applications, ~/Applications, or a
@@ -73,18 +73,25 @@ struct CLIInstallSection: View {
 
     /// Path to the `tasktick` binary co-located with the running GUI.
     /// Bundle.main.bundleURL is the .app root; the CLI is at
-    /// Contents/MacOS/tasktick.
+    /// Contents/MacOS/<cliName>.
     private func currentAppCLIPath() -> String {
         Bundle.main.bundleURL
-            .appendingPathComponent("Contents/MacOS/tasktick")
+            .appendingPathComponent("Contents/MacOS/\(cliName)")
             .path
+    }
+
+    /// CLI binary / symlink name. Differs by bundle ID so dev and release
+    /// can coexist on PATH (`tasktick` for release, `tasktick-dev` for dev).
+    private var cliName: String {
+        let isDev = (Bundle.main.bundleIdentifier ?? "").hasSuffix(".dev")
+        return isDev ? "tasktick-dev" : "tasktick"
     }
 
     private func showEnableDialog() {
         // Prefer Homebrew prefix on Apple Silicon if it exists; fall back to /usr/local/bin.
         let target = FileManager.default.fileExists(atPath: "/opt/homebrew/bin")
-            ? "/opt/homebrew/bin/tasktick"
-            : "/usr/local/bin/tasktick"
+            ? "/opt/homebrew/bin/\(cliName)"
+            : "/usr/local/bin/\(cliName)"
         let cliPath = currentAppCLIPath()
         let cmd = "sudo ln -sf \"\(cliPath)\" \(target)"
 
