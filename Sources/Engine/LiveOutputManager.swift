@@ -1,11 +1,20 @@
+@preconcurrency import Combine
 import Foundation
 import TaskTickCore
+
+struct LiveChunkEvent {
+    let taskId: UUID
+    let stream: String   // "stdout" or "stderr"
+    let text: String
+}
 
 @MainActor
 final class LiveOutputManager: ObservableObject {
     static let shared = LiveOutputManager()
 
     @Published private(set) var liveOutputs: [UUID: LiveOutput] = [:]
+
+    nonisolated let chunkPublisher = PassthroughSubject<LiveChunkEvent, Never>()
 
     struct LiveOutput {
         var stdout: String = ""
@@ -31,6 +40,7 @@ final class LiveOutputManager: ObservableObject {
             output.stdout = String(output.stdout.suffix(ExecutionLog.maxOutputSize))
         }
         pendingUpdates[taskId] = output
+        chunkPublisher.send(LiveChunkEvent(taskId: taskId, stream: "stdout", text: str))
         scheduleFlush()
     }
 
@@ -45,6 +55,7 @@ final class LiveOutputManager: ObservableObject {
             output.stderr = String(output.stderr.suffix(ExecutionLog.maxOutputSize))
         }
         pendingUpdates[taskId] = output
+        chunkPublisher.send(LiveChunkEvent(taskId: taskId, stream: "stderr", text: str))
         scheduleFlush()
     }
 

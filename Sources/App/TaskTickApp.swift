@@ -27,6 +27,7 @@ struct TaskTickApp: App {
         backup.startScheduledBackups()
 
         CLIBridge.shared.configure(modelContainer: container)
+        CLIBroadcaster.shared.start()
     }
 
     var sharedModelContainer: ModelContainer { Self._sharedModelContainer }
