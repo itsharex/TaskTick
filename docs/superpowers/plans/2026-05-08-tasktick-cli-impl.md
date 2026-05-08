@@ -4,13 +4,21 @@
 
 **Goal:** Add a `tasktick` CLI binary to the TaskTick `.app`, plus the GUI-side bridge (URL Scheme + Distributed Notification handler + Settings "Enable CLI" UI) it needs to dispatch run/stop/restart/reveal commands. CLI v1 ships 9 commands: `list`, `status`, `logs`, `run`, `stop`, `restart`, `reveal`, `tail`, `wait` — covering Quick Launcher parity plus task-chain scripting and tab completion.
 
-**Architecture:** CLI is a second `executableTarget` in the same `Package.swift`, sharing `Models/` + select `Engine/` files via `sources:` whitelist (no library extraction). Read commands open a read-only `ModelContainer` directly. Write commands post a `DistributedNotificationCenter` notification (or fall back to `tasktick://run?id=<uuid>` URL Scheme to wake the GUI). Stream commands subscribe to GUI-broadcast notifications. Spec: `docs/superpowers/specs/2026-05-08-raycast-extension-design.md`.
+**Architecture:** CLI is a second `executableTarget` in the same `Package.swift`, depending on a new `TaskTickCore` library target that holds shared types (Models, FuzzyMatch, StoreMigration, StoreHardener, L10n, Localization resources). Both `TaskTick` (GUI) and `tasktick` (CLI) link Core. Read commands open a read-only `ModelContainer` directly. Write commands post a `DistributedNotificationCenter` notification (or fall back to `tasktick://run?id=<uuid>` URL Scheme to wake the GUI). Stream commands subscribe to GUI-broadcast notifications. Spec: `docs/superpowers/specs/2026-05-08-raycast-extension-design.md`.
+
+**Note on plan amendment**: an earlier draft tried to share files via `path: "Sources"` + `sources:` whitelist on both targets. SwiftPM rejects this with "overlapping sources" — the canonical solution is library extraction. Phase 0 was rewritten accordingly.
 
 **Tech Stack:** Swift 6, SwiftPM, swift-argument-parser 1.5+, SwiftData, AppKit (URL Scheme handler in AppDelegate), DistributedNotificationCenter for IPC.
 
 ---
 
 ## File Map
+
+**Moved files (Phase 0 extraction → `Sources/TaskTickCore/`):**
+- `Models/{ScheduledTask,ExecutionLog,CronExpression}.swift` — moved from `Sources/Models/`
+- `Engine/{FuzzyMatch,StoreMigration,StoreHardener}.swift` — moved from `Sources/Engine/`
+- `Localization/L10n.swift` + `Localization/AppLanguage.swift` — split out from `Sources/App/Localization.swift` (the SwiftUI-flavored `LanguageManager` + `LocalizedView` stay in App)
+- `Localization/{en,zh-Hans}.lproj/` — moved from `Sources/Localization/` (resource bundle now generated as `TaskTick_TaskTickCore.bundle`)
 
 **New files (TaskTick app side):**
 - `Sources/Engine/CLIBridge.swift` — Single entry point; routes URL Scheme + Distributed Notification → ScriptExecutor / Scheduler / MainWindowSelection
@@ -28,12 +36,14 @@
 - `Sources/CLI/Identifier/TaskResolver.swift` — UUID/prefix/name/fuzzy multi-tier resolution
 
 **Modified files:**
-- `Package.swift` — Add swift-argument-parser dep, add `tasktick` executable target
+- `Package.swift` — Add `TaskTickCore` library target + swift-argument-parser dep + `tasktick` executable target; both executables depend on Core
+- ~30 GUI files — add `import TaskTickCore` for moved types (mechanical)
+- `Sources/App/Localization.swift` — slim down to just `LanguageManager` + `LocalizedView` (SwiftUI-flavored bits)
 - `Sources/App/AppDelegate.swift` — Register URL Scheme handler, start CLIBridge + CLIBroadcaster
 - `Sources/App/TaskTickApp.swift` — Wire CLIBridge into model container at boot
-- `scripts/build-dev.sh` — Inject URL Scheme into Info.plist; copy CLI binary into `.app/Contents/MacOS/tasktick`
+- `scripts/build-dev.sh` — Glob copy ALL `*.bundle` (not just hardcoded `TaskTick_TaskTick.bundle`); inject URL Scheme into Info.plist; copy CLI binary into `.app/Contents/MacOS/tasktick`
 - `scripts/release.sh` — Same as build-dev.sh, both arches
-- `Sources/Localization/{en,zh-Hans}.lproj/Localizable.strings` — New strings for Settings CLI section
+- `Sources/TaskTickCore/Localization/{en,zh-Hans}.lproj/Localizable.strings` — New strings for Settings CLI section (added in Phase 9)
 
 **Tests:**
 - `Tests/CLITests/TaskResolverTests.swift` — Identifier resolution cases
@@ -43,17 +53,267 @@
 
 ---
 
-## Phase 0: Package.swift + skeleton CLI target
+## Phase 0: Extract TaskTickCore + scaffold CLI target
 
-### Task 0.1: Add swift-argument-parser dependency and CLI target
+This phase splits into three tasks. Each ends in a green build + commit.
+
+### Task 0.1: Extract TaskTickCore library
+
+Move shared Swift sources + the localization resource bundle into a new `TaskTickCore` library target. Both `TaskTick` (GUI) and (later) `tasktick` (CLI) will depend on Core. After this task, only the GUI target exists, but the build is green and behavior is unchanged.
+
+**Files moved (use `git mv` to preserve history):**
+- `Sources/Models/ScheduledTask.swift`     → `Sources/TaskTickCore/Models/ScheduledTask.swift`
+- `Sources/Models/ExecutionLog.swift`      → `Sources/TaskTickCore/Models/ExecutionLog.swift`
+- `Sources/Models/CronExpression.swift`    → `Sources/TaskTickCore/Models/CronExpression.swift`
+- `Sources/Engine/FuzzyMatch.swift`        → `Sources/TaskTickCore/Engine/FuzzyMatch.swift`
+- `Sources/Engine/StoreMigration.swift`    → `Sources/TaskTickCore/Engine/StoreMigration.swift`
+- `Sources/Engine/StoreHardener.swift`     → `Sources/TaskTickCore/Engine/StoreHardener.swift`
+- `Sources/Localization/en.lproj/`         → `Sources/TaskTickCore/Localization/en.lproj/`
+- `Sources/Localization/zh-Hans.lproj/`    → `Sources/TaskTickCore/Localization/zh-Hans.lproj/`
+
+**Files split:** `Sources/App/Localization.swift` is split into three:
+- `Sources/TaskTickCore/Localization/AppLanguage.swift` — the `AppLanguage` enum (pure data, no SwiftUI)
+- `Sources/TaskTickCore/Localization/L10n.swift` — the `L10n` enum + bundle resolution + fallback (no SwiftUI deps)
+- `Sources/App/Localization.swift` — keeps only `LanguageManager` (`@MainActor`, `ObservableObject`) and `LocalizedView` + `View.localized()` (SwiftUI extension)
+
+- [ ] **Step 1: Move source files via `git mv`**
+
+```bash
+mkdir -p Sources/TaskTickCore/Models Sources/TaskTickCore/Engine Sources/TaskTickCore/Localization
+git mv Sources/Models/ScheduledTask.swift   Sources/TaskTickCore/Models/
+git mv Sources/Models/ExecutionLog.swift    Sources/TaskTickCore/Models/
+git mv Sources/Models/CronExpression.swift  Sources/TaskTickCore/Models/
+git mv Sources/Engine/FuzzyMatch.swift      Sources/TaskTickCore/Engine/
+git mv Sources/Engine/StoreMigration.swift  Sources/TaskTickCore/Engine/
+git mv Sources/Engine/StoreHardener.swift   Sources/TaskTickCore/Engine/
+git mv Sources/Localization/en.lproj        Sources/TaskTickCore/Localization/en.lproj
+git mv Sources/Localization/zh-Hans.lproj   Sources/TaskTickCore/Localization/zh-Hans.lproj
+rmdir Sources/Models Sources/Localization 2>/dev/null || true
+```
+
+(`Sources/Engine/` keeps its remaining files; `Sources/Models/` becomes empty; `Sources/Localization/` becomes empty.)
+
+- [ ] **Step 2: Split Localization.swift into Core's L10n.swift + AppLanguage.swift, leaving SwiftUI bits in App**
+
+Read the current `Sources/App/Localization.swift`. It has four pieces:
+1. `enum AppLanguage` — extract to `Sources/TaskTickCore/Localization/AppLanguage.swift` (mark `public`)
+2. `final class LanguageManager` — keep in `Sources/App/Localization.swift` (uses SwiftUI ObservableObject + `@AppStorage`-equivalent UserDefaults key — App-side only)
+3. `enum L10n` — extract to `Sources/TaskTickCore/Localization/L10n.swift` (mark `public`)
+4. `struct LocalizedView` + `extension View` — keep in `Sources/App/Localization.swift` (SwiftUI)
+
+Create `Sources/TaskTickCore/Localization/AppLanguage.swift` with the contents of `AppLanguage` enum from the old file, prefixing the enum and its members with `public`. Add `import Foundation` at top.
+
+Create `Sources/TaskTickCore/Localization/L10n.swift` with the contents of the `L10n` enum, with these CHANGES from the original:
+
+a. Mark `enum L10n` and `static func tr(...)` and `static func reloadBundle(for:)` as `public`.
+
+b. Change the bundle name (was `TaskTick_TaskTick.bundle`) to `TaskTick_TaskTickCore.bundle` since the resource bundle is now generated for the Core target:
+
+```swift
+private static let _resourceBundle: Bundle = {
+    let bundleName = "TaskTick_TaskTickCore.bundle"
+    // ...rest unchanged...
+}()
+```
+
+c. Add fallback to en when a key is missing in the current language. Replace the two `tr` functions with:
+
+```swift
+public static func tr(_ key: String) -> String {
+    let s = NSLocalizedString(key, tableName: nil, bundle: _bundle, value: __missingMarker, comment: "")
+    if s == __missingMarker {
+        // Cross-language fallback: try the en bundle directly.
+        if let enBundle = Self.findBundle(for: "en") {
+            let en = NSLocalizedString(key, tableName: nil, bundle: enBundle, value: key, comment: "")
+            return en
+        }
+        return key
+    }
+    return s
+}
+
+public static func tr(_ key: String, _ args: any CVarArg...) -> String {
+    let format = tr(key)
+    return String(format: format, arguments: args)
+}
+
+private static let __missingMarker = "__TT_MISSING_TRANSLATION__"
+```
+
+The `findBundle(for:)` already returns nil-or-Bundle and is case-insensitive. The fallback chain is: current lang → en → key string.
+
+d. Leave the rest (`_resourceBundle` candidate URL search, `findBundle(for:)`) unchanged. The 4-candidate search already handles both GUI process (`Bundle.main.bundleURL` = `.app`) and CLI process (`Bundle.main.bundleURL` = `Contents/MacOS`, candidate #4 climbs three levels to `.app`).
+
+Now rewrite `Sources/App/Localization.swift` with ONLY:
+
+```swift
+import Foundation
+import SwiftUI
+import TaskTickCore
+
+/// Observable language manager that triggers SwiftUI re-renders on language change.
+@MainActor
+final class LanguageManager: ObservableObject {
+    static let shared = LanguageManager()
+
+    @Published var revision: Int = 0
+
+    @Published var current: AppLanguage {
+        didSet {
+            UserDefaults.standard.set(current.rawValue, forKey: "appLanguage")
+            L10n.reloadBundle(for: current)
+            revision += 1
+        }
+    }
+
+    private init() {
+        let saved = UserDefaults.standard.string(forKey: "appLanguage") ?? "system"
+        let lang = AppLanguage(rawValue: saved) ?? .system
+        self.current = lang
+        L10n.reloadBundle(for: lang)
+    }
+}
+
+struct LocalizedView: ViewModifier {
+    @ObservedObject private var lm = LanguageManager.shared
+
+    func body(content: Content) -> some View {
+        content
+            .id(lm.revision)
+    }
+}
+
+extension View {
+    func localized() -> some View {
+        modifier(LocalizedView())
+    }
+}
+```
+
+- [ ] **Step 3: Mark moved types public**
+
+In each moved file, mark every type and member that the GUI calls into as `public`. Mechanical pass — make these `public`:
+
+- `Sources/TaskTickCore/Models/ScheduledTask.swift`:
+  - `final class ScheduledTask` (already `@Model`; add `public` keyword: `public final class ScheduledTask`)
+  - All stored properties (`id`, `name`, `scriptBody`, `shell`, `scheduledDate`, etc. — every `var`)
+  - The `init(...)`
+  - Every computed property (`schedule`, `repeatType`, `endRepeatType`, `customIntervalUnit`, `environmentVariables`, `scheduleDescription`)
+  - The enums declared in this file: `RepeatType`, `CustomRepeatUnit`, `EndRepeatType`, `ScheduleType` — `public` on enum + each `case` — and `displayName` / `calendarInterval` / `calendarComponent` computed properties
+- `Sources/TaskTickCore/Models/ExecutionLog.swift`:
+  - `enum ExecutionStatus`, `enum TriggerType` (each `public`, all cases public, `displayName` / `iconName` public)
+  - `final class ExecutionLog` (`public`), all members, init
+  - `static let maxOutputSize`, `static func truncateOutput` (`public`)
+- `Sources/TaskTickCore/Models/CronExpression.swift`: every type / function used by the GUI (search for usages first)
+- `Sources/TaskTickCore/Engine/FuzzyMatch.swift`: `public enum FuzzyMatch` + `public static func score(query:candidate:)`
+- `Sources/TaskTickCore/Engine/StoreMigration.swift`: `public enum StoreMigration` + `public static func resolveStoreURL()` (private internals stay private)
+- `Sources/TaskTickCore/Engine/StoreHardener.swift`: every public-facing function
+
+Critical: `@Model` classes need `public init(...)` for the GUI to construct them. Don't forget the init.
+
+- [ ] **Step 4: Update Package.swift to declare TaskTickCore library + GUI dep**
+
+Replace `Package.swift` with:
+
+```swift
+// swift-tools-version: 6.0
+
+import PackageDescription
+
+let package = Package(
+    name: "TaskTick",
+    defaultLocalization: "en",
+    platforms: [
+        .macOS(.v14)
+    ],
+    targets: [
+        .target(
+            name: "TaskTickCore",
+            path: "Sources/TaskTickCore",
+            resources: [
+                .process("Localization")
+            ]
+        ),
+        .executableTarget(
+            name: "TaskTick",
+            dependencies: ["TaskTickCore"],
+            path: "Sources",
+            exclude: ["TaskTickCore", "CLI"]
+        ),
+        .testTarget(
+            name: "TaskTickTests",
+            dependencies: ["TaskTick", "TaskTickCore"],
+            path: "Tests"
+        )
+    ]
+)
+```
+
+Notes:
+- `TaskTickCore` is a library (`.target`, not `.executableTarget`). Resources processed from its own Localization/.
+- `TaskTick` GUI excludes `TaskTickCore` (it's a sibling target, not a subdir to include) and excludes `CLI` (will be added in Task 0.2).
+- swift-argument-parser dep + tasktick target + Tests/CLITests are added in Task 0.2 (next task).
+
+- [ ] **Step 5: Add `import TaskTickCore` to GUI files referencing moved types**
+
+Run `grep -rln 'ScheduledTask\b\|ExecutionLog\b\|FuzzyMatch\b\|StoreMigration\b\|StoreHardener\b\|RepeatType\b\|EndRepeatType\b\|ScheduleType\b\|CustomRepeatUnit\b\|ExecutionStatus\b\|TriggerType\b\|AppLanguage\b\|L10n\b' Sources/App Sources/Engine Sources/Views` to find all GUI files that need the new import.
+
+For each file in the result, add `import TaskTickCore` near the top (after `import Foundation` / `import SwiftUI` / etc). If a file already has `import` lines, just append; if not, add after the file's existing imports.
+
+- [ ] **Step 6: Verify build**
+
+Run: `swift build`
+Expected: clean build, all GUI target tests pass.
+
+If build fails with "X is internal" (because we missed making something public), grep the error file for the symbol and add `public`. Repeat until green.
+
+If build fails with "no such module 'TaskTickCore'", find the file mentioned in the error and add `import TaskTickCore`.
+
+Common pitfalls:
+- `ScheduledTask`'s `executionLogs: [ExecutionLog]` relationship — both classes must be `public`
+- `@Relationship` macro with `inverse: \ExecutionLog.task` — `task` must also be `public`
+- enums passed across module boundary: ALL cases must be `public` even if the enum itself is `public`
+- `init` defaulted parameters that reference enum default values — those enums must be public
+
+- [ ] **Step 7: Verify GUI runtime behavior**
+
+Run: `./scripts/build-dev.sh` then check the resulting app:
+- Launches without crashing
+- Localized strings still display in correct language
+- Database operations work (create / list / run a task)
+- Look for the resource bundle name: `ls "/Applications/TaskTick Dev.app/" | grep bundle` should show `TaskTick_TaskTickCore.bundle` (NOT `TaskTick_TaskTick.bundle`)
+
+If the bundle isn't being copied into the .app, the build script needs the glob fix from Task 0.3 — add a TODO and continue (we'll fix in 0.3).
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add Sources/ Package.swift
+git commit -m "core: extract TaskTickCore library with shared models + L10n
+
+Moves Models/{ScheduledTask,ExecutionLog,CronExpression}, Engine/Fuzzy
+Match/StoreMigration/StoreHardener, plus L10n + AppLanguage enum out
+of the GUI target so a future CLI executable can link them too. SPM
+won't allow source overlap between targets, so library extraction is
+the only valid path. Localization resources move with L10n.
+
+Adds en-fallback to L10n.tr: when a key is missing in the current
+language, return the en value (or the key string if even en lacks it),
+never an empty string."
+```
+
+### Task 0.2: Add tasktick CLI executable target
+
+With Core extracted, adding the CLI is now trivial.
 
 **Files:**
 - Modify: `Package.swift`
 - Create: `Sources/CLI/main.swift`
+- Restructure: `Tests/` → `Tests/AppTests/`, create empty `Tests/CLITests/`
 
-- [ ] **Step 1: Update Package.swift**
+- [ ] **Step 1: Add swift-argument-parser dep + tasktick target**
 
-Replace the entire file with:
+Update `Package.swift` to:
 
 ```swift
 // swift-tools-version: 6.0
@@ -70,56 +330,44 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0")
     ],
     targets: [
-        .executableTarget(
-            name: "TaskTick",
-            path: "Sources",
-            exclude: ["CLI"],
+        .target(
+            name: "TaskTickCore",
+            path: "Sources/TaskTickCore",
             resources: [
                 .process("Localization")
             ]
         ),
         .executableTarget(
+            name: "TaskTick",
+            dependencies: ["TaskTickCore"],
+            path: "Sources",
+            exclude: ["TaskTickCore", "CLI"]
+        ),
+        .executableTarget(
             name: "tasktick",
             dependencies: [
+                "TaskTickCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ],
-            path: "Sources",
-            exclude: [
-                "App",
-                "Views",
-                "Localization",
-                "Resources"
-            ],
-            sources: [
-                "CLI",
-                "Models/ScheduledTask.swift",
-                "Models/ExecutionLog.swift",
-                "Models/CronExpression.swift",
-                "Engine/FuzzyMatch.swift",
-                "Engine/StoreMigration.swift",
-                "Engine/StoreHardener.swift"
-            ]
+            path: "Sources/CLI"
         ),
         .testTarget(
             name: "TaskTickTests",
-            dependencies: ["TaskTick"],
+            dependencies: ["TaskTick", "TaskTickCore"],
             path: "Tests/AppTests"
         ),
         .testTarget(
             name: "CLITests",
-            dependencies: ["tasktick"],
+            dependencies: ["tasktick", "TaskTickCore"],
             path: "Tests/CLITests"
         )
     ]
 )
 ```
 
-Notes:
-- `TaskTick` target excludes `CLI/` so it doesn't accidentally pull main.swift into the GUI binary
-- `tasktick` target excludes `App/Views/Localization/Resources` (none of which the CLI needs) and uses `sources:` whitelist to share specific files. Critically, it does NOT pull `Engine/TaskScheduler.swift` / `ScriptExecutor.swift` (those are `@MainActor` and link SwiftUI)
-- Test targets split into `AppTests/` (existing `Tests/`) and `CLITests/` (new)
+Crucial: `tasktick` target uses `path: "Sources/CLI"` — its own subdirectory. NO source overlap with TaskTick GUI target.
 
-- [ ] **Step 2: Move existing Tests/ to Tests/AppTests/**
+- [ ] **Step 2: Restructure Tests/**
 
 ```bash
 git mv Tests Tests-tmp
@@ -136,9 +384,10 @@ Create `Sources/CLI/main.swift`:
 ```swift
 import ArgumentParser
 import Foundation
+import TaskTickCore
 
 @main
-struct TaskTick: AsyncParsableCommand {
+struct TaskTickCLI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "tasktick",
         abstract: "Control TaskTick scheduled tasks from the command line.",
@@ -149,12 +398,12 @@ struct TaskTick: AsyncParsableCommand {
 }
 ```
 
-Empty subcommand list — we'll add commands in later phases. Compiles and runs `tasktick --help`.
+`import TaskTickCore` is here so future commands can use Models, FuzzyMatch, etc.
 
 - [ ] **Step 4: Verify both targets build**
 
 Run: `swift build`
-Expected: Both `TaskTick` and `tasktick` build with no warnings. Binary at `.build/debug/tasktick`.
+Expected: produces both `.build/debug/TaskTick` and `.build/debug/tasktick`. No warnings.
 
 - [ ] **Step 5: Verify CLI runs**
 
@@ -162,7 +411,7 @@ Run: `.build/debug/tasktick --version`
 Expected: `0.1.0`
 
 Run: `.build/debug/tasktick --help`
-Expected: Brief usage message naming the command.
+Expected: usage banner.
 
 - [ ] **Step 6: Commit**
 
@@ -170,9 +419,134 @@ Expected: Brief usage message naming the command.
 git add Package.swift Sources/CLI/ Tests/
 git commit -m "cli: scaffold tasktick executable target
 
-Adds swift-argument-parser dep, second executableTarget sharing Models/
-+ a few Engine/ files via sources: whitelist (no library extraction).
-Splits Tests/ into AppTests/ + CLITests/."
+Adds swift-argument-parser dep, tasktick executableTarget at
+Sources/CLI/, depending on TaskTickCore for shared models. Splits
+Tests/ into AppTests/ + CLITests/."
+```
+
+### Task 0.3: Build scripts — glob copy bundles + URL Scheme
+
+The hand-assembled `.app` bundles in `build-dev.sh` and `release.sh` currently hardcode the resource bundle name `TaskTick_TaskTick.bundle`. After Task 0.1 the actual bundle is `TaskTick_TaskTickCore.bundle`, and Task 5 will copy a CLI binary too — both demand glob-based copying per the project's global `CLAUDE.md` rule (SPM resource bundle hardcoding has bitten this repo before).
+
+**Files:**
+- Modify: `scripts/build-dev.sh`
+- Modify: `scripts/release.sh`
+
+- [ ] **Step 1: Replace hardcoded bundle copy with glob in build-dev.sh**
+
+In `scripts/build-dev.sh`, find the block (around line 36-47):
+
+```bash
+RESOURCE_BUNDLE=$(find "${BUILD_DIR}/build" -name "${APP_NAME}_${APP_NAME}.bundle" -type d | head -1)
+# ...
+if [ -n "${RESOURCE_BUNDLE}" ]; then
+  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/"
+fi
+```
+
+Replace with:
+
+```bash
+# Glob-copy ALL SPM-generated *.bundle directories. Per CLAUDE.md global
+# rule: hardcoding bundle names breaks when new SPM dependencies / library
+# targets land. Bundle.module fatalErrors if its target's bundle isn't
+# found at runtime, so a missing bundle = SIGTRAP crash.
+echo "  Bundles:"
+for bundle in $(find "${BUILD_DIR}/build" -name "*.bundle" -type d -not -path '*\.dSYM*'); do
+  cp -R "${bundle}" "${APP_BUNDLE}/"
+  echo "    $(basename "${bundle}")"
+done
+```
+
+- [ ] **Step 2: Replace in release.sh too**
+
+In `scripts/release.sh` `build_arch()` function, find the equivalent block (around line 64-80):
+
+```bash
+local RESOURCE_BUNDLE
+RESOURCE_BUNDLE=$(find "${ARCH_BUILD_DIR}/build" -name "${APP_NAME}_${APP_NAME}.bundle" -type d | head -1)
+# ...
+if [ -n "${RESOURCE_BUNDLE}" ]; then
+  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/"
+  echo "  Resources: ${RESOURCE_BUNDLE}"
+fi
+```
+
+Replace with:
+
+```bash
+# Glob-copy ALL *.bundle (TaskTick_TaskTickCore.bundle and any future
+# SPM target bundle). Per CLAUDE.md global rule.
+echo "  Bundles:"
+for bundle in $(find "${ARCH_BUILD_DIR}/build" -name "*.bundle" -type d -not -path '*\.dSYM*'); do
+  cp -R "${bundle}" "${APP_BUNDLE}/"
+  echo "    $(basename "${bundle}")"
+done
+```
+
+- [ ] **Step 3: Add `tasktick:` URL Scheme to dev Info.plist**
+
+In `scripts/build-dev.sh`, find the Info.plist heredoc (line 55-101). Add this block before `</dict>`:
+
+```xml
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.lifedever.TaskTick.dev.urlscheme</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>tasktick</string>
+            </array>
+        </dict>
+    </array>
+```
+
+- [ ] **Step 4: Add URL Scheme to release Info.plist**
+
+Same block in `scripts/release.sh` Info.plist heredoc (use `com.lifedever.TaskTick.urlscheme` for the URL name in release):
+
+```xml
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.lifedever.TaskTick.urlscheme</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>tasktick</string>
+            </array>
+        </dict>
+    </array>
+```
+
+- [ ] **Step 5: Smoke-test dev build**
+
+```bash
+./scripts/build-dev.sh
+ls "/Applications/TaskTick Dev.app/" | grep bundle
+defaults read "/Applications/TaskTick Dev.app/Contents/Info.plist" CFBundleURLTypes
+```
+
+Expected:
+- Bundles output lists `TaskTick_TaskTickCore.bundle`
+- URL Types output shows `tasktick` scheme registered
+
+Open TaskTick Dev — verify it launches and localizations still work (try language switch in Settings).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add scripts/build-dev.sh scripts/release.sh
+git commit -m "build: glob-copy SPM bundles and register tasktick:// URL Scheme
+
+Replaces hardcoded TaskTick_TaskTick.bundle copy with glob over all
+*.bundle dirs — required because TaskTickCore extraction introduces
+TaskTick_TaskTickCore.bundle and future SPM deps may add more.
+Hardcoding here has bitten the repo before (see CLAUDE.md global rule).
+
+Also injects CFBundleURLTypes for the tasktick:// URL Scheme that
+Phase 1's CLIBridge handler will receive."
 ```
 
 ---
@@ -367,87 +741,47 @@ TaskTickApp.init configures the bridge with the shared ModelContainer
 so notifications received before the first window opens still work."
 ```
 
-### Task 1.3: Inject URL Scheme into Info.plist
+### Task 1.3: End-to-end smoke test the URL Scheme handler
 
-**Files:**
-- Modify: `scripts/build-dev.sh`
-- Modify: `scripts/release.sh`
+(Info.plist registration was done in Phase 0 / Task 0.3. This task only verifies the chain works.)
 
-- [ ] **Step 1: Add CFBundleURLTypes to build-dev.sh Info.plist heredoc**
-
-In `scripts/build-dev.sh`, find the Info.plist heredoc (line 55-101). Add this block before `</dict>` (around line 99):
-
-```xml
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>com.lifedever.TaskTick.dev.urlscheme</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>tasktick</string>
-            </array>
-        </dict>
-    </array>
-```
-
-Note dev build uses `.dev.urlscheme` URL name to distinguish from release.
-
-- [ ] **Step 2: Add CFBundleURLTypes to release.sh Info.plist heredoc**
-
-In `scripts/release.sh`, find the Info.plist heredoc (line 88-136). Add before `</dict>`:
-
-```xml
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>com.lifedever.TaskTick.urlscheme</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>tasktick</string>
-            </array>
-        </dict>
-    </array>
-```
-
-- [ ] **Step 3: Build dev and verify URL Scheme registers**
+- [ ] **Step 1: Rebuild dev with Phase 1 wiring**
 
 Run: `./scripts/build-dev.sh`
 
-Then verify:
-```bash
-defaults read /Applications/TaskTick\ Dev.app/Contents/Info.plist CFBundleURLTypes
-```
-Expected: array with one dict containing `CFBundleURLSchemes = ( tasktick )`.
+- [ ] **Step 2: Send a URL Scheme command and verify GUI reacts**
 
-- [ ] **Step 4: End-to-end smoke test the URL handler**
-
-With TaskTick Dev running:
-```bash
-# Get a task UUID from the SwiftData store
-sqlite3 ~/Library/Application\ Support/com.lifedever.TaskTick.dev/tasktick-dev.store \
-  "SELECT ZID FROM ZSCHEDULEDTASK LIMIT 1;"
-# (UUID column may be named differently; replace with the actual column)
-
-# Open the URL
-open "tasktick://run?id=<paste-uuid-here>"
-```
-Expected: Toast appears in TaskTick Dev showing "Task started". Menu bar icon swaps to running variant.
-
-If the SwiftData column name isn't `ZID`, run:
+With TaskTick Dev running, get a task UUID:
 ```bash
 sqlite3 ~/Library/Application\ Support/com.lifedever.TaskTick.dev/tasktick-dev.store \
   ".schema ZSCHEDULEDTASK" | head -20
+# Locate the UUID column (likely ZID or ZID_PRIMITIVE), then:
+sqlite3 ~/Library/Application\ Support/com.lifedever.TaskTick.dev/tasktick-dev.store \
+  "SELECT ZID FROM ZSCHEDULEDTASK LIMIT 1;"
 ```
-to find the UUID column name.
 
-- [ ] **Step 5: Commit**
+Open the URL:
+```bash
+open "tasktick://run?id=<paste-uuid-here>"
+```
+
+Expected: Toast appears in TaskTick Dev showing "Task started". Menu bar icon swaps to running variant. ExecutionLog row gets created.
 
 ```bash
-git add scripts/build-dev.sh scripts/release.sh
-git commit -m "build: register tasktick:// URL Scheme in Info.plist for both dev and release"
+open "tasktick://stop?id=<paste-uuid-here>"
 ```
+Expected: running task stops; menu bar returns to idle.
+
+- [ ] **Step 3: Verify with TaskTick Dev quit (auto-launch case)**
+
+```bash
+pkill -f "TaskTick Dev"
+sleep 1
+open "tasktick://run?id=<paste-uuid-here>"
+```
+Expected: TaskTick Dev launches, then runs the task. (URL Scheme delivery happens after launch as part of macOS's standard `application(_:open:)` flow.)
+
+No code changes in this task — it's a verification gate. Move on if all three behaviors work.
 
 ---
 
