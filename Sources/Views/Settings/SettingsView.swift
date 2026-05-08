@@ -52,6 +52,9 @@ struct SettingsView: View {
             quickLauncherTab
                 .tabItem { Label(L10n.tr("quick_launcher.settings.section"), systemImage: "command") }
 
+            cliTab
+                .tabItem { Label(L10n.tr("settings.cli.section.title"), systemImage: "terminal") }
+
             backupTab
                 .tabItem { Label(L10n.tr("settings.backup"), systemImage: "externaldrive.badge.timemachine") }
 
@@ -158,6 +161,15 @@ struct SettingsView: View {
             } header: {
                 Text(L10n.tr("quick_launcher.settings.results"))
             }
+        }
+        .formStyle(.grouped)
+    }
+
+    // MARK: - Command Line
+
+    private var cliTab: some View {
+        Form {
+            CLIInstallSection()
         }
         .formStyle(.grouped)
     }
