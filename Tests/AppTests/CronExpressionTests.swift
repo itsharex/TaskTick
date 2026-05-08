@@ -1,5 +1,5 @@
 import Testing
-@testable import TaskTick
+@testable import TaskTickApp
 import TaskTickCore
 
 @Suite("CronExpression Tests")

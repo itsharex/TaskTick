@@ -1,5 +1,5 @@
 import Testing
-@testable import TaskTick
+@testable import TaskTickApp
 
 @Suite("TaskScheduler Tests")
 struct TaskSchedulerTests {
