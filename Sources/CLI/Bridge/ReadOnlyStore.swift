@@ -59,9 +59,14 @@ final class ReadOnlyStore {
         return try container.mainContext.fetch(descriptor).first
     }
 
+    /// Most recent execution log for a task. Skips in-progress runs because
+    /// their stdout/stderr live in GUI memory (LiveOutputManager) and aren't
+    /// flushed to SwiftData until the run completes — fetching them here
+    /// would always return empty strings. Use `tail` for live streaming.
     func fetchLatestLog(forTaskId taskId: UUID) throws -> ExecutionLog? {
+        let runningRaw = "running"
         var descriptor = FetchDescriptor<ExecutionLog>(
-            predicate: #Predicate { $0.task?.id == taskId },
+            predicate: #Predicate { $0.task?.id == taskId && $0.statusRaw != runningRaw },
             sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
         )
         descriptor.fetchLimit = 1

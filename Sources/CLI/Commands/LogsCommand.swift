@@ -35,6 +35,16 @@ struct LogsCommand: AsyncParsableCommand {
             throw ExitCode(1)
         }
 
+        // If the task is currently running, hint at `tail` — fetchLatestLog
+        // skips in-progress runs (their output isn't flushed to SwiftData yet),
+        // so we'd otherwise show stale data without explanation.
+        let runningIds = NotificationBridge.runningTaskIds(store: store)
+        if runningIds.contains(task.id) {
+            FileHandle.standardError.write(Data(
+                "note: \(task.name) is currently running — use `tail` for live output\n".utf8
+            ))
+        }
+
         guard let log = try store.fetchLatestLog(forTaskId: task.id) else {
             FileHandle.standardError.write(Data("tasktick: no execution logs for \(task.name)\n".utf8))
             throw ExitCode(1)
