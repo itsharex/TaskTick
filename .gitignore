@@ -6,6 +6,8 @@ DerivedData/
 .DS_Store
 CLAUDE.md
 .claude/
-docs/superpowers/
+docs/superpowers/*
+!docs/superpowers/specs/
+!docs/superpowers/specs/**
 .dev-build/
 .release/
