@@ -13,3 +13,4 @@ docs/superpowers/*
 !docs/superpowers/plans/**
 .dev-build/
 .release/
+.worktrees/
