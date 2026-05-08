@@ -1,4 +1,4 @@
-#compdef tasktick
+#compdef tasktick tasktick-dev
 
 _tasktick() {
     local -a subcmds
@@ -24,7 +24,7 @@ _tasktick() {
             local -a tasks
             local prefix="${words[CURRENT]}"
             local IFS=$'\n'
-            tasks=($(tasktick __complete "$prefix" 2>/dev/null))
+            tasks=($(${words[1]} __complete "$prefix" 2>/dev/null))
             _describe 'task' tasks
             ;;
         list)
