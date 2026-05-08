@@ -427,3 +427,15 @@
 "recovery.message" = "資料庫無法開啟，您的資料檔案已保留。您可以在設定中從備份還原，或手動定位資料庫檔案。";
 "recovery.open_settings" = "開啟設定";
 "recovery.open_folder" = "顯示資料庫檔案";
+
+/* Settings → Command Line */
+"settings.cli.section.title" = "命令列";
+"settings.cli.description" = "啟用 `tasktick` 命令列工具，讓你在終端、指令稿和 Raycast 中控制 TaskTick。";
+"settings.cli.enable_button" = "啟用 CLI…";
+"settings.cli.installed" = "已安裝於 %@";
+"settings.cli.not_installed" = "未安裝";
+"settings.cli.install.alert.title" = "啟用 tasktick CLI";
+"settings.cli.install.alert.message" = "在終端中執行以下指令以啟用 `tasktick`：\n\n%@";
+"settings.cli.install.alert.copy" = "複製指令";
+"settings.cli.install.alert.open_terminal" = "開啟終端";
+"settings.cli.install.alert.cancel" = "取消";

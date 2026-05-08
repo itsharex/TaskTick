@@ -534,3 +534,15 @@
 "recovery.message" = "The database could not be opened. Your data file has been preserved. You can restore from a backup in Settings, or locate the database file manually.";
 "recovery.open_settings" = "Open Settings";
 "recovery.open_folder" = "Show Database File";
+
+/* Settings → Command Line */
+"settings.cli.section.title" = "Command Line";
+"settings.cli.description" = "Enable the `tasktick` command in your terminal to control TaskTick from scripts and Raycast.";
+"settings.cli.enable_button" = "Enable CLI…";
+"settings.cli.installed" = "Installed at %@";
+"settings.cli.not_installed" = "Not installed";
+"settings.cli.install.alert.title" = "Enable tasktick CLI";
+"settings.cli.install.alert.message" = "Run this command in Terminal to enable the `tasktick` CLI:\n\n%@";
+"settings.cli.install.alert.copy" = "Copy Command";
+"settings.cli.install.alert.open_terminal" = "Open Terminal";
+"settings.cli.install.alert.cancel" = "Cancel";
