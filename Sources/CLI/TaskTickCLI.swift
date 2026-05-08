@@ -9,7 +9,8 @@ struct TaskTickCLI: AsyncParsableCommand {
         abstract: "Control TaskTick scheduled tasks from the command line.",
         version: "0.1.0",
         subcommands: [
-            ListCommand.self
+            ListCommand.self,
+            StatusCommand.self
         ]
     )
 }
