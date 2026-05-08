@@ -19,7 +19,13 @@ enum GUILauncher {
     /// running and a write command needs to dispatch. Blocks up to 10s for the
     /// app to be running. Returns whether launch succeeded.
     static func launchAndWait(action: NotificationBridge.CLIAction, taskId: UUID, timeout: TimeInterval = 10) -> Bool {
-        guard let url = URL(string: "tasktick://\(action.rawValue)?id=\(taskId.uuidString)") else {
+        // Pick URL Scheme based on the CLI's bundle context: dev CLI
+        // (inside TaskTick Dev.app) uses tasktick-dev:// which is registered
+        // only by the dev .app, eliminating LaunchServices ambiguity when
+        // both apps are installed.
+        let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        let scheme = bundleId.hasSuffix(".dev") ? "tasktick-dev" : "tasktick"
+        guard let url = URL(string: "\(scheme)://\(action.rawValue)?id=\(taskId.uuidString)") else {
             return false
         }
         NSWorkspace.shared.open(url)

@@ -117,8 +117,11 @@ final class LogFileWriter: @unchecked Sendable {
 
     // MARK: - Static helpers
 
-    /// `~/Library/Logs/TaskTick/`. Returns nil only if the user's Library
-    /// directory itself can't be located or created — extremely rare.
+    /// `~/Library/Logs/TaskTick/<bundle-id>/`. Returns nil only if the user's
+    /// Library directory itself can't be located or created — extremely rare.
+    /// Bundle-ID subdir keeps dev / release log files isolated. Pre-bundle-ID
+    /// logs at `~/Library/Logs/TaskTick/<slug>.log` are orphaned; acceptable
+    /// per the comment above that log files are ephemeral.
     static func logsDirectory() -> URL? {
         let fm = FileManager.default
         guard let lib = try? fm.url(
@@ -127,7 +130,8 @@ final class LogFileWriter: @unchecked Sendable {
             appropriateFor: nil,
             create: true
         ) else { return nil }
-        let dir = lib.appendingPathComponent("Logs/TaskTick", isDirectory: true)
+        let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        let dir = lib.appendingPathComponent("Logs/TaskTick/\(bundleId)", isDirectory: true)
         do {
             try fm.createDirectory(at: dir, withIntermediateDirectories: true)
             return dir

@@ -11,7 +11,12 @@ enum NotificationBridge {
         case run, stop, restart, reveal
 
         var notificationName: Notification.Name {
-            Notification.Name("com.lifedever.TaskTick.cli.\(rawValue)")
+            // Dynamic per-bundle so the dev CLI (Bundle.main =
+            // com.lifedever.TaskTick.dev) posts to the dev GUI listener
+            // and not the release GUI's. Falls back to release ID when run
+            // outside any .app (e.g. .build/debug/tasktick).
+            let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+            return Notification.Name("\(bundleId).cli.\(rawValue)")
         }
     }
 

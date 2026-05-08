@@ -71,6 +71,14 @@ build_arch() {
   # Copy binary (rename TaskTickApp → TaskTick during cp; user-facing name)
   cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
+  # Copy CLI binary alongside the GUI binary
+  local CLI_BIN_PATH
+  CLI_BIN_PATH=$(find "${ARCH_BUILD_DIR}/build" -name "tasktick" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
+  if [ -n "${CLI_BIN_PATH}" ]; then
+    cp "${CLI_BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/tasktick"
+    echo "  CLI: tasktick"
+  fi
+
   # Glob-copy ALL *.bundle (TaskTick_TaskTickCore.bundle and any future
   # SPM target bundle). Per CLAUDE.md global rule.
   echo "  Bundles:"

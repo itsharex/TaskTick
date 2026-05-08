@@ -16,10 +16,16 @@ final class CLIBridge {
     }
 
     /// Notification names: see spec §6.1
-    static let runNotification     = Notification.Name("com.lifedever.TaskTick.cli.run")
-    static let stopNotification    = Notification.Name("com.lifedever.TaskTick.cli.stop")
-    static let restartNotification = Notification.Name("com.lifedever.TaskTick.cli.restart")
-    static let revealNotification  = Notification.Name("com.lifedever.TaskTick.cli.reveal")
+    /// Dynamic per-bundle so dev (`com.lifedever.TaskTick.dev`) and release
+    /// (`com.lifedever.TaskTick`) running in parallel don't crosstalk.
+    private static var bundlePrefix: String {
+        Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+    }
+
+    static var runNotification: Notification.Name     { Notification.Name("\(bundlePrefix).cli.run") }
+    static var stopNotification: Notification.Name    { Notification.Name("\(bundlePrefix).cli.stop") }
+    static var restartNotification: Notification.Name { Notification.Name("\(bundlePrefix).cli.restart") }
+    static var revealNotification: Notification.Name  { Notification.Name("\(bundlePrefix).cli.reveal") }
 
     private var modelContainer: ModelContainer?
 

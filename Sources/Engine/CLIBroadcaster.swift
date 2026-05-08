@@ -11,9 +11,15 @@ final class CLIBroadcaster {
 
     static let shared = CLIBroadcaster()
 
-    static let taskStartedNotification   = Notification.Name("com.lifedever.TaskTick.gui.taskStarted")
-    static let taskCompletedNotification = Notification.Name("com.lifedever.TaskTick.gui.taskCompleted")
-    static let logChunkNotification      = Notification.Name("com.lifedever.TaskTick.gui.logChunk")
+    /// Dynamic per-bundle so dev / release GUIs don't broadcast to each
+    /// other's CLI subscribers when both are running in parallel.
+    private static var bundlePrefix: String {
+        Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+    }
+
+    static var taskStartedNotification: Notification.Name   { Notification.Name("\(bundlePrefix).gui.taskStarted") }
+    static var taskCompletedNotification: Notification.Name { Notification.Name("\(bundlePrefix).gui.taskCompleted") }
+    static var logChunkNotification: Notification.Name      { Notification.Name("\(bundlePrefix).gui.logChunk") }
 
     private var cancellables: Set<AnyCancellable> = []
     private var lastRunningSnapshot: Set<UUID> = []
