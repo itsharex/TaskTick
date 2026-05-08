@@ -427,3 +427,9 @@
 "recovery.message" = "Не удалось открыть базу данных. Файл данных сохранён. Вы можете восстановить резервную копию в Настройках или найти файл базы данных вручную.";
 "recovery.open_settings" = "Открыть Настройки";
 "recovery.open_folder" = "Показать файл БД";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "Запущено";
+"toast.action.stopped" = "Остановлено";
+"toast.action.restarted" = "Перезапущено";
+"toast.action.failed" = "Действие не выполнено";

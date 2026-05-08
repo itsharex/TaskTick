@@ -442,3 +442,9 @@
 "settings.cli.uninstall_button" = "解除安裝 CLI…";
 "settings.cli.uninstall.alert.title" = "解除安裝 tasktick CLI";
 "settings.cli.uninstall.alert.message" = "在終端中執行以下指令以解除安裝 `tasktick`：\n\n%@";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "已啟動";
+"toast.action.stopped" = "已停止";
+"toast.action.restarted" = "已重啟";
+"toast.action.failed" = "操作失敗";

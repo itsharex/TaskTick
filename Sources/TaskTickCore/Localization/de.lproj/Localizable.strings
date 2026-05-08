@@ -427,3 +427,9 @@
 "recovery.message" = "Die Datenbank konnte nicht geöffnet werden. Ihre Datendatei wurde beibehalten. Sie können ein Backup in den Einstellungen wiederherstellen oder die Datenbankdatei manuell suchen.";
 "recovery.open_settings" = "Einstellungen öffnen";
 "recovery.open_folder" = "Datenbankdatei anzeigen";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "Gestartet";
+"toast.action.stopped" = "Gestoppt";
+"toast.action.restarted" = "Neu gestartet";
+"toast.action.failed" = "Aktion fehlgeschlagen";

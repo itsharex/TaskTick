@@ -384,3 +384,9 @@
 "recovery.message" = "La base de données n'a pas pu être ouverte. Votre fichier de données a été conservé. Vous pouvez restaurer une sauvegarde dans les Réglages ou localiser le fichier manuellement.";
 "recovery.open_settings" = "Ouvrir les Réglages";
 "recovery.open_folder" = "Afficher le fichier";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "Démarré";
+"toast.action.stopped" = "Arrêté";
+"toast.action.restarted" = "Redémarré";
+"toast.action.failed" = "Action échouée";
