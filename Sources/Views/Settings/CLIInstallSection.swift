@@ -99,10 +99,10 @@ struct CLIInstallSection: View {
     }
 
     private func showEnableDialog() {
-        // Prefer Homebrew prefix on Apple Silicon if it exists; fall back to /usr/local/bin.
-        let target = FileManager.default.fileExists(atPath: "/opt/homebrew/bin")
-            ? "/opt/homebrew/bin/\(cliName)"
-            : "/usr/local/bin/\(cliName)"
+        // /usr/local/bin is the universal Unix convention and is always in
+        // macOS's default PATH (/etc/paths). Homebrew users will still find
+        // their existing /opt/homebrew/bin symlinks via refreshState's scan.
+        let target = "/usr/local/bin/\(cliName)"
         let cliPath = currentAppCLIPath()
         let cmd = "sudo ln -sf \"\(cliPath)\" \(target)"
 

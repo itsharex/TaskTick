@@ -539,7 +539,7 @@
 "settings.cli.section.title" = "Command Line";
 "settings.cli.description" = "Enable the `tasktick` command in your terminal to control TaskTick from scripts and Raycast.";
 "settings.cli.enable_button" = "Enable CLI…";
-"settings.cli.installed" = "Installed at %@";
+"settings.cli.installed" = "Linked at %@";
 "settings.cli.not_installed" = "Not installed";
 "settings.cli.install.alert.title" = "Enable tasktick CLI";
 "settings.cli.install.alert.message" = "Run this command in Terminal to enable the `tasktick` CLI:\n\n%@";
