@@ -1,4 +1,5 @@
 import Foundation
+import TaskTickCore
 
 /// Streams a single running script's stdout/stderr to a plain-text log file
 /// under `~/Library/Logs/TaskTick/`. Designed for the manual-script /

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TaskTickCore
 
 struct MainWindowView: View {
     @Environment(\.modelContext) private var modelContext

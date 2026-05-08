@@ -1,14 +1,14 @@
 import Foundation
 import SwiftData
 
-enum ExecutionStatus: String, Codable, CaseIterable, Sendable {
+public enum ExecutionStatus: String, Codable, CaseIterable, Sendable {
     case running = "running"
     case success = "success"
     case failure = "failure"
     case timeout = "timeout"
     case cancelled = "cancelled"
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .running: L10n.tr("status.running")
         case .success: L10n.tr("status.success")
@@ -18,7 +18,7 @@ enum ExecutionStatus: String, Codable, CaseIterable, Sendable {
         }
     }
 
-    var iconName: String {
+    public var iconName: String {
         switch self {
         case .running: "play.circle.fill"
         case .success: "checkmark.circle.fill"
@@ -29,12 +29,12 @@ enum ExecutionStatus: String, Codable, CaseIterable, Sendable {
     }
 }
 
-enum TriggerType: String, Codable, Sendable {
+public enum TriggerType: String, Codable, Sendable {
     case schedule = "schedule"
     case manual = "manual"
     case launch = "launch"
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .schedule: L10n.tr("log.detail.trigger.schedule")
         case .manual:   L10n.tr("log.detail.trigger.manual")
@@ -44,19 +44,19 @@ enum TriggerType: String, Codable, Sendable {
 }
 
 @Model
-final class ExecutionLog {
-    var id: UUID = UUID()
-    var task: ScheduledTask?
-    var startedAt: Date = Date()
-    var finishedAt: Date?
-    var statusRaw: String = ExecutionStatus.running.rawValue
-    var exitCode: Int?
-    var stdout: String?
-    var stderr: String?
-    var durationMs: Int?
-    var triggeredByRaw: String = TriggerType.manual.rawValue
+public final class ExecutionLog {
+    public var id: UUID = UUID()
+    public var task: ScheduledTask?
+    public var startedAt: Date = Date()
+    public var finishedAt: Date?
+    public var statusRaw: String = ExecutionStatus.running.rawValue
+    public var exitCode: Int?
+    public var stdout: String?
+    public var stderr: String?
+    public var durationMs: Int?
+    public var triggeredByRaw: String = TriggerType.manual.rawValue
 
-    init(
+    public init(
         task: ScheduledTask? = nil,
         triggeredBy: TriggerType = .manual
     ) {
@@ -67,20 +67,20 @@ final class ExecutionLog {
         self.triggeredByRaw = triggeredBy.rawValue
     }
 
-    var status: ExecutionStatus {
+    public var status: ExecutionStatus {
         get { ExecutionStatus(rawValue: statusRaw) ?? .running }
         set { statusRaw = newValue.rawValue }
     }
 
-    var triggeredBy: TriggerType {
+    public var triggeredBy: TriggerType {
         get { TriggerType(rawValue: triggeredByRaw) ?? .manual }
         set { triggeredByRaw = newValue.rawValue }
     }
 
     /// Maximum output size: 512KB
-    static let maxOutputSize = 512 * 1024
+    public static let maxOutputSize = 512 * 1024
 
-    static func truncateOutput(_ output: String) -> String {
+    public static func truncateOutput(_ output: String) -> String {
         if output.utf8.count > maxOutputSize {
             let truncated = String(output.prefix(maxOutputSize / 2))
             return truncated + "\n\n--- 输出已截断 (超过 512KB) ---"

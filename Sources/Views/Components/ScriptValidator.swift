@@ -1,4 +1,5 @@
 import SwiftUI
+import TaskTickCore
 
 /// Reusable script validation result type and runner.
 enum ScriptValidationResult {

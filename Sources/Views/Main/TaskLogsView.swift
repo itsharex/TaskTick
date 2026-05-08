@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TaskTickCore
 
 struct TaskLogsView: View {
     @Environment(\.dismiss) private var dismiss

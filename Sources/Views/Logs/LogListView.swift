@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TaskTickCore
 
 struct LogListView: View {
     @Environment(\.modelContext) private var modelContext

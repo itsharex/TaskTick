@@ -1,4 +1,5 @@
 import Foundation
+import TaskTickCore
 
 /// Shared state for the task editor window.
 @MainActor

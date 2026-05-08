@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import TaskTickCore
 
 /// A floating panel that displays full script output for strong reminders.
 /// User must click "OK" to dismiss.

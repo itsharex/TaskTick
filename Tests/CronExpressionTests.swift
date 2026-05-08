@@ -1,5 +1,6 @@
 import Testing
 @testable import TaskTick
+import TaskTickCore
 
 @Suite("CronExpression Tests")
 struct CronExpressionTests {

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import TaskTickCore
 
 /// Imports tasks from the system crontab.
 struct CrontabImporter {

@@ -13,12 +13,12 @@ import os
 /// every transaction writes straight to the main file. It must run BEFORE any
 /// `ModelContainer` opens the store, otherwise SwiftData will hold the connection
 /// and SQLite won't let us change the mode.
-enum StoreHardener {
+public enum StoreHardener {
     private static let logger = Logger(subsystem: "com.lifedever.TaskTick", category: "StoreHardener")
 
     /// Flush any pending WAL into the main DB and switch to DELETE journal mode.
     /// No-op if the store doesn't exist yet (first launch).
-    static func hardenStore(at url: URL) {
+    public static func hardenStore(at url: URL) {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
 
         var db: OpaquePointer?
@@ -42,7 +42,7 @@ enum StoreHardener {
     /// Flush any pending WAL into the main DB. Safe to call while SwiftData holds
     /// the store open — SQLite coordinates concurrent checkpoints via its own
     /// locking. Used after a backup restore to merge the restored -wal immediately.
-    static func checkpoint(at url: URL) {
+    public static func checkpoint(at url: URL) {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         var db: OpaquePointer?
         guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK, let db else {

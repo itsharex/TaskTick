@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import TaskTickCore
 
 /// Checks GitHub Releases API for app updates, downloads and installs.
 @MainActor

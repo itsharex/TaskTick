@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TaskTickCore
 
 struct LogDetailView: View {
     let log: ExecutionLog

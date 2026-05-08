@@ -1,4 +1,5 @@
 import SwiftUI
+import TaskTickCore
 
 /// A text field with a folder-chooser button for selecting a working directory.
 struct WorkingDirectoryField: View {

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TaskTickCore
 
 /// Content view displayed in the menu bar popover.
 struct MenuBarView: View {

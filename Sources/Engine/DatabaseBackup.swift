@@ -2,6 +2,7 @@ import CryptoKit
 import Foundation
 import SwiftData
 import os
+import TaskTickCore
 
 /// Manages automatic data backups.
 ///

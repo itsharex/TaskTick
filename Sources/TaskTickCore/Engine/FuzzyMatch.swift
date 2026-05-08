@@ -9,10 +9,10 @@ import Foundation
 ///   so an exact prefix beats a scattered subsequence.
 ///
 /// Returns `nil` if `query` is not a subsequence of `candidate`.
-enum FuzzyMatch {
+public enum FuzzyMatch {
 
     /// Higher score = better match. `nil` means no match.
-    static func score(query: String, candidate: String) -> Int? {
+    public static func score(query: String, candidate: String) -> Int? {
         let q = query.lowercased()
         let c = candidate.lowercased()
         guard !q.isEmpty else { return 0 }

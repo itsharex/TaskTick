@@ -1,4 +1,5 @@
 import Foundation
+import TaskTickCore
 
 struct ScriptTemplate: Codable, Identifiable, Equatable, Hashable {
     var id: UUID

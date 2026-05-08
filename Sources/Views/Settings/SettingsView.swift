@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import ServiceManagement
+import TaskTickCore
 
 struct SettingsView: View {
     // General

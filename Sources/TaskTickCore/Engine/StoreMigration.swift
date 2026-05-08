@@ -41,7 +41,7 @@ import os
 /// 6. **Never throw.** Migration runs inside a `static let` initializer; a
 ///    throw there would crash the app on launch. Any failure is logged and
 ///    the caller falls back to opening the (possibly empty) new path.
-enum StoreMigration {
+public enum StoreMigration {
     private static let logger = Logger(subsystem: "com.lifedever.TaskTick", category: "StoreMigration")
     private static let tmpSuffix = ".migrating"
     /// All three SwiftData SQLite sidecars. Order matters for the rename phase.
@@ -50,7 +50,7 @@ enum StoreMigration {
     /// Returns the URL TaskTick should pass to `ModelConfiguration`. Migrates
     /// legacy data into a per-bundleID subdirectory on first run of v1.4.2+.
     /// Idempotent — safe to call on every launch.
-    static func resolveStoreURL() -> URL {
+    public static func resolveStoreURL() -> URL {
         let appSupport = URL.applicationSupportDirectory
         let bundleID = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
         let isDev = bundleID.hasSuffix(".dev")

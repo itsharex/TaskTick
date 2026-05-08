@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import TaskTickCore
 
 enum ScriptSource: String, CaseIterable {
     case inline

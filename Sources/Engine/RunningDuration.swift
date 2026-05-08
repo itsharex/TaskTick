@@ -1,4 +1,5 @@
 import Foundation
+import TaskTickCore
 
 /// Single source of truth for "this task started its current run at X" — read
 /// by both the Quick Launcher row and the detail-page schedule card so the

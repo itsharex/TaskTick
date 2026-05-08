@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import TaskTickCore
 
 struct ScriptEditorView: View {
     @Binding var scriptBody: String

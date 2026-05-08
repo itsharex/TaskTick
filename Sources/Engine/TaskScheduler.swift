@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import SwiftData
+import TaskTickCore
 
 /// Master timer-based task scheduler.
 /// Maintains a single timer that fires at the earliest `nextRunAt` across all enabled tasks.

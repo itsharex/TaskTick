@@ -1,4 +1,5 @@
 import Foundation
+import TaskTickCore
 
 /// One-shot rendezvous so external triggers (Quick Launcher, Menu Bar, future
 /// URL handlers) can ask the main window to focus a specific task. The main

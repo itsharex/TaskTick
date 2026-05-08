@@ -3,7 +3,7 @@ import SwiftData
 
 // MARK: - Repeat Type
 
-enum RepeatType: String, Codable, CaseIterable, Sendable {
+public enum RepeatType: String, Codable, CaseIterable, Sendable {
     case never = "never"
     case everyMinute = "everyMinute"
     case every5Minutes = "every5Minutes"
@@ -21,7 +21,7 @@ enum RepeatType: String, Codable, CaseIterable, Sendable {
     case yearly = "yearly"
     case custom = "custom"
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .never: L10n.tr("repeat.never")
         case .everyMinute: L10n.tr("repeat.every_minute")
@@ -43,7 +43,7 @@ enum RepeatType: String, Codable, CaseIterable, Sendable {
     }
 
     /// Calendar component and value for computing next date
-    var calendarInterval: (component: Calendar.Component, value: Int)? {
+    public var calendarInterval: (component: Calendar.Component, value: Int)? {
         switch self {
         case .never: nil
         case .everyMinute: (.minute, 1)
@@ -64,14 +64,14 @@ enum RepeatType: String, Codable, CaseIterable, Sendable {
 }
 
 /// Unit for custom repeat interval
-enum CustomRepeatUnit: String, Codable, CaseIterable, Sendable {
+public enum CustomRepeatUnit: String, Codable, CaseIterable, Sendable {
     case hour = "hour"
     case day = "day"
     case week = "week"
     case month = "month"
     case year = "year"
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .hour: L10n.tr("repeat.unit.hour")
         case .day: L10n.tr("repeat.unit.day")
@@ -81,7 +81,7 @@ enum CustomRepeatUnit: String, Codable, CaseIterable, Sendable {
         }
     }
 
-    var calendarComponent: Calendar.Component {
+    public var calendarComponent: Calendar.Component {
         switch self {
         case .hour: .hour
         case .day: .day
@@ -94,12 +94,12 @@ enum CustomRepeatUnit: String, Codable, CaseIterable, Sendable {
 
 // MARK: - End Repeat Type
 
-enum EndRepeatType: String, Codable, CaseIterable, Sendable {
+public enum EndRepeatType: String, Codable, CaseIterable, Sendable {
     case never = "never"
     case onDate = "onDate"
     case afterCount = "afterCount"
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .never: L10n.tr("end_repeat.never")
         case .onDate: L10n.tr("end_repeat.on_date")
@@ -110,11 +110,11 @@ enum EndRepeatType: String, Codable, CaseIterable, Sendable {
 
 // MARK: - Legacy ScheduleType (for migration)
 
-enum ScheduleType: String, Codable, CaseIterable, Sendable {
+public enum ScheduleType: String, Codable, CaseIterable, Sendable {
     case cron = "cron"
     case interval = "interval"
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .cron: L10n.tr("schedule.cron")
         case .interval: L10n.tr("schedule.interval")
@@ -125,73 +125,73 @@ enum ScheduleType: String, Codable, CaseIterable, Sendable {
 // MARK: - Model
 
 @Model
-final class ScheduledTask {
-    var id: UUID
-    var serialNumber: Int = 0
-    var name: String
-    var scriptBody: String
-    var scriptFilePath: String?
+public final class ScheduledTask {
+    public var id: UUID
+    public var serialNumber: Int = 0
+    public var name: String
+    public var scriptBody: String
+    public var scriptFilePath: String?
     /// Commands to run before the main script body (e.g. `export` proxy vars).
     /// Executed in the same shell invocation so env changes propagate to the script.
-    var preRunCommand: String = ""
-    var shell: String
+    public var preRunCommand: String = ""
+    public var shell: String
 
     // Legacy fields (kept for data migration)
-    var scheduleType: String
-    var cronExpression: String?
-    var intervalSeconds: Int?
+    public var scheduleType: String
+    public var cronExpression: String?
+    public var intervalSeconds: Int?
 
     // New schedule fields
-    var scheduledDate: Date?
+    public var scheduledDate: Date?
     /// Whether the user wants the schedule anchored to a specific date.
     /// Default `true` preserves legacy behavior on SwiftData migration.
-    var hasDate: Bool = true
+    public var hasDate: Bool = true
     /// Whether the user wants the schedule anchored to a specific time of day.
-    var hasTime: Bool = true
-    var repeatTypeRaw: String = RepeatType.daily.rawValue
-    var endRepeatTypeRaw: String = EndRepeatType.never.rawValue
-    var endRepeatDate: Date?
-    var endRepeatCount: Int?
-    var executionCount: Int = 0
-    var customIntervalValue: Int = 1
-    var customIntervalUnitRaw: String = CustomRepeatUnit.day.rawValue
+    public var hasTime: Bool = true
+    public var repeatTypeRaw: String = RepeatType.daily.rawValue
+    public var endRepeatTypeRaw: String = EndRepeatType.never.rawValue
+    public var endRepeatDate: Date?
+    public var endRepeatCount: Int?
+    public var executionCount: Int = 0
+    public var customIntervalValue: Int = 1
+    public var customIntervalUnitRaw: String = CustomRepeatUnit.day.rawValue
 
-    var isEnabled: Bool
+    public var isEnabled: Bool
     /// When true, the task has no schedule — it only runs when triggered manually
     /// (right-click "Run", menu bar ▶, etc.). All schedule fields are ignored.
     /// Default `false` preserves legacy behavior on SwiftData migration.
-    var isManualOnly: Bool = false
-    var createdAt: Date
-    var updatedAt: Date
-    var lastRunAt: Date?
+    public var isManualOnly: Bool = false
+    public var createdAt: Date
+    public var updatedAt: Date
+    public var lastRunAt: Date?
     /// Most recent time this task was run *manually* (UI play button, Quick
     /// Launcher Enter, menu bar ▶). Scheduled triggers do not bump this —
     /// it's the signal we sort by so user-initiated runs surface to the top
     /// across sidebar / Quick Launcher / menu bar without scheduled cron
     /// jobs constantly churning the order.
-    var lastManualRunAt: Date?
-    var nextRunAt: Date?
-    var workingDirectory: String?
-    var environmentVariablesJSON: String?
-    var timeoutSeconds: Int
-    var notifyOnSuccess: Bool
-    var notifyOnFailure: Bool
+    public var lastManualRunAt: Date?
+    public var nextRunAt: Date?
+    public var workingDirectory: String?
+    public var environmentVariablesJSON: String?
+    public var timeoutSeconds: Int
+    public var notifyOnSuccess: Bool
+    public var notifyOnFailure: Bool
     /// When true and the script exits successfully but produces no stdout (after
     /// trimming), TaskTick suppresses the success notification. Lets polling-style
     /// scripts stay silent on no-op runs and only chirp when they actually do work
     /// (`echo` something). Default `false` keeps existing tasks' behavior unchanged.
-    var notifyOnlyWhenOutput: Bool = false
-    var runMissedExecution: Bool = false
+    public var notifyOnlyWhenOutput: Bool = false
+    public var runMissedExecution: Bool = false
     /// When true, fires once every time `TaskScheduler.start()` runs (i.e. each
     /// app launch). Independent of any time-based schedule. See issue #25.
-    var runOnLaunch: Bool = false
-    var strongReminder: Bool = false
-    var ignoreExitCode: Bool = false
+    public var runOnLaunch: Bool = false
+    public var strongReminder: Bool = false
+    public var ignoreExitCode: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \ExecutionLog.task)
-    var executionLogs: [ExecutionLog]
+    public var executionLogs: [ExecutionLog]
 
-    init(
+    public init(
         name: String = "",
         scriptBody: String = "",
         shell: String = "/bin/zsh",
@@ -237,27 +237,27 @@ final class ScheduledTask {
 
     // MARK: - Computed Properties
 
-    var schedule: ScheduleType {
+    public var schedule: ScheduleType {
         get { ScheduleType(rawValue: scheduleType) ?? .interval }
         set { scheduleType = newValue.rawValue }
     }
 
-    var repeatType: RepeatType {
+    public var repeatType: RepeatType {
         get { RepeatType(rawValue: repeatTypeRaw) ?? .daily }
         set { repeatTypeRaw = newValue.rawValue }
     }
 
-    var endRepeatType: EndRepeatType {
+    public var endRepeatType: EndRepeatType {
         get { EndRepeatType(rawValue: endRepeatTypeRaw) ?? .never }
         set { endRepeatTypeRaw = newValue.rawValue }
     }
 
-    var customIntervalUnit: CustomRepeatUnit {
+    public var customIntervalUnit: CustomRepeatUnit {
         get { CustomRepeatUnit(rawValue: customIntervalUnitRaw) ?? .day }
         set { customIntervalUnitRaw = newValue.rawValue }
     }
 
-    var environmentVariables: [String: String]? {
+    public var environmentVariables: [String: String]? {
         get {
             guard let json = environmentVariablesJSON,
                   let data = json.data(using: .utf8) else { return nil }
@@ -274,7 +274,7 @@ final class ScheduledTask {
     }
 
     /// Human-readable schedule description
-    var scheduleDescription: String {
+    public var scheduleDescription: String {
         if isManualOnly {
             return L10n.tr("schedule.manual_only")
         }

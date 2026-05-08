@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import TaskTickCore
 
 /// Template editor view, shown as a Window (not a sheet) to get proper TabView chrome.
 struct TemplateEditorSheet: View {

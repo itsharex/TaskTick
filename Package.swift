@@ -9,16 +9,22 @@ let package = Package(
         .macOS(.v14)
     ],
     targets: [
-        .executableTarget(
-            name: "TaskTick",
-            path: "Sources",
+        .target(
+            name: "TaskTickCore",
+            path: "Sources/TaskTickCore",
             resources: [
                 .process("Localization")
             ]
         ),
+        .executableTarget(
+            name: "TaskTick",
+            dependencies: ["TaskTickCore"],
+            path: "Sources",
+            exclude: ["TaskTickCore", "CLI"]
+        ),
         .testTarget(
             name: "TaskTickTests",
-            dependencies: ["TaskTick"],
+            dependencies: ["TaskTick", "TaskTickCore"],
             path: "Tests"
         )
     ]

@@ -2,35 +2,35 @@ import Foundation
 
 /// Cron expression parser supporting standard 5-field format:
 /// minute hour dayOfMonth month dayOfWeek
-struct CronExpression: Sendable {
-    let minute: CronField
-    let hour: CronField
-    let dayOfMonth: CronField
-    let month: CronField
-    let dayOfWeek: CronField
+public struct CronExpression: Sendable {
+    public let minute: CronField
+    public let hour: CronField
+    public let dayOfMonth: CronField
+    public let month: CronField
+    public let dayOfWeek: CronField
 
-    let raw: String
+    public let raw: String
 
-    enum CronField: Sendable, Equatable {
+    public enum CronField: Sendable, Equatable {
         case any                          // *
         case step(Int)                    // */N
         case value(Int)                   // N
         case range(Int, Int)              // N-M
         case list([CronFieldEntry])       // N,M,O or combined
 
-        enum CronFieldEntry: Sendable, Equatable {
+        public enum CronFieldEntry: Sendable, Equatable {
             case value(Int)
             case range(Int, Int)
             case step(Int)
         }
     }
 
-    enum ParseError: Error, LocalizedError {
+    public enum ParseError: Error, LocalizedError {
         case invalidFormat(String)
         case invalidField(String, String)
         case valueOutOfRange(field: String, value: Int, range: ClosedRange<Int>)
 
-        var errorDescription: String? {
+        public var errorDescription: String? {
             switch self {
             case .invalidFormat(let expr):
                 return "无效的 Cron 表达式格式: \(expr)，需要 5 个字段"
@@ -42,7 +42,7 @@ struct CronExpression: Sendable {
         }
     }
 
-    static let fieldRanges: [(name: String, range: ClosedRange<Int>)] = [
+    public static let fieldRanges: [(name: String, range: ClosedRange<Int>)] = [
         ("minute", 0...59),
         ("hour", 0...23),
         ("dayOfMonth", 1...31),
@@ -50,7 +50,7 @@ struct CronExpression: Sendable {
         ("dayOfWeek", 0...6)
     ]
 
-    init(parsing expression: String) throws {
+    public init(parsing expression: String) throws {
         self.raw = expression.trimmingCharacters(in: .whitespaces)
         let parts = self.raw.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
 
@@ -130,7 +130,7 @@ struct CronExpression: Sendable {
     }
 
     /// Calculate the next fire date after the given date
-    func nextFireDate(after date: Date = Date()) -> Date? {
+    public func nextFireDate(after date: Date = Date()) -> Date? {
         let calendar = Calendar.current
         var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         // Start from the next minute
@@ -191,7 +191,7 @@ struct CronExpression: Sendable {
     }
 
     /// Human-readable description of the expression
-    var humanReadable: String {
+    public var humanReadable: String {
         switch raw {
         case "* * * * *": return L10n.tr("cron.human.every_minute")
         case "0 * * * *": return L10n.tr("cron.human.every_hour")

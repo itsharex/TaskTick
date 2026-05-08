@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import TaskTickCore
 
 /// Strip ANSI escape sequences and terminal control codes.
 /// Safe for plain text — only removes invisible control characters.

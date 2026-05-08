@@ -2,6 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 import Combine
 import SwiftUI
+import TaskTickCore
 
 /// User-facing config for the quick launcher. Stored in UserDefaults and
 /// observed via Combine so the Settings UI reacts to recorder updates without

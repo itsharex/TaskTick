@@ -1,6 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 import SwiftUI
+import TaskTickCore
 
 /// Click-to-record hotkey field. While recording, an `NSEvent` local monitor
 /// intercepts the next key press and saves the (keyCode, modifiers) pair.

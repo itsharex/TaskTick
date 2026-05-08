@@ -1,4 +1,5 @@
 import Foundation
+import TaskTickCore
 
 @MainActor
 final class LiveOutputManager: ObservableObject {

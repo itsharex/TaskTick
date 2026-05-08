@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import SwiftData
 import UniformTypeIdentifiers
+import TaskTickCore
 
 /// Exports and imports tasks as JSON files.
 @MainActor

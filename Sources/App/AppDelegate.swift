@@ -1,6 +1,7 @@
 import AppKit
 import SwiftData
 import SwiftUI
+import TaskTickCore
 
 /// Show a modal warning alert for a non-fatal error. Use at sites where we previously
 /// swallowed errors with `try?` and the user needs to know the action didn't take effect.

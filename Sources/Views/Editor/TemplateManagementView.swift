@@ -1,4 +1,5 @@
 import SwiftUI
+import TaskTickCore
 
 struct TemplateManagementView: View {
     @ObservedObject private var store = ScriptTemplateStore.shared
