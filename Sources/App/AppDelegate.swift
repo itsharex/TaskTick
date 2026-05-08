@@ -219,4 +219,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         AppDelegate.gracefulShutdown()
     }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            guard let parsed = CLIBridge.shared.parse(url: url) else {
+                NSLog("⚠️ AppDelegate: malformed URL \(url.absoluteString)")
+                continue
+            }
+            CLIBridge.shared.handle(action: parsed.action, taskId: parsed.taskId)
+        }
+    }
 }

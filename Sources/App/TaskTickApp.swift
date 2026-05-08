@@ -25,6 +25,8 @@ struct TaskTickApp: App {
         let backup = DatabaseBackup.shared
         backup.configure(storeURL: Self._storeURL, modelContext: container.mainContext)
         backup.startScheduledBackups()
+
+        CLIBridge.shared.configure(modelContainer: container)
     }
 
     var sharedModelContainer: ModelContainer { Self._sharedModelContainer }
