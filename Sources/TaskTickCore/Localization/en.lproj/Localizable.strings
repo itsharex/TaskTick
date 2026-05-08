@@ -546,3 +546,6 @@
 "settings.cli.install.alert.copy" = "Copy Command";
 "settings.cli.install.alert.open_terminal" = "Open Terminal";
 "settings.cli.install.alert.cancel" = "Cancel";
+"settings.cli.uninstall_button" = "Uninstall CLI…";
+"settings.cli.uninstall.alert.title" = "Uninstall tasktick CLI";
+"settings.cli.uninstall.alert.message" = "Run this command in Terminal to remove the `tasktick` CLI symlink:\n\n%@";

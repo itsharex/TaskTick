@@ -23,8 +23,13 @@ struct CLIInstallSection: View {
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 12) {
-                    Button(L10n.tr("settings.cli.enable_button")) {
-                        showEnableDialog()
+                    Button(buttonLabel) {
+                        switch installState {
+                        case .installed(let path):
+                            showUninstallDialog(symlinkPath: path)
+                        default:
+                            showEnableDialog()
+                        }
                     }
 
                     statusLabel
@@ -87,6 +92,13 @@ struct CLIInstallSection: View {
         return isDev ? "tasktick-dev" : "tasktick"
     }
 
+    private var buttonLabel: String {
+        if case .installed = installState {
+            return L10n.tr("settings.cli.uninstall_button")
+        }
+        return L10n.tr("settings.cli.enable_button")
+    }
+
     private func showEnableDialog() {
         // Prefer Homebrew prefix on Apple Silicon if it exists; fall back to /usr/local/bin.
         let target = FileManager.default.fileExists(atPath: "/opt/homebrew/bin")
@@ -118,6 +130,36 @@ struct CLIInstallSection: View {
             break
         }
         // Refresh in case the user already ran the command before clicking.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            refreshState()
+        }
+    }
+
+    private func showUninstallDialog(symlinkPath: String) {
+        let cmd = "sudo rm \(symlinkPath)"
+
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("settings.cli.uninstall.alert.title")
+        alert.informativeText = L10n.tr("settings.cli.uninstall.alert.message", cmd)
+        alert.addButton(withTitle: L10n.tr("settings.cli.install.alert.copy"))
+        alert.addButton(withTitle: L10n.tr("settings.cli.install.alert.open_terminal"))
+        alert.addButton(withTitle: L10n.tr("settings.cli.install.alert.cancel"))
+
+        let response = alert.runModal()
+        switch response {
+        case .alertFirstButtonReturn:
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(cmd, forType: .string)
+        case .alertSecondButtonReturn:
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(cmd, forType: .string)
+            if let terminalURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Terminal") {
+                NSWorkspace.shared.open(terminalURL)
+            }
+        default:
+            break
+        }
+        // Refresh — if the user ran the command, state should flip back to notInstalled.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             refreshState()
         }

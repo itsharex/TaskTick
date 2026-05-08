@@ -439,3 +439,6 @@
 "settings.cli.install.alert.copy" = "複製指令";
 "settings.cli.install.alert.open_terminal" = "開啟終端";
 "settings.cli.install.alert.cancel" = "取消";
+"settings.cli.uninstall_button" = "解除安裝 CLI…";
+"settings.cli.uninstall.alert.title" = "解除安裝 tasktick CLI";
+"settings.cli.uninstall.alert.message" = "在終端中執行以下指令以解除安裝 `tasktick`：\n\n%@";

@@ -546,3 +546,6 @@
 "settings.cli.install.alert.copy" = "复制命令";
 "settings.cli.install.alert.open_terminal" = "打开终端";
 "settings.cli.install.alert.cancel" = "取消";
+"settings.cli.uninstall_button" = "卸载 CLI…";
+"settings.cli.uninstall.alert.title" = "卸载 tasktick CLI";
+"settings.cli.uninstall.alert.message" = "在终端中运行以下命令以卸载 `tasktick`：\n\n%@";
