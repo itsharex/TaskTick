@@ -11,11 +11,18 @@ struct RunCommand: AsyncParsableCommand {
     @Argument(help: "Task identifier.")
     var identifier: String
 
+    @Flag(name: .long, help: "Block until the task completes, streaming its output. Exit code mirrors the task's.")
+    var wait: Bool = false
+
     @Flag(name: .long) var json: Bool = false
 
     @MainActor
     func run() async throws {
-        try await dispatch(action: .run, identifier: identifier, json: json)
+        if wait {
+            try await runAndWait(identifier: identifier, json: json)
+        } else {
+            try await dispatch(action: .run, identifier: identifier, json: json)
+        }
     }
 }
 
@@ -96,4 +103,105 @@ private func printSuccess(action: NotificationBridge.CLIAction, name: String, js
         }()
         print("✓ \(verb): \(name)")
     }
+}
+
+/// `run --wait` — combines run + tail + exit-code-passthrough into one
+/// invocation. Subscribes to `gui.logChunk` + `gui.taskCompleted` BEFORE
+/// dispatching the run notification (avoids losing first-frame output).
+///
+/// Started/Completed banners go to stderr so `run X --wait` pipes cleanly:
+/// stdout is just the task's output. Ctrl+C exits the CLI watcher with 130;
+/// the task continues in the GUI.
+@MainActor
+func runAndWait(identifier: String, json: Bool) async throws {
+    let store = try ReadOnlyStore()
+    let allTasks = try store.fetchTasks()
+    let resolver = TaskResolver(
+        items: allTasks,
+        idOf: { $0.id },
+        nameOf: { $0.name },
+        serialOf: { $0.serialNumber }
+    )
+    let task: ScheduledTask
+    do {
+        task = try resolver.resolve(identifier)
+    } catch let err as TaskResolverError {
+        FileHandle.standardError.write(Data("tasktick: \(err)\n".utf8))
+        throw ExitCode(1)
+    }
+
+    let bundleId = BundleContext.bundleID
+    let chunkName = Notification.Name("\(bundleId).gui.logChunk")
+    let completedName = Notification.Name("\(bundleId).gui.taskCompleted")
+    let center = DistributedNotificationCenter.default()
+    let targetId = task.id.uuidString
+    let startedAt = Date()
+    let taskName = task.name
+    let useJSON = json
+
+    // Print "Started" line on stderr so stdout is just the task's output.
+    FileHandle.standardError.write(Data("✓ Started: \(taskName)\n".utf8))
+
+    let exitCode: Int32 = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Int32, Error>) in
+        // Ctrl+C handler — task continues in GUI; CLI just stops watching.
+        signal(SIGINT, SIG_IGN)
+        let sigSrc = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
+        sigSrc.setEventHandler {
+            cont.resume(throwing: ExitCode(130))
+        }
+        sigSrc.resume()
+
+        var observers: [NSObjectProtocol] = []
+
+        // Subscribe to chunks BEFORE dispatching to avoid losing first lines.
+        observers.append(center.addObserver(forName: chunkName, object: nil, queue: .main) { note in
+            guard
+                let info = note.userInfo,
+                let id = info["id"] as? String,
+                id == targetId,
+                let stream = info["stream"] as? String,
+                let text = info["text"] as? String
+            else { return }
+            if useJSON {
+                let payload: [String: String] = ["stream": stream, "text": text]
+                if let data = try? JSONEncoder().encode(payload),
+                   let line = String(data: data, encoding: .utf8) {
+                    print(line)
+                }
+            } else {
+                if stream == "stderr" {
+                    FileHandle.standardError.write(Data(("[stderr] " + text).utf8))
+                } else {
+                    print(text, terminator: "")
+                }
+            }
+        })
+
+        observers.append(center.addObserver(forName: completedName, object: nil, queue: .main) { note in
+            guard let id = note.userInfo?["id"] as? String, id == targetId else { return }
+            let exit = (note.userInfo?["exitCode"] as? Int) ?? 0
+            for o in observers { center.removeObserver(o) }
+            sigSrc.cancel()
+            let durMs = Int(Date().timeIntervalSince(startedAt) * 1000)
+            let dur = durMs >= 1000 ? "\(durMs / 1000)s" : "\(durMs)ms"
+            FileHandle.standardError.write(Data("✓ Completed in \(dur) (exit \(exit))\n".utf8))
+            cont.resume(returning: Int32(exit))
+        })
+
+        // Now dispatch run — observer is already listening.
+        if GUILauncher.isRunning() {
+            NotificationBridge.post(action: .run, taskId: task.id)
+        } else {
+            let ok = GUILauncher.launchAndWait(action: .run, taskId: task.id)
+            if !ok {
+                for o in observers { center.removeObserver(o) }
+                sigSrc.cancel()
+                FileHandle.standardError.write(Data("tasktick: TaskTick.app failed to launch within 10s\n".utf8))
+                cont.resume(throwing: ExitCode(1))
+                return
+            }
+        }
+    }
+
+    throw ExitCode(exitCode)
 }
