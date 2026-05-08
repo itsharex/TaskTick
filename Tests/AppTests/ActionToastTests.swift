@@ -10,6 +10,13 @@ final class ActionToastTests: XCTestCase {
         L10n.reloadBundle(for: .en)
     }
 
+    override func tearDown() {
+        // Restore the system-default bundle so other tests in the same process
+        // aren't pinned to English (L10n._bundle is process-global).
+        L10n.reloadBundle(for: .system)
+        super.tearDown()
+    }
+
     func testStartedTitleAndBody() {
         let (title, body) = ActionToast.previewContent(for: .started(taskName: "Backup"))
         XCTAssertEqual(title, "Started")           // English locale assumed in test env
