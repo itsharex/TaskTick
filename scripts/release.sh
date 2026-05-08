@@ -52,32 +52,32 @@ build_arch() {
     --arch "${ARCH}" \
     --build-path "${ARCH_BUILD_DIR}/build"
 
-  # Locate binary
+  # Locate binary (SPM target was renamed to TaskTickApp in Task 0.2 to dodge
+  # case-insensitive APFS collision with the lowercase 'tasktick' CLI target;
+  # we copy + rename to TaskTick during the cp into the .app below)
+  local SPM_TARGET="TaskTickApp"
   local BIN_PATH
-  BIN_PATH=$(find "${ARCH_BUILD_DIR}/build" -name "${APP_NAME}" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
+  BIN_PATH=$(find "${ARCH_BUILD_DIR}/build" -name "${SPM_TARGET}" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
   if [ -z "${BIN_PATH}" ]; then
     echo "Error: Could not find built binary for ${ARCH}"
     exit 1
   fi
   echo "  Binary: ${BIN_PATH}"
 
-  # Locate resource bundle
-  local RESOURCE_BUNDLE
-  RESOURCE_BUNDLE=$(find "${ARCH_BUILD_DIR}/build" -name "${APP_NAME}_${APP_NAME}.bundle" -type d | head -1)
-
   # Create .app bundle structure
   mkdir -p "${APP_BUNDLE}/Contents/MacOS"
   mkdir -p "${APP_BUNDLE}/Contents/Resources"
 
-  # Copy binary
+  # Copy binary (rename TaskTickApp → TaskTick during cp; user-facing name)
   cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
-  # Copy resource bundle (contains localization files)
-  # Bundle.module (SPM-generated) looks at Bundle.main.bundleURL which is the .app root
-  if [ -n "${RESOURCE_BUNDLE}" ]; then
-    cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/"
-    echo "  Resources: ${RESOURCE_BUNDLE}"
-  fi
+  # Glob-copy ALL *.bundle (TaskTick_TaskTickCore.bundle and any future
+  # SPM target bundle). Per CLAUDE.md global rule.
+  echo "  Bundles:"
+  for bundle in $(find "${ARCH_BUILD_DIR}/build" -name "*.bundle" -type d -not -path '*\.dSYM*'); do
+    cp -R "${bundle}" "${APP_BUNDLE}/"
+    echo "    $(basename "${bundle}")"
+  done
 
   # Copy icon
   if [ -f "${ICON_PATH}" ]; then
@@ -130,6 +130,17 @@ build_arch() {
     <array>
         <string>en</string>
         <string>zh-Hans</string>
+    </array>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.lifedever.TaskTick.urlscheme</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>tasktick</string>
+            </array>
+        </dict>
     </array>
 </dict>
 </plist>
