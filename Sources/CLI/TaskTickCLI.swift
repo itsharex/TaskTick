@@ -8,7 +8,8 @@ struct TaskTickCLI: AsyncParsableCommand {
         commandName: "tasktick",
         abstract: "Control TaskTick scheduled tasks from the command line.",
         version: "0.1.0",
-        subcommands: [],
-        defaultSubcommand: nil
+        subcommands: [
+            ListCommand.self
+        ]
     )
 }

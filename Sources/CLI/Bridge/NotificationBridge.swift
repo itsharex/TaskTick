@@ -1,0 +1,41 @@
+import AppKit
+import Foundation
+import SwiftData
+import TaskTickCore
+
+/// Distributed Notification helpers. Only post + observe primitives — the
+/// command-specific logic stays in each Command class.
+enum NotificationBridge {
+
+    enum CLIAction: String {
+        case run, stop, restart, reveal
+
+        var notificationName: Notification.Name {
+            Notification.Name("com.lifedever.TaskTick.cli.\(rawValue)")
+        }
+    }
+
+    /// Post a CLI → GUI command notification.
+    static func post(action: CLIAction, taskId: UUID) {
+        DistributedNotificationCenter.default().postNotificationName(
+            action.notificationName,
+            object: nil,
+            userInfo: ["id": taskId.uuidString],
+            deliverImmediately: true
+        )
+    }
+
+    /// Best-effort snapshot of currently-running task IDs. CLI reads
+    /// ExecutionLog rows where status == .running as a proxy for the GUI's
+    /// in-memory runningTaskIDs. Stale by 1 fetch round-trip but correct
+    /// after the GUI's last save. Phase 6 (tail/wait) augments with live
+    /// notification subscription for real-time accuracy.
+    @MainActor
+    static func runningTaskIds(store: ReadOnlyStore) -> Set<UUID> {
+        let descriptor = FetchDescriptor<ExecutionLog>(
+            predicate: #Predicate { $0.statusRaw == "running" }
+        )
+        let logs = (try? store.container.mainContext.fetch(descriptor)) ?? []
+        return Set(logs.compactMap { $0.task?.id })
+    }
+}

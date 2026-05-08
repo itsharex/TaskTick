@@ -1,4 +1,5 @@
 import Foundation
+import TaskTickCore
 
 enum TaskKind: String, Codable {
     case scheduled
@@ -51,3 +52,25 @@ struct ExecutionLogDTO: Codable {
     let stderr: String
     let lines: [LogLine]
 }
+
+extension TaskDTO {
+    /// Build from a SwiftData ScheduledTask + the current running ID set.
+    /// `runningIds` must be supplied separately because a CLI process can't
+    /// observe the GUI's @Published runningTaskIDs (different process).
+    static func from(_ task: ScheduledTask, runningIds: Set<UUID>, lastLog: ExecutionLog?) -> TaskDTO {
+        TaskDTO(
+            id: task.id,
+            shortId: String(task.id.uuidString.prefix(4)).lowercased(),
+            name: task.name,
+            kind: task.isManualOnly ? .manual : .scheduled,
+            enabled: task.isEnabled,
+            status: runningIds.contains(task.id) ? .running : .idle,
+            scheduleSummary: task.isManualOnly ? "Manual" : task.repeatType.displayName,
+            lastRunAt: task.lastRunAt,
+            lastRunDurationSec: lastLog?.durationMs.map { $0 / 1000 },
+            lastExitCode: lastLog?.exitCode,
+            createdAt: task.createdAt
+        )
+    }
+}
+
