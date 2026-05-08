@@ -304,16 +304,21 @@ never an empty string."
 
 ### Task 0.2: Add tasktick CLI executable target
 
-With Core extracted, adding the CLI is now trivial.
+With Core extracted, adding the CLI is now trivial — but two SwiftPM gotchas surfaced and shape this task:
+
+1. **Swift forbids `@main` in a file literally named `main.swift`** — that file triggers script mode. Entry-point file is named `TaskTickCLI.swift` instead.
+2. **Default APFS is case-insensitive** — SPM target names `TaskTick` and `tasktick` collide on disk (same inode for `.build/debug/TaskTick` and `.build/debug/tasktick`; second linker wins). The fix is to rename the GUI's SPM target to `TaskTickApp` (case-distinct from `tasktick`). The user-facing `.app` bundle and binary inside it stay named `TaskTick` — the build script copies `.build/.../TaskTickApp` → `.app/Contents/MacOS/TaskTick`.
 
 **Files:**
-- Modify: `Package.swift`
-- Create: `Sources/CLI/main.swift`
+- Modify: `Package.swift` (rename GUI target to `TaskTickApp` + add CLI target)
+- Create: `Sources/CLI/TaskTickCLI.swift` (NOT `main.swift` — see gotcha #1)
 - Restructure: `Tests/` → `Tests/AppTests/`, create empty `Tests/CLITests/`
+- Modify: existing test files — `@testable import TaskTick` → `@testable import TaskTickApp`
+- Build script updates are deferred to Task 0.3
 
-- [ ] **Step 1: Add swift-argument-parser dep + tasktick target**
+- [ ] **Step 1: Update Package.swift**
 
-Update `Package.swift` to:
+Replace `Package.swift` with:
 
 ```swift
 // swift-tools-version: 6.0
@@ -338,7 +343,7 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "TaskTick",
+            name: "TaskTickApp",
             dependencies: ["TaskTickCore"],
             path: "Sources",
             exclude: ["TaskTickCore", "CLI"]
@@ -353,7 +358,7 @@ let package = Package(
         ),
         .testTarget(
             name: "TaskTickTests",
-            dependencies: ["TaskTick", "TaskTickCore"],
+            dependencies: ["TaskTickApp", "TaskTickCore"],
             path: "Tests/AppTests"
         ),
         .testTarget(
@@ -365,7 +370,7 @@ let package = Package(
 )
 ```
 
-Crucial: `tasktick` target uses `path: "Sources/CLI"` — its own subdirectory. NO source overlap with TaskTick GUI target.
+Note: GUI target renamed `TaskTick` → `TaskTickApp`; CLI keeps target name `tasktick`. Case-distinct, no inode collision.
 
 - [ ] **Step 2: Restructure Tests/**
 
@@ -377,9 +382,18 @@ mkdir Tests/CLITests
 touch Tests/CLITests/.gitkeep
 ```
 
-- [ ] **Step 3: Create skeleton CLI main.swift**
+- [ ] **Step 3: Update existing test files' `@testable import`**
 
-Create `Sources/CLI/main.swift`:
+Search for and replace:
+```bash
+grep -rln '@testable import TaskTick\b' Tests/AppTests
+```
+
+In each result, change `@testable import TaskTick` → `@testable import TaskTickApp`. Mechanical sed-like edit.
+
+- [ ] **Step 4: Create skeleton CLI entry-point**
+
+Create `Sources/CLI/TaskTickCLI.swift` (NOT `main.swift`):
 
 ```swift
 import ArgumentParser
@@ -398,43 +412,77 @@ struct TaskTickCLI: AsyncParsableCommand {
 }
 ```
 
-`import TaskTickCore` is here so future commands can use Models, FuzzyMatch, etc.
+Why not `main.swift`: Swift treats `main.swift` as top-level script mode, which is incompatible with the `@main` attribute. ArgumentParser requires `@main`.
 
-- [ ] **Step 4: Verify both targets build**
+- [ ] **Step 5: Verify both targets build**
 
 Run: `swift build`
-Expected: produces both `.build/debug/TaskTick` and `.build/debug/tasktick`. No warnings.
+Expected: produces `.build/debug/TaskTickApp` AND `.build/debug/tasktick`. Two distinct binaries, both case-sensitive distinct names. No warnings (the AppIcon.icns warning is pre-existing).
 
-- [ ] **Step 5: Verify CLI runs**
+- [ ] **Step 6: Verify CLI runs**
 
 Run: `.build/debug/tasktick --version`
 Expected: `0.1.0`
 
 Run: `.build/debug/tasktick --help`
-Expected: usage banner.
+Expected: usage banner naming `tasktick`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Verify GUI tests still pass after rename**
+
+Run: `swift test`
+Expected: existing test suites (under `Tests/AppTests/`) still pass — the rename only affected import statements and target name, not test logic.
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add Package.swift Sources/CLI/ Tests/
 git commit -m "cli: scaffold tasktick executable target
 
-Adds swift-argument-parser dep, tasktick executableTarget at
-Sources/CLI/, depending on TaskTickCore for shared models. Splits
-Tests/ into AppTests/ + CLITests/."
+Adds swift-argument-parser dep + tasktick executableTarget at
+Sources/CLI/, depending on TaskTickCore. Renames GUI SPM target
+TaskTick → TaskTickApp to avoid case-insensitive APFS collision with
+the lowercase 'tasktick' CLI target (same inode under default macOS
+filesystem, second linker overwrites the first). Build script in
+Task 0.3 will rename the binary back to TaskTick when copying into
+the .app bundle, so user-facing names are unchanged.
+
+Splits Tests/ into AppTests/ + CLITests/. Existing test imports
+updated from TaskTick → TaskTickApp."
 ```
 
-### Task 0.3: Build scripts — glob copy bundles + URL Scheme
+### Task 0.3: Build scripts — binary rename, glob bundles, URL Scheme
 
-The hand-assembled `.app` bundles in `build-dev.sh` and `release.sh` currently hardcode the resource bundle name `TaskTick_TaskTick.bundle`. After Task 0.1 the actual bundle is `TaskTick_TaskTickCore.bundle`, and Task 5 will copy a CLI binary too — both demand glob-based copying per the project's global `CLAUDE.md` rule (SPM resource bundle hardcoding has bitten this repo before).
+After Task 0.2 the GUI's SPM binary output is `.build/.../TaskTickApp` (renamed to avoid case-insensitive APFS collision). The hand-assembled `.app` bundles in `build-dev.sh` and `release.sh` currently:
+1. Search for a binary named `TaskTick` — must change to find `TaskTickApp` instead, then copy with rename to `.app/Contents/MacOS/TaskTick` (Info.plist's `CFBundleExecutable` stays `TaskTick`)
+2. Hardcode `TaskTick_TaskTick.bundle` resource bundle copy — must change to glob `*.bundle` (Task 0.1 made the bundle `TaskTick_TaskTickCore.bundle`; future targets may add more)
+3. Need `tasktick:` URL Scheme registered in Info.plist for Phase 1's CLIBridge handler
+
+Per the project's global `CLAUDE.md` rule, SPM bundle name hardcoding has bitten this repo before — the glob fix is also a hardening, not just an immediate need.
 
 **Files:**
 - Modify: `scripts/build-dev.sh`
 - Modify: `scripts/release.sh`
 
-- [ ] **Step 1: Replace hardcoded bundle copy with glob in build-dev.sh**
+- [ ] **Step 1: Update binary search in build-dev.sh**
 
-In `scripts/build-dev.sh`, find the block (around line 36-47):
+In `scripts/build-dev.sh`, find:
+
+```bash
+BIN_PATH=$(find "${BUILD_DIR}/build" -name "${APP_NAME}" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
+```
+
+Note `${APP_NAME}` is `TaskTick` (the user-facing name). The actual SPM binary is now `TaskTickApp`. Add a separate variable and update the find:
+
+```bash
+SPM_TARGET="TaskTickApp"  # SPM target name (renamed in Task 0.2 to dodge case collision with lowercase 'tasktick')
+BIN_PATH=$(find "${BUILD_DIR}/build" -name "${SPM_TARGET}" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
+```
+
+The downstream `cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${DEV_APP_NAME}"` already renames during cp (it copies the binary into the bundle under the user-facing name), so no further change needed for the GUI binary path. Verify the existing `cp` line uses `${DEV_APP_NAME}` not `${SPM_TARGET}` for the destination filename.
+
+- [ ] **Step 2: Replace hardcoded bundle copy with glob in build-dev.sh**
+
+In `scripts/build-dev.sh`, find the block:
 
 ```bash
 RESOURCE_BUNDLE=$(find "${BUILD_DIR}/build" -name "${APP_NAME}_${APP_NAME}.bundle" -type d | head -1)
@@ -458,21 +506,21 @@ for bundle in $(find "${BUILD_DIR}/build" -name "*.bundle" -type d -not -path '*
 done
 ```
 
-- [ ] **Step 2: Replace in release.sh too**
+- [ ] **Step 3: Same updates in release.sh**
 
-In `scripts/release.sh` `build_arch()` function, find the equivalent block (around line 64-80):
+In `scripts/release.sh` `build_arch()` function, apply both changes:
+
+(a) Add `SPM_TARGET="TaskTickApp"` near the top of `build_arch` (after the `local` declarations) and update the `BIN_PATH` find to use `-name "${SPM_TARGET}"`:
 
 ```bash
-local RESOURCE_BUNDLE
-RESOURCE_BUNDLE=$(find "${ARCH_BUILD_DIR}/build" -name "${APP_NAME}_${APP_NAME}.bundle" -type d | head -1)
-# ...
-if [ -n "${RESOURCE_BUNDLE}" ]; then
-  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/"
-  echo "  Resources: ${RESOURCE_BUNDLE}"
-fi
+local SPM_TARGET="TaskTickApp"
+local BIN_PATH
+BIN_PATH=$(find "${ARCH_BUILD_DIR}/build" -name "${SPM_TARGET}" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
 ```
 
-Replace with:
+The downstream `cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"` already renames to the user-facing name during cp.
+
+(b) Replace the bundle copy block with the glob version (same pattern as build-dev.sh):
 
 ```bash
 # Glob-copy ALL *.bundle (TaskTick_TaskTickCore.bundle and any future
@@ -484,9 +532,9 @@ for bundle in $(find "${ARCH_BUILD_DIR}/build" -name "*.bundle" -type d -not -pa
 done
 ```
 
-- [ ] **Step 3: Add `tasktick:` URL Scheme to dev Info.plist**
+- [ ] **Step 4: Add `tasktick:` URL Scheme to dev Info.plist**
 
-In `scripts/build-dev.sh`, find the Info.plist heredoc (line 55-101). Add this block before `</dict>`:
+In `scripts/build-dev.sh`, find the Info.plist heredoc. Add this block before `</dict>`:
 
 ```xml
     <key>CFBundleURLTypes</key>
@@ -502,7 +550,7 @@ In `scripts/build-dev.sh`, find the Info.plist heredoc (line 55-101). Add this b
     </array>
 ```
 
-- [ ] **Step 4: Add URL Scheme to release Info.plist**
+- [ ] **Step 5: Add URL Scheme to release Info.plist**
 
 Same block in `scripts/release.sh` Info.plist heredoc (use `com.lifedever.TaskTick.urlscheme` for the URL name in release):
 
@@ -520,7 +568,7 @@ Same block in `scripts/release.sh` Info.plist heredoc (use `com.lifedever.TaskTi
     </array>
 ```
 
-- [ ] **Step 5: Smoke-test dev build**
+- [ ] **Step 6: Smoke-test dev build**
 
 ```bash
 ./scripts/build-dev.sh
@@ -532,21 +580,22 @@ Expected:
 - Bundles output lists `TaskTick_TaskTickCore.bundle`
 - URL Types output shows `tasktick` scheme registered
 
-Open TaskTick Dev — verify it launches and localizations still work (try language switch in Settings).
+Open TaskTick Dev — verify it launches and localizations now work correctly (the bundle is being copied + the SPM target rename produced a binary that the script renames to `TaskTick` during cp).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add scripts/build-dev.sh scripts/release.sh
-git commit -m "build: glob-copy SPM bundles and register tasktick:// URL Scheme
+git commit -m "build: rename SPM target binary, glob bundles, register URL Scheme
 
-Replaces hardcoded TaskTick_TaskTick.bundle copy with glob over all
-*.bundle dirs — required because TaskTickCore extraction introduces
-TaskTick_TaskTickCore.bundle and future SPM deps may add more.
-Hardcoding here has bitten the repo before (see CLAUDE.md global rule).
-
-Also injects CFBundleURLTypes for the tasktick:// URL Scheme that
-Phase 1's CLIBridge handler will receive."
+Three coupled fixes for hand-assembled .app:
+1. SPM_TARGET=\"TaskTickApp\" — find the renamed GUI binary, copy it
+   into the bundle as TaskTick (the user-facing name is unchanged).
+2. Glob-copy ALL *.bundle dirs (was hardcoded TaskTick_TaskTick.bundle).
+   Bundle.module SIGTRAPs if its bundle isn't present, so any new SPM
+   target with resources would silently break the app without this.
+3. Register CFBundleURLTypes for tasktick:// scheme — Phase 1's
+   CLIBridge handler subscribes to this."
 ```
 
 ---
