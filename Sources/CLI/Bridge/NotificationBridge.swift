@@ -15,7 +15,7 @@ enum NotificationBridge {
             // com.lifedever.TaskTick.dev) posts to the dev GUI listener
             // and not the release GUI's. Falls back to release ID when run
             // outside any .app (e.g. .build/debug/tasktick).
-            let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+            let bundleId = BundleContext.bundleID
             return Notification.Name("\(bundleId).cli.\(rawValue)")
         }
     }

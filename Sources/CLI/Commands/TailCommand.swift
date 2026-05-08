@@ -37,7 +37,7 @@ struct TailCommand: AsyncParsableCommand {
         // Subscribe to chunk + completed notifications. Dynamic per-bundle
         // so dev CLI (inside dev .app) listens on the dev GUI's namespace.
         let center = DistributedNotificationCenter.default()
-        let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        let bundleId = BundleContext.bundleID
         let chunkName     = Notification.Name("\(bundleId).gui.logChunk")
         let completedName = Notification.Name("\(bundleId).gui.taskCompleted")
         let targetId = task.id.uuidString

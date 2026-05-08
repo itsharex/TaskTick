@@ -52,8 +52,8 @@ public enum StoreMigration {
     /// Idempotent — safe to call on every launch.
     public static func resolveStoreURL() -> URL {
         let appSupport = URL.applicationSupportDirectory
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
-        let isDev = bundleID.hasSuffix(".dev")
+        let bundleID = BundleContext.bundleID
+        let isDev = BundleContext.isDev
         // Filename kept identical to legacy so old DatabaseBackup `.store`-dir
         // backups keep working (they record the legacy filename verbatim).
         let filename = isDev ? "tasktick-dev.store" : "default.store"

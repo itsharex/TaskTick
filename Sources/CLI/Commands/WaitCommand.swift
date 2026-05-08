@@ -42,7 +42,7 @@ struct WaitCommand: AsyncParsableCommand {
 
         // Subscribe to taskCompleted on the bundle-namespaced channel
         // (Phase 0.4 made the GUI broadcast names depend on Bundle.main).
-        let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        let bundleId = BundleContext.bundleID
         let completedName = Notification.Name("\(bundleId).gui.taskCompleted")
         let center = DistributedNotificationCenter.default()
         let targetId = task.id.uuidString

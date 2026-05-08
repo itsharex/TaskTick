@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import TaskTickCore
 
 /// Detects whether TaskTick.app is running, launches it via URL Scheme if not,
 /// and waits up to 10s for it to be ready before returning.
@@ -23,8 +24,7 @@ enum GUILauncher {
         // (inside TaskTick Dev.app) uses tasktick-dev:// which is registered
         // only by the dev .app, eliminating LaunchServices ambiguity when
         // both apps are installed.
-        let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
-        let scheme = bundleId.hasSuffix(".dev") ? "tasktick-dev" : "tasktick"
+        let scheme = BundleContext.isDev ? "tasktick-dev" : "tasktick"
         guard let url = URL(string: "\(scheme)://\(action.rawValue)?id=\(taskId.uuidString)") else {
             return false
         }

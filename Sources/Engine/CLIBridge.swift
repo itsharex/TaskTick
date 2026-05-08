@@ -19,7 +19,7 @@ final class CLIBridge {
     /// Dynamic per-bundle so dev (`com.lifedever.TaskTick.dev`) and release
     /// (`com.lifedever.TaskTick`) running in parallel don't crosstalk.
     private static var bundlePrefix: String {
-        Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        BundleContext.bundleID
     }
 
     static var runNotification: Notification.Name     { Notification.Name("\(bundlePrefix).cli.run") }

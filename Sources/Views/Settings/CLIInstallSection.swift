@@ -88,8 +88,7 @@ struct CLIInstallSection: View {
     /// CLI binary / symlink name. Differs by bundle ID so dev and release
     /// can coexist on PATH (`tasktick` for release, `tasktick-dev` for dev).
     private var cliName: String {
-        let isDev = (Bundle.main.bundleIdentifier ?? "").hasSuffix(".dev")
-        return isDev ? "tasktick-dev" : "tasktick"
+        BundleContext.isDev ? "tasktick-dev" : "tasktick"
     }
 
     private var buttonLabel: String {

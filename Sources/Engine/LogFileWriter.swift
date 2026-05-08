@@ -130,7 +130,7 @@ final class LogFileWriter: @unchecked Sendable {
             appropriateFor: nil,
             create: true
         ) else { return nil }
-        let bundleId = Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        let bundleId = BundleContext.bundleID
         let dir = lib.appendingPathComponent("Logs/TaskTick/\(bundleId)", isDirectory: true)
         do {
             try fm.createDirectory(at: dir, withIntermediateDirectories: true)

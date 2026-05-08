@@ -14,7 +14,7 @@ final class CLIBroadcaster {
     /// Dynamic per-bundle so dev / release GUIs don't broadcast to each
     /// other's CLI subscribers when both are running in parallel.
     private static var bundlePrefix: String {
-        Bundle.main.bundleIdentifier ?? "com.lifedever.TaskTick"
+        BundleContext.bundleID
     }
 
     static var taskStartedNotification: Notification.Name   { Notification.Name("\(bundlePrefix).gui.taskStarted") }
