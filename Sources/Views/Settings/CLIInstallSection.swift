@@ -77,11 +77,15 @@ struct CLIInstallSection: View {
     }
 
     /// Path to the `tasktick` binary co-located with the running GUI.
-    /// Bundle.main.bundleURL is the .app root; the CLI is at
-    /// Contents/MacOS/<cliName>.
+    /// Release CLI lives in Contents/cli/ (NOT Contents/MacOS/) — case-
+    /// insensitive APFS would otherwise collide 'TaskTick' (GUI) with
+    /// 'tasktick' (CLI) and silently overwrite one. Dev CLI stays in
+    /// Contents/MacOS/tasktick-dev because the dash-suffixed name doesn't
+    /// collide with 'TaskTick Dev'.
     private func currentAppCLIPath() -> String {
-        Bundle.main.bundleURL
-            .appendingPathComponent("Contents/MacOS/\(cliName)")
+        let subdir = BundleContext.isDev ? "Contents/MacOS" : "Contents/cli"
+        return Bundle.main.bundleURL
+            .appendingPathComponent("\(subdir)/\(cliName)")
             .path
     }
 
