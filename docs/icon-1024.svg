@@ -14,7 +14,7 @@
     <!-- Soft bezel ring around the clock -->
     <radialGradient id="bezel" cx="50%" cy="50%" r="50%">
       <stop offset="92%" stop-color="rgba(0,0,0,0)"/>
-      <stop offset="100%" stop-color="rgba(80,80,120,0.18)"/>
+      <stop offset="100%" stop-color="rgba(70,75,110,0.32)"/>
     </radialGradient>
     <filter id="bgShadow" x="-5%" y="-5%" width="110%" height="115%">
       <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#0f1224" flood-opacity="0.10"/>
@@ -32,32 +32,30 @@
   <!-- Clock face — true center (512,512), radius 320 (~31% of canvas) -->
   <!-- Soft outer bezel ring (gives the clock a tactile edge against white bg) -->
   <circle cx="512" cy="512" r="328" fill="url(#bezel)"/>
-  <!-- Crisp ring -->
-  <circle cx="512" cy="512" r="320" fill="none" stroke="#d8d9eb" stroke-width="6"/>
-  <!-- Inner thin guide ring -->
-  <circle cx="512" cy="512" r="296" fill="none" stroke="#eaebf3" stroke-width="3"/>
+  <!-- Crisp ring (darkened so it reads at small sizes) -->
+  <circle cx="512" cy="512" r="320" fill="none" stroke="#9da4c2" stroke-width="8"/>
 
-  <!-- Hour markers on r=270 ring -->
-  <circle cx="512" cy="242" r="16" fill="#6c8aff"/><!-- 12 -->
-  <circle cx="647" cy="278" r="11" fill="#c4c4dd"/><!-- 1 -->
-  <circle cx="746" cy="377" r="11" fill="#c4c4dd"/><!-- 2 -->
-  <circle cx="782" cy="512" r="16" fill="#8b7cf7"/><!-- 3 -->
-  <circle cx="746" cy="647" r="11" fill="#c4c4dd"/><!-- 4 -->
-  <circle cx="647" cy="746" r="11" fill="#c4c4dd"/><!-- 5 -->
-  <circle cx="512" cy="782" r="16" fill="#a78bfa"/><!-- 6 -->
-  <circle cx="377" cy="746" r="11" fill="#c4c4dd"/><!-- 7 -->
-  <circle cx="278" cy="647" r="11" fill="#c4c4dd"/><!-- 8 -->
-  <circle cx="242" cy="512" r="16" fill="#6c8aff"/><!-- 9 -->
-  <circle cx="278" cy="377" r="11" fill="#c4c4dd"/><!-- 10 -->
-  <circle cx="377" cy="278" r="11" fill="#c4c4dd"/><!-- 11 -->
+  <!-- Hour markers on r=270 ring (cardinal markers stronger) -->
+  <circle cx="512" cy="242" r="18" fill="#5b76e8"/><!-- 12 -->
+  <circle cx="647" cy="278" r="12" fill="#8a90b3"/><!-- 1 -->
+  <circle cx="746" cy="377" r="12" fill="#8a90b3"/><!-- 2 -->
+  <circle cx="782" cy="512" r="18" fill="#7c66f0"/><!-- 3 -->
+  <circle cx="746" cy="647" r="12" fill="#8a90b3"/><!-- 4 -->
+  <circle cx="647" cy="746" r="12" fill="#8a90b3"/><!-- 5 -->
+  <circle cx="512" cy="782" r="18" fill="#9476f5"/><!-- 6 -->
+  <circle cx="377" cy="746" r="12" fill="#8a90b3"/><!-- 7 -->
+  <circle cx="278" cy="647" r="12" fill="#8a90b3"/><!-- 8 -->
+  <circle cx="242" cy="512" r="18" fill="#5b76e8"/><!-- 9 -->
+  <circle cx="278" cy="377" r="12" fill="#8a90b3"/><!-- 10 -->
+  <circle cx="377" cy="278" r="12" fill="#8a90b3"/><!-- 11 -->
 
   <!-- Hour hand pointing toward 11 -->
-  <line x1="512" y1="512" x2="512" y2="358" stroke="#3a3a5c" stroke-width="22" stroke-linecap="round"/>
-  <!-- Minute hand pointing toward 2 -->
-  <line x1="512" y1="512" x2="640" y2="416" stroke="#6c8aff" stroke-width="15" stroke-linecap="round"/>
+  <line x1="512" y1="512" x2="512" y2="358" stroke="#1f2240" stroke-width="24" stroke-linecap="round"/>
+  <!-- Minute hand pointing toward 2 (darker for clarity at small sizes) -->
+  <line x1="512" y1="512" x2="640" y2="416" stroke="#4661e0" stroke-width="17" stroke-linecap="round"/>
 
   <!-- Center pivot -->
-  <circle cx="512" cy="512" r="26" fill="#6c8aff"/>
+  <circle cx="512" cy="512" r="28" fill="#4661e0"/>
   <circle cx="512" cy="512" r="12" fill="white"/>
 
   <!-- Green check badge — bottom-right, comfortably inset -->
