@@ -418,3 +418,11 @@
 "recovery.message" = "No se pudo abrir la base de datos. Su archivo de datos se ha conservado. Puede restaurar desde una copia de seguridad en Ajustes o buscar el archivo manualmente.";
 "recovery.open_settings" = "Abrir Ajustes";
 "recovery.open_folder" = "Mostrar archivo";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "Iniciado";
+"toast.action.stopped" = "Detenido";
+"toast.action.restarted" = "Reiniciado";
+"toast.action.failed" = "Acción fallida";
+"toast.action.failed.notReady" = "TaskTick está iniciando";
+"toast.action.failed.taskNotFound" = "Tarea no encontrada";

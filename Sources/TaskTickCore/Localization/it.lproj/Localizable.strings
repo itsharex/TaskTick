@@ -427,3 +427,11 @@
 "recovery.message" = "Impossibile aprire il database. Il file dei dati è stato conservato. Puoi ripristinare un backup nelle Impostazioni o individuare il file manualmente.";
 "recovery.open_settings" = "Apri Impostazioni";
 "recovery.open_folder" = "Mostra file database";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "Avviato";
+"toast.action.stopped" = "Fermato";
+"toast.action.restarted" = "Riavviato";
+"toast.action.failed" = "Azione fallita";
+"toast.action.failed.notReady" = "TaskTick è in avvio";
+"toast.action.failed.taskNotFound" = "Attività non trovata";

@@ -549,3 +549,11 @@
 "settings.cli.uninstall_button" = "卸载 CLI…";
 "settings.cli.uninstall.alert.title" = "卸载 tasktick CLI";
 "settings.cli.uninstall.alert.message" = "在终端中运行以下命令以卸载 `tasktick`：\n\n%@";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "已启动";
+"toast.action.stopped" = "已停止";
+"toast.action.restarted" = "已重启";
+"toast.action.failed" = "操作失败";
+"toast.action.failed.notReady" = "TaskTick 正在启动";
+"toast.action.failed.taskNotFound" = "任务未找到";

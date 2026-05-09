@@ -427,3 +427,11 @@
 "recovery.message" = "データベースを開けませんでした。データファイルは保持されています。設定からバックアップを復元するか、データベースファイルを手動で確認できます。";
 "recovery.open_settings" = "設定を開く";
 "recovery.open_folder" = "データベースファイルを表示";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "開始しました";
+"toast.action.stopped" = "停止しました";
+"toast.action.restarted" = "再起動しました";
+"toast.action.failed" = "操作に失敗しました";
+"toast.action.failed.notReady" = "TaskTick は起動中です";
+"toast.action.failed.taskNotFound" = "タスクが見つかりません";

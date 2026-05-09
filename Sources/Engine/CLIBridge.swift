@@ -40,12 +40,14 @@ final class CLIBridge {
     func handle(action: Action, taskId: UUID) {
         guard let container = modelContainer else {
             NSLog("⚠️ CLIBridge: handle(\(action.rawValue)) called before configure()")
+            ActionToast.notify(.failed(taskName: nil, reason: L10n.tr("toast.action.failed.notReady")))
             return
         }
         let context = container.mainContext
         let descriptor = FetchDescriptor<ScheduledTask>(predicate: #Predicate { $0.id == taskId })
         guard let task = try? context.fetch(descriptor).first else {
             NSLog("⚠️ CLIBridge: no task with id \(taskId)")
+            ActionToast.notify(.failed(taskName: nil, reason: L10n.tr("toast.action.failed.taskNotFound")))
             return
         }
 
@@ -54,8 +56,10 @@ final class CLIBridge {
             // Already-running guard — match Quick Launcher's idempotent contract.
             guard !TaskScheduler.shared.runningTaskIDs.contains(task.id) else { return }
             Task { _ = await ScriptExecutor.shared.execute(task: task, modelContext: context) }
+            ActionToast.notify(.started(taskName: task.name))
         case .stop:
             ScriptExecutor.shared.cancel(taskId: task.id)
+            ActionToast.notify(.stopped(taskName: task.name))
         case .restart:
             let wasRunning = TaskScheduler.shared.runningTaskIDs.contains(task.id)
             if wasRunning { ScriptExecutor.shared.cancel(taskId: task.id) }
@@ -63,10 +67,12 @@ final class CLIBridge {
                 if wasRunning { try? await Task.sleep(for: .milliseconds(200)) }
                 _ = await ScriptExecutor.shared.execute(task: task, modelContext: context)
             }
+            ActionToast.notify(.restarted(taskName: task.name))
         case .reveal:
             MainWindowSelection.shared.taskToReveal = task
             NotificationCenter.default.post(name: .revealTaskInMain, object: nil)
             NSApp.activate(ignoringOtherApps: true)
+            // No toast — reveal's feedback is the window opening.
         }
     }
 

@@ -549,3 +549,11 @@
 "settings.cli.uninstall_button" = "Uninstall CLI…";
 "settings.cli.uninstall.alert.title" = "Uninstall tasktick CLI";
 "settings.cli.uninstall.alert.message" = "Run this command in Terminal to remove the `tasktick` CLI symlink:\n\n%@";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "Started";
+"toast.action.stopped" = "Stopped";
+"toast.action.restarted" = "Restarted";
+"toast.action.failed" = "Action failed";
+"toast.action.failed.notReady" = "TaskTick is still starting";
+"toast.action.failed.taskNotFound" = "Task not found";

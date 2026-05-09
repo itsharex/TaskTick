@@ -427,3 +427,11 @@
 "recovery.message" = "Database tidak dapat dibuka. File data Anda telah disimpan. Anda dapat memulihkan dari cadangan di Pengaturan atau mencari file database secara manual.";
 "recovery.open_settings" = "Buka Pengaturan";
 "recovery.open_folder" = "Tampilkan File Database";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "Dimulai";
+"toast.action.stopped" = "Dihentikan";
+"toast.action.restarted" = "Dimulai ulang";
+"toast.action.failed" = "Aksi gagal";
+"toast.action.failed.notReady" = "TaskTick sedang memulai";
+"toast.action.failed.taskNotFound" = "Tugas tidak ditemukan";

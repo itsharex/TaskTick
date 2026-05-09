@@ -192,12 +192,14 @@ struct TaskListView: View {
             if scheduler.runningTaskIDs.contains(task.id) {
                 Button(L10n.tr("task.detail.stop"), systemImage: "stop.fill") {
                     ScriptExecutor.shared.cancel(taskId: task.id)
+                    ActionToast.notify(.stopped(taskName: task.name))
                 }
             } else {
                 Button(L10n.tr("task.detail.run"), systemImage: "play.fill") {
                     Task {
                         _ = await ScriptExecutor.shared.execute(task: task, modelContext: modelContext)
                     }
+                    ActionToast.notify(.started(taskName: task.name))
                 }
             }
             Divider()

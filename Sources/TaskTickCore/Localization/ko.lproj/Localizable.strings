@@ -402,3 +402,11 @@
 "recovery.message" = "데이터베이스를 열 수 없습니다. 데이터 파일은 보존되었습니다. 설정에서 백업을 복원하거나 데이터베이스 파일을 직접 찾을 수 있습니다.";
 "recovery.open_settings" = "설정 열기";
 "recovery.open_folder" = "데이터베이스 파일 보기";
+
+/* Action Toast (Run/Stop/Restart banners) */
+"toast.action.started" = "시작됨";
+"toast.action.stopped" = "중지됨";
+"toast.action.restarted" = "재시작됨";
+"toast.action.failed" = "작업 실패";
+"toast.action.failed.notReady" = "TaskTick 시작 중";
+"toast.action.failed.taskNotFound" = "작업을 찾을 수 없음";
