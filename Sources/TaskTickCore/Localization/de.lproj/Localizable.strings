@@ -435,3 +435,10 @@
 "toast.action.failed" = "Aktion fehlgeschlagen";
 "toast.action.failed.notReady" = "TaskTick startet";
 "toast.action.failed.taskNotFound" = "Aufgabe nicht gefunden";
+
+"cli.repair.title" = "tasktick-CLI-Verknüpfung aktualisieren";
+"cli.repair.message" = "%@ zeigt auf einen veralteten CLI-Pfad. Jetzt aktualisieren? (Admin-Rechte erforderlich)";
+"cli.repair.update_button" = "Jetzt aktualisieren";
+"cli.repair.later_button" = "Später";
+"cli.repair.success.title" = "tasktick-CLI aktualisiert";
+"cli.repair.success.message" = "%@ verweist nun auf die gebündelte CLI-Binärdatei.";

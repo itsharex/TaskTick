@@ -435,3 +435,10 @@
 "toast.action.failed" = "Aksi gagal";
 "toast.action.failed.notReady" = "TaskTick sedang memulai";
 "toast.action.failed.taskNotFound" = "Tugas tidak ditemukan";
+
+"cli.repair.title" = "Perbarui tautan tasktick CLI";
+"cli.repair.message" = "%@ menunjuk ke jalur CLI lama. Perbarui sekarang? (Memerlukan izin admin)";
+"cli.repair.update_button" = "Perbarui Sekarang";
+"cli.repair.later_button" = "Nanti";
+"cli.repair.success.title" = "tasktick CLI diperbarui";
+"cli.repair.success.message" = "%@ kini menunjuk ke biner CLI yang dibundel.";

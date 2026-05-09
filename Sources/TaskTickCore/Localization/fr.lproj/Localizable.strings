@@ -392,3 +392,10 @@
 "toast.action.failed" = "Action échouée";
 "toast.action.failed.notReady" = "TaskTick démarre";
 "toast.action.failed.taskNotFound" = "Tâche introuvable";
+
+"cli.repair.title" = "Mettre à jour le lien tasktick CLI";
+"cli.repair.message" = "%@ pointe vers un ancien chemin de la CLI. Mettre à jour maintenant ? (Permissions administrateur requises)";
+"cli.repair.update_button" = "Mettre à jour";
+"cli.repair.later_button" = "Plus tard";
+"cli.repair.success.title" = "tasktick CLI mis à jour";
+"cli.repair.success.message" = "%@ pointe maintenant vers le binaire CLI groupé.";

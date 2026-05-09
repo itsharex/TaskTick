@@ -426,3 +426,10 @@
 "toast.action.failed" = "Acción fallida";
 "toast.action.failed.notReady" = "TaskTick está iniciando";
 "toast.action.failed.taskNotFound" = "Tarea no encontrada";
+
+"cli.repair.title" = "Actualizar enlace de tasktick CLI";
+"cli.repair.message" = "%@ apunta a una ruta antigua de la CLI. ¿Actualizar ahora? (Requiere permiso de administrador)";
+"cli.repair.update_button" = "Actualizar ahora";
+"cli.repair.later_button" = "Más tarde";
+"cli.repair.success.title" = "tasktick CLI actualizado";
+"cli.repair.success.message" = "%@ ahora apunta al binario de CLI incluido.";

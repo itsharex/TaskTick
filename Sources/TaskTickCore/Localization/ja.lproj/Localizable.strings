@@ -435,3 +435,10 @@
 "toast.action.failed" = "操作に失敗しました";
 "toast.action.failed.notReady" = "TaskTick は起動中です";
 "toast.action.failed.taskNotFound" = "タスクが見つかりません";
+
+"cli.repair.title" = "tasktick CLI のリンクを更新";
+"cli.repair.message" = "%@ は古い CLI パスを指しています。今すぐ更新しますか？（管理者権限が必要）";
+"cli.repair.update_button" = "今すぐ更新";
+"cli.repair.later_button" = "後で";
+"cli.repair.success.title" = "tasktick CLI を更新しました";
+"cli.repair.success.message" = "%@ は新しい CLI バイナリを指しています。";

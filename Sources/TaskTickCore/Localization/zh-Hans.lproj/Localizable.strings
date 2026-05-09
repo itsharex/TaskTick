@@ -557,3 +557,10 @@
 "toast.action.failed" = "操作失败";
 "toast.action.failed.notReady" = "TaskTick 正在启动";
 "toast.action.failed.taskNotFound" = "任务未找到";
+
+"cli.repair.title" = "更新 tasktick CLI 链接";
+"cli.repair.message" = "%@ 指向旧的 CLI 路径。是否现在更新？（需要管理员权限）";
+"cli.repair.update_button" = "立即更新";
+"cli.repair.later_button" = "稍后";
+"cli.repair.success.title" = "tasktick CLI 已更新";
+"cli.repair.success.message" = "%@ 已指向新的 CLI 二进制。";

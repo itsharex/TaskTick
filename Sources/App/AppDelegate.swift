@@ -26,6 +26,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationManager.shared.requestPermission()
 
+        // One-shot launch-time CLI symlink repair: detects /usr/local/bin/tasktick
+        // (or /opt/homebrew/bin/tasktick) symlinks left over from v1.8.0/1.8.1
+        // pointing at the now-relocated CLI binary, and offers a single-click
+        // admin-prompt repair via osascript. No-op when symlinks are already
+        // correct or absent.
+        CLISymlinkRepair.checkAndRepairIfNeeded()
+
         // Apply saved appearance mode
         let mode = UserDefaults.standard.string(forKey: "appearanceMode") ?? "system"
         switch mode {

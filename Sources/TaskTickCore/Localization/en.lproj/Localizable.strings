@@ -557,3 +557,10 @@
 "toast.action.failed" = "Action failed";
 "toast.action.failed.notReady" = "TaskTick is still starting";
 "toast.action.failed.taskNotFound" = "Task not found";
+
+"cli.repair.title" = "Update tasktick CLI link";
+"cli.repair.message" = "The tasktick command at %@ points to an outdated location. Update it to the new path now? (Requires admin permission.)";
+"cli.repair.update_button" = "Update Now";
+"cli.repair.later_button" = "Later";
+"cli.repair.success.title" = "tasktick CLI updated";
+"cli.repair.success.message" = "%@ now points at the bundled CLI binary.";

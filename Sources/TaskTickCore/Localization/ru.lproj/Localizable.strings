@@ -435,3 +435,10 @@
 "toast.action.failed" = "Действие не выполнено";
 "toast.action.failed.notReady" = "TaskTick запускается";
 "toast.action.failed.taskNotFound" = "Задача не найдена";
+
+"cli.repair.title" = "Обновить ссылку tasktick CLI";
+"cli.repair.message" = "%@ указывает на устаревший путь к CLI. Обновить сейчас? (Требуются права администратора)";
+"cli.repair.update_button" = "Обновить сейчас";
+"cli.repair.later_button" = "Позже";
+"cli.repair.success.title" = "tasktick CLI обновлён";
+"cli.repair.success.message" = "%@ теперь указывает на встроенный бинарный файл CLI.";
