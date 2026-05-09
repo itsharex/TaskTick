@@ -1,57 +1,67 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6c8aff"/>
-      <stop offset="50%" stop-color="#8b7cf7"/>
-      <stop offset="100%" stop-color="#a78bfa"/>
+    <!-- Subtle warm-white gradient for the rounded-square background so the
+         icon doesn't look flat against light-mode UIs -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f3f4f8"/>
     </linearGradient>
-    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.28)"/>
-      <stop offset="50%" stop-color="rgba(255,255,255,0.04)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    <!-- Light edge glow on the squircle -->
+    <linearGradient id="edgeShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
     </linearGradient>
-    <filter id="clockShadow" x="-15%" y="-15%" width="130%" height="135%">
-      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#3b3b8c" flood-opacity="0.28"/>
+    <!-- Soft bezel ring around the clock -->
+    <radialGradient id="bezel" cx="50%" cy="50%" r="50%">
+      <stop offset="92%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="100%" stop-color="rgba(80,80,120,0.18)"/>
+    </radialGradient>
+    <filter id="bgShadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#0f1224" flood-opacity="0.10"/>
     </filter>
     <filter id="badgeShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0d6c2f" flood-opacity="0.32"/>
     </filter>
   </defs>
 
-  <!-- Rounded square background. Apple HIG corner radius ≈ 22.4% × 1024 ≈ 230 -->
-  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
-  <rect width="1024" height="1024" rx="230" fill="url(#shine)"/>
+  <!-- White rounded-square background, subtle inner shadow on bottom for depth -->
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)" filter="url(#bgShadow)"/>
+  <!-- Top highlight to soften the squircle -->
+  <rect width="1024" height="1024" rx="230" fill="url(#edgeShine)" opacity="0.5"/>
 
-  <!-- Clock face — true center (512,512), radius 270 (~26% of canvas, generous padding) -->
-  <circle cx="512" cy="512" r="270" fill="white" opacity="0.97" filter="url(#clockShadow)"/>
-  <circle cx="512" cy="512" r="258" fill="white"/>
-  <circle cx="512" cy="512" r="244" fill="none" stroke="#e8e8f4" stroke-width="5"/>
+  <!-- Clock face — true center (512,512), radius 320 (~31% of canvas) -->
+  <!-- Soft outer bezel ring (gives the clock a tactile edge against white bg) -->
+  <circle cx="512" cy="512" r="328" fill="url(#bezel)"/>
+  <!-- Crisp ring -->
+  <circle cx="512" cy="512" r="320" fill="none" stroke="#d8d9eb" stroke-width="6"/>
+  <!-- Inner thin guide ring -->
+  <circle cx="512" cy="512" r="296" fill="none" stroke="#eaebf3" stroke-width="3"/>
 
-  <!-- Hour markers on r=224 ring -->
-  <circle cx="512" cy="288" r="14" fill="#6c8aff"/>
-  <circle cx="624" cy="318" r="10" fill="#c4c4dd"/>
-  <circle cx="706" cy="400" r="10" fill="#c4c4dd"/>
-  <circle cx="736" cy="512" r="14" fill="#8b7cf7"/>
-  <circle cx="706" cy="624" r="10" fill="#c4c4dd"/>
-  <circle cx="624" cy="706" r="10" fill="#c4c4dd"/>
-  <circle cx="512" cy="736" r="14" fill="#a78bfa"/>
-  <circle cx="400" cy="706" r="10" fill="#c4c4dd"/>
-  <circle cx="318" cy="624" r="10" fill="#c4c4dd"/>
-  <circle cx="288" cy="512" r="14" fill="#6c8aff"/>
-  <circle cx="318" cy="400" r="10" fill="#c4c4dd"/>
-  <circle cx="400" cy="318" r="10" fill="#c4c4dd"/>
+  <!-- Hour markers on r=270 ring -->
+  <circle cx="512" cy="242" r="16" fill="#6c8aff"/><!-- 12 -->
+  <circle cx="647" cy="278" r="11" fill="#c4c4dd"/><!-- 1 -->
+  <circle cx="746" cy="377" r="11" fill="#c4c4dd"/><!-- 2 -->
+  <circle cx="782" cy="512" r="16" fill="#8b7cf7"/><!-- 3 -->
+  <circle cx="746" cy="647" r="11" fill="#c4c4dd"/><!-- 4 -->
+  <circle cx="647" cy="746" r="11" fill="#c4c4dd"/><!-- 5 -->
+  <circle cx="512" cy="782" r="16" fill="#a78bfa"/><!-- 6 -->
+  <circle cx="377" cy="746" r="11" fill="#c4c4dd"/><!-- 7 -->
+  <circle cx="278" cy="647" r="11" fill="#c4c4dd"/><!-- 8 -->
+  <circle cx="242" cy="512" r="16" fill="#6c8aff"/><!-- 9 -->
+  <circle cx="278" cy="377" r="11" fill="#c4c4dd"/><!-- 10 -->
+  <circle cx="377" cy="278" r="11" fill="#c4c4dd"/><!-- 11 -->
 
-  <!-- Hour hand — toward 11 -->
-  <line x1="512" y1="512" x2="512" y2="380" stroke="#3a3a5c" stroke-width="18" stroke-linecap="round"/>
-  <!-- Minute hand — toward 2 -->
-  <line x1="512" y1="512" x2="624" y2="430" stroke="#6c8aff" stroke-width="13" stroke-linecap="round"/>
+  <!-- Hour hand pointing toward 11 -->
+  <line x1="512" y1="512" x2="512" y2="358" stroke="#3a3a5c" stroke-width="22" stroke-linecap="round"/>
+  <!-- Minute hand pointing toward 2 -->
+  <line x1="512" y1="512" x2="640" y2="416" stroke="#6c8aff" stroke-width="15" stroke-linecap="round"/>
 
   <!-- Center pivot -->
-  <circle cx="512" cy="512" r="22" fill="#6c8aff"/>
-  <circle cx="512" cy="512" r="10" fill="white"/>
+  <circle cx="512" cy="512" r="26" fill="#6c8aff"/>
+  <circle cx="512" cy="512" r="12" fill="white"/>
 
   <!-- Green check badge — bottom-right, comfortably inset -->
-  <circle cx="696" cy="696" r="92" fill="#22c55e" filter="url(#badgeShadow)"/>
-  <circle cx="696" cy="696" r="84" fill="#22c55e"/>
-  <polyline points="652,696 686,730 740,672" fill="none" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="724" cy="724" r="100" fill="#22c55e" filter="url(#badgeShadow)"/>
+  <circle cx="724" cy="724" r="92" fill="#22c55e"/>
+  <polyline points="676,724 712,760 770,696" fill="none" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
