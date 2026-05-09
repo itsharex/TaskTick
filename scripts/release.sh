@@ -71,12 +71,17 @@ build_arch() {
   # Copy binary (rename TaskTickApp → TaskTick during cp; user-facing name)
   cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
-  # Copy CLI binary alongside the GUI binary
+  # Copy CLI binary to Contents/cli/ — NOT Contents/MacOS/.
+  # macOS APFS is case-insensitive by default, so the GUI binary
+  # 'TaskTick' and CLI binary 'tasktick' would collide in MacOS/,
+  # with the second cp silently overwriting the first → app fails
+  # to launch. Cask's `binary` field points here for $PATH symlink.
   local CLI_BIN_PATH
   CLI_BIN_PATH=$(find "${ARCH_BUILD_DIR}/build" -name "tasktick" -type f -perm +111 | grep -v '\.build\|\.dSYM\|\.bundle' | head -1)
   if [ -n "${CLI_BIN_PATH}" ]; then
-    cp "${CLI_BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/tasktick"
-    echo "  CLI: tasktick"
+    mkdir -p "${APP_BUNDLE}/Contents/cli"
+    cp "${CLI_BIN_PATH}" "${APP_BUNDLE}/Contents/cli/tasktick"
+    echo "  CLI: tasktick (Contents/cli/)"
   fi
 
   # Glob-copy ALL *.bundle (TaskTick_TaskTickCore.bundle and any future
