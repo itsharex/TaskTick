@@ -56,8 +56,9 @@ struct EventsCommand: AsyncParsableCommand {
         // Reference the dispatch sources so they aren't deallocated.
         _ = intSrc
         _ = termSrc
-        await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in
-            // No-op: signal handlers exit the process.
+        await withUnsafeContinuation { (_: UnsafeContinuation<Void, Never>) in
+            // Never resume; signal handlers (SIGINT/SIGTERM) call Foundation.exit().
+            // Using unsafe to avoid the runtime leak warning at process exit.
         }
     }
 
