@@ -408,3 +408,5 @@
 "toast.action.stopped" = "중지됨";
 "toast.action.restarted" = "재시작됨";
 "toast.action.failed" = "작업 실패";
+"toast.action.failed.notReady" = "TaskTick 시작 중";
+"toast.action.failed.taskNotFound" = "작업을 찾을 수 없음";

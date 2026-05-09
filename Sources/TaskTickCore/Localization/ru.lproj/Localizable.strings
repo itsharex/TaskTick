@@ -433,3 +433,5 @@
 "toast.action.stopped" = "Остановлено";
 "toast.action.restarted" = "Перезапущено";
 "toast.action.failed" = "Действие не выполнено";
+"toast.action.failed.notReady" = "TaskTick запускается";
+"toast.action.failed.taskNotFound" = "Задача не найдена";

@@ -555,3 +555,5 @@
 "toast.action.stopped" = "Stopped";
 "toast.action.restarted" = "Restarted";
 "toast.action.failed" = "Action failed";
+"toast.action.failed.notReady" = "TaskTick is still starting";
+"toast.action.failed.taskNotFound" = "Task not found";

@@ -433,3 +433,5 @@
 "toast.action.stopped" = "停止しました";
 "toast.action.restarted" = "再起動しました";
 "toast.action.failed" = "操作に失敗しました";
+"toast.action.failed.notReady" = "TaskTick は起動中です";
+"toast.action.failed.taskNotFound" = "タスクが見つかりません";

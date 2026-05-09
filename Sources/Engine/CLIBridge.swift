@@ -40,14 +40,14 @@ final class CLIBridge {
     func handle(action: Action, taskId: UUID) {
         guard let container = modelContainer else {
             NSLog("⚠️ CLIBridge: handle(\(action.rawValue)) called before configure()")
-            ActionToast.notify(.failed(taskName: nil, reason: "TaskTick not ready"))
+            ActionToast.notify(.failed(taskName: nil, reason: L10n.tr("toast.action.failed.notReady")))
             return
         }
         let context = container.mainContext
         let descriptor = FetchDescriptor<ScheduledTask>(predicate: #Predicate { $0.id == taskId })
         guard let task = try? context.fetch(descriptor).first else {
             NSLog("⚠️ CLIBridge: no task with id \(taskId)")
-            ActionToast.notify(.failed(taskName: nil, reason: "task not found"))
+            ActionToast.notify(.failed(taskName: nil, reason: L10n.tr("toast.action.failed.taskNotFound")))
             return
         }
 

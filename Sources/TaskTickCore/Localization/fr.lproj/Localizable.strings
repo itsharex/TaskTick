@@ -390,3 +390,5 @@
 "toast.action.stopped" = "Arrêté";
 "toast.action.restarted" = "Redémarré";
 "toast.action.failed" = "Action échouée";
+"toast.action.failed.notReady" = "TaskTick démarre";
+"toast.action.failed.taskNotFound" = "Tâche introuvable";

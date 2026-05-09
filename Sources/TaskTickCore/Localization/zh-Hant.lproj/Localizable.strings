@@ -448,3 +448,5 @@
 "toast.action.stopped" = "已停止";
 "toast.action.restarted" = "已重啟";
 "toast.action.failed" = "操作失敗";
+"toast.action.failed.notReady" = "TaskTick 正在啟動";
+"toast.action.failed.taskNotFound" = "任務未找到";

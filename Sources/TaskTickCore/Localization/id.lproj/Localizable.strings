@@ -433,3 +433,5 @@
 "toast.action.stopped" = "Dihentikan";
 "toast.action.restarted" = "Dimulai ulang";
 "toast.action.failed" = "Aksi gagal";
+"toast.action.failed.notReady" = "TaskTick sedang memulai";
+"toast.action.failed.taskNotFound" = "Tugas tidak ditemukan";
